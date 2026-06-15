@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotest)
     alias(libs.plugins.androidx.room)
+    alias(libs.plugins.metro)
 }
 
 kotlin {
@@ -30,6 +31,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.metrox.android)
         }
         commonMain.dependencies {
             api(projects.core)

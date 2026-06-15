@@ -9,4 +9,5 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.kotest) apply false
     alias(libs.plugins.androidx.room) apply false
+    alias(libs.plugins.metro) apply false
 }

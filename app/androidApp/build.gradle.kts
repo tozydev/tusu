@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.metro)
 }
 
 kotlin {
@@ -15,9 +16,10 @@ kotlin {
 dependencies {
     implementation(projects.app.shared)
 
-    implementation(libs.androidx.activity.compose)
-
     implementation(libs.compose.uiToolingPreview)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.metrox.android)
+
     debugImplementation(libs.compose.uiTooling)
 }
 
