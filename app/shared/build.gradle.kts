@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.kotest)
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.metro)
+    alias(libs.plugins.kotlinxSerialization)
 }
 
 kotlin {
@@ -45,6 +46,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.androidx.navigation3.runtime)
+            implementation(libs.androidx.navigation3.ui)
+            implementation(libs.androidx.navigationevent.compose)
+            implementation(libs.kotlinx.serialization.core)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework.engine)

@@ -10,6 +10,7 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.android.ActivityKey
 import vn.io.tozyworks.tusu.di.AndroidAppGraph
+import vn.io.tozyworks.tusu.ui.App
 
 @ContributesIntoMap(AppScope::class, binding<Activity>())
 @ActivityKey
