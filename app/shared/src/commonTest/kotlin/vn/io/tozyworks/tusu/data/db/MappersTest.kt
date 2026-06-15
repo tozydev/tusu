@@ -4,9 +4,9 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
-import vn.io.tozyworks.tusu.model.Entry
-import vn.io.tozyworks.tusu.model.Media
-import vn.io.tozyworks.tusu.model.Tag
+import vn.io.tozyworks.tusu.domain.model.Entry
+import vn.io.tozyworks.tusu.domain.model.Media
+import vn.io.tozyworks.tusu.domain.model.Tag
 
 class MappersTest : ShouldSpec() {
     init {

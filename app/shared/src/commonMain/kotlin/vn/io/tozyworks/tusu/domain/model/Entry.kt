@@ -1,4 +1,4 @@
-package vn.io.tozyworks.tusu.model
+package vn.io.tozyworks.tusu.domain.model
 
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

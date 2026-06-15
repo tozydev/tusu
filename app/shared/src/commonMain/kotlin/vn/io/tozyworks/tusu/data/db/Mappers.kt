@@ -1,9 +1,9 @@
 package vn.io.tozyworks.tusu.data.db
 
 import kotlin.uuid.Uuid
-import vn.io.tozyworks.tusu.model.Entry
-import vn.io.tozyworks.tusu.model.Media
-import vn.io.tozyworks.tusu.model.Tag
+import vn.io.tozyworks.tusu.domain.model.Entry
+import vn.io.tozyworks.tusu.domain.model.Media
+import vn.io.tozyworks.tusu.domain.model.Tag
 
 fun TagEntity.toModel() =
     Tag(
