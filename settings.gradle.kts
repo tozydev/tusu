@@ -32,9 +32,13 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "tusu"
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":app:androidApp")
+
 include(":app:shared")
+
 include(":core")
+
 include(":server")
