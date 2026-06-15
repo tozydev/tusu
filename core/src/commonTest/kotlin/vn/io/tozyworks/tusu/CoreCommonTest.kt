@@ -3,10 +3,10 @@ package vn.io.tozyworks.tusu
 import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 
-class SharedCommonTest : ShouldSpec() {
+class CoreCommonTest : ShouldSpec() {
     init {
-        should("calculate the sum of 1 and 2") {
-            (1 + 2) shouldBe 3
+        should("say hello to Kotest") {
+            sayHello("Kotest") shouldBe "Hello, Kotest!"
         }
     }
 }

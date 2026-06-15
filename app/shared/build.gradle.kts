@@ -1,10 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotest)
 }
 
 kotlin {
@@ -40,7 +43,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
         }
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            implementation(libs.kotest.framework.engine)
+            implementation(libs.kotest.assertions.core)
         }
     }
 }
@@ -51,4 +55,8 @@ dependencies {
 
 compose.resources {
     packageOfResClass = "${group}.generated.resources"
+}
+
+tasks.withType<KotlinJvmTest>().configureEach {
+    useJUnitPlatform()
 }
