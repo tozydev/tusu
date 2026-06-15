@@ -1,4 +1,4 @@
-package vn.io.tozyworks.tusu.data.local.db
+package vn.io.tozyworks.tusu.data.db
 
 import android.content.Context
 import androidx.room.Room

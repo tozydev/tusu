@@ -1,4 +1,4 @@
-package vn.io.tozyworks.tusu.data.local.db
+package vn.io.tozyworks.tusu.data.db
 
 import androidx.room.Dao
 import androidx.room.Delete

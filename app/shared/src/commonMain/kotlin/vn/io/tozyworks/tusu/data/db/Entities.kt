@@ -1,4 +1,4 @@
-package vn.io.tozyworks.tusu.data.local.db
+package vn.io.tozyworks.tusu.data.db
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
