@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -49,6 +48,11 @@ kotlin {
             implementation(libs.kotest.framework.engine)
             implementation(libs.kotest.assertions.core)
         }
+        val androidHostTest by getting {
+            dependencies {
+                implementation(libs.kotest.runner.junit6)
+            }
+        }
     }
 }
 
@@ -65,6 +69,6 @@ compose.resources {
     packageOfResClass = "${group}.generated.resources"
 }
 
-tasks.withType<KotlinJvmTest>().configureEach {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
