@@ -27,6 +27,10 @@ interface EntryDao {
     @Transaction
     @Query("SELECT * FROM entries ORDER BY recorded_at DESC")
     fun getAllEntriesWithRelationsFlow(): Flow<List<EntryWithRelations>>
+
+    @Query("SELECT id FROM entries LIMIT 1") suspend fun getFirstEntryId(): Uuid?
+
+    @Insert suspend fun insertAll(entries: List<EntryEntity>)
 }
 
 @Dao
@@ -38,6 +42,8 @@ interface TagDao {
     @Query("SELECT * FROM tags") fun getAllAsFlow(): Flow<List<TagEntity>>
 
     @Query("SELECT * FROM tags WHERE name = :name") suspend fun getByName(name: String): TagEntity?
+
+    @Insert suspend fun insertAll(tagSeeds: List<TagEntity>)
 }
 
 @Dao
@@ -55,4 +61,6 @@ interface EntryTagDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(crossRef: EntryTagCrossRef)
 
     @Delete suspend fun delete(crossRef: EntryTagCrossRef)
+
+    @Insert suspend fun insertAll(entryTagSeeds: List<EntryTagCrossRef>)
 }

@@ -22,6 +22,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import vn.io.tozyworks.tusu.data.db.seedDatabase
 import vn.io.tozyworks.tusu.di.AppGraph
 import vn.io.tozyworks.tusu.ui.navigation.AppNavigation
 
@@ -39,6 +43,12 @@ val LocalAppGraph = staticCompositionLocalOf<AppGraph> { error("No AppGraph prov
 @Composable
 fun App(appGraph: AppGraph) {
     CompositionLocalProvider(LocalAppGraph provides appGraph) {
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            seedDatabase(appGraph.tusuDatabase)
+        }
+    }
+
         MaterialTheme {
             Scaffold(
                 topBar = {
