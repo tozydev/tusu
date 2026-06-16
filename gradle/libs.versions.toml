@@ -23,6 +23,9 @@ material3 = "1.11.0-alpha07"
 room = "2.8.4"
 sqlite = "2.6.2"
 metro = "1.2.1"
+coil = "3.5.0"
+filekit = "0.14.2"
+richeditor = "1.0.0-rc14"
 
 
 [libraries]
@@ -58,6 +61,10 @@ metrox-android = { module = "dev.zacsweers.metro:metrox-android", version.ref = 
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "androidx-navigation3" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "androidx-navigation3" }
 androidx-navigationevent-compose = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "androidx-navigationevent" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
+richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditor" }
 
 
 [plugins]

@@ -50,6 +50,10 @@ kotlin {
             implementation(libs.androidx.navigation3.ui)
             implementation(libs.androidx.navigationevent.compose)
             implementation(libs.kotlinx.serialization.core)
+            implementation(libs.coil.compose)
+            implementation(libs.filekit.core)
+            implementation(libs.filekit.dialogs.compose)
+            implementation(libs.richeditor.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework.engine)
