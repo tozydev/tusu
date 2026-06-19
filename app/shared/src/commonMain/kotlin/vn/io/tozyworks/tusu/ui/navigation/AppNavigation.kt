@@ -10,9 +10,10 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
-import vn.io.tozyworks.tusu.ui.DemoScreenA
-import vn.io.tozyworks.tusu.ui.DemoScreenB
 import vn.io.tozyworks.tusu.ui.LocalAppGraph
+import vn.io.tozyworks.tusu.ui.feature.editor.EditorScreen
+import vn.io.tozyworks.tusu.ui.feature.feed.FeedScreen
+import vn.io.tozyworks.tusu.ui.feature.settings.SettingsScreen
 
 @OptIn(ExperimentalSerializationApi::class)
 private val savedStateConfiguration = SavedStateConfiguration {
@@ -24,7 +25,7 @@ private val savedStateConfiguration = SavedStateConfiguration {
 }
 
 @Composable
-fun AppNavigation(startRoute: AppRoutes = AppRoutes.DemoA) {
+fun AppNavigation(startRoute: AppRoutes = AppRoutes.Feed) {
     val backStack = rememberNavBackStack(savedStateConfiguration, startRoute)
     val appGraph = LocalAppGraph.current
 
@@ -34,20 +35,16 @@ fun AppNavigation(startRoute: AppRoutes = AppRoutes.DemoA) {
         entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator()),
         entryProvider =
             entryProvider {
-                entry<AppRoutes.DemoA> {
-                    DemoScreenA(
-                        greetingText = appGraph.greeting.greet(),
-                        onNavigateToB = {
-                            backStack.add(AppRoutes.DemoB("Hello from Screen A!"))
-                        },
-                    )
+                entry<AppRoutes.Feed> {
+                    FeedScreen()
                 }
 
-                entry<AppRoutes.DemoB> { key ->
-                    DemoScreenB(
-                        message = key.message,
-                        onBack = { backStack.removeLastOrNull() },
-                    )
+                entry<AppRoutes.Settings> {
+                    SettingsScreen()
+                }
+
+                entry<AppRoutes.Editor> { entryId ->
+                    EditorScreen()
                 }
             },
     )
