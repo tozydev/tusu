@@ -54,6 +54,7 @@ kotlin {
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.richeditor.compose)
+            implementation(libs.materialKolor)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework.engine)
