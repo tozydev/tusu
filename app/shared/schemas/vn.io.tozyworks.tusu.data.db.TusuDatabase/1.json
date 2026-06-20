@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "b3ede4c384b11daf2be0b2c6003320d1",
+    "identityHash": "ac7a2ae03ed05717339c7a3e6df23a06",
     "entities": [
       {
         "tableName": "entries",
@@ -147,7 +147,7 @@
       },
       {
         "tableName": "media",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` BLOB NOT NULL, `entry_id` BLOB NOT NULL, `mime_type` TEXT NOT NULL, `filename` TEXT NOT NULL, `path` TEXT NOT NULL, `height` INTEGER, `width` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`entry_id`) REFERENCES `entries`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` BLOB NOT NULL, `entry_id` BLOB NOT NULL, `mime_type` TEXT NOT NULL, `filename` TEXT NOT NULL, `path` TEXT NOT NULL, `order` REAL NOT NULL, `height` INTEGER, `width` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`entry_id`) REFERENCES `entries`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -177,6 +177,12 @@
             "fieldPath": "path",
             "columnName": "path",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "REAL",
             "notNull": true
           },
           {
@@ -224,7 +230,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b3ede4c384b11daf2be0b2c6003320d1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ac7a2ae03ed05717339c7a3e6df23a06')"
     ]
   }
 }

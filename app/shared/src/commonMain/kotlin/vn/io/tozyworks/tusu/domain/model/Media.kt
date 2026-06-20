@@ -7,6 +7,7 @@ data class Media(
     val mimeType: String,
     val filename: String,
     val path: String,
+    val order: Float,
     val height: Int?,
     val width: Int?,
 )

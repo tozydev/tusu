@@ -36,6 +36,7 @@ class MappersTest : ShouldSpec() {
                     mimeType = "image/png",
                     filename = "photo.png",
                     path = "/path/to/photo.png",
+                    order = 0.001f,
                     height = 1080,
                     width = 1920,
                 )
@@ -44,6 +45,7 @@ class MappersTest : ShouldSpec() {
             model.mimeType shouldBe "image/png"
             model.filename shouldBe "photo.png"
             model.path shouldBe "/path/to/photo.png"
+            model.order shouldBe 0.001f
             model.height shouldBe 1080
             model.width shouldBe 1920
         }
@@ -57,6 +59,7 @@ class MappersTest : ShouldSpec() {
                     mimeType = "video/mp4",
                     filename = "video.mp4",
                     path = "/path/to/video.mp4",
+                    order = 0.001f,
                     height = 720,
                     width = 1280,
                 )
@@ -66,6 +69,7 @@ class MappersTest : ShouldSpec() {
             entity.mimeType shouldBe "video/mp4"
             entity.filename shouldBe "video.mp4"
             entity.path shouldBe "/path/to/video.mp4"
+            entity.order shouldBe 0.001f
             entity.height shouldBe 720
             entity.width shouldBe 1280
         }
@@ -113,6 +117,7 @@ class MappersTest : ShouldSpec() {
                     mimeType = "image/jpeg",
                     filename = "sunset.jpg",
                     path = "/path/to/sunset.jpg",
+                    order = 1.2f,
                     height = 600,
                     width = 800,
                 )
@@ -154,6 +159,7 @@ class MappersTest : ShouldSpec() {
                                 mimeType = "image/png",
                                 filename = "draft.png",
                                 path = "/draft.png",
+                                order = 1f,
                                 height = null,
                                 width = null,
                             )

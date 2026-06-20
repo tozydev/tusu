@@ -72,6 +72,7 @@ data class MediaEntity(
     @ColumnInfo(name = "mime_type") val mimeType: String,
     val filename: String,
     val path: String,
+    val order: Float,
     val height: Int?,
     val width: Int?,
 )

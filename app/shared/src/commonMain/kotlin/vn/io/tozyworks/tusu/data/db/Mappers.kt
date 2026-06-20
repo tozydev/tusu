@@ -23,6 +23,7 @@ fun MediaEntity.toModel() =
         mimeType = mimeType,
         filename = filename,
         path = path,
+        order = order,
         height = height,
         width = width,
     )
@@ -34,6 +35,7 @@ fun Media.toEntity(entryId: Uuid) =
         mimeType = mimeType,
         filename = filename,
         path = path,
+        order = order,
         height = height,
         width = width,
     )
