@@ -45,6 +45,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.room.paging)
             implementation(libs.androidx.sqlite.bundled)
             implementation(libs.androidx.navigation3.runtime)
             implementation(libs.androidx.navigation3.ui)
@@ -55,6 +56,7 @@ kotlin {
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.richeditor.compose)
             implementation(libs.materialKolor)
+            implementation(libs.androidx.paging.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework.engine)

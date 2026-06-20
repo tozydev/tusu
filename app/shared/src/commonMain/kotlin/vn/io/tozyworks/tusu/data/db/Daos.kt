@@ -10,7 +10,13 @@ import kotlin.uuid.Uuid
 @Dao
 interface EntryDao {
     @Transaction
-    @Query("select * from entries order by recorded_at desc")
+    @Query(
+        """
+        select distinct e.* from entries e
+        left join media m on e.id = m.entry_id
+        order by e.recorded_at desc, m.`order` asc
+        """
+    )
     fun pagingSource(): PagingSource<Int, EntryWithRelations>
 
     @Query("SELECT id FROM entries LIMIT 1") suspend fun getFirstEntryId(): Uuid?

@@ -28,6 +28,7 @@ filekit = "0.14.2"
 richeditor = "1.0.0-rc14"
 
 materialKolor = "5.0.0-alpha07"
+androidx-paging = "3.4.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -58,6 +59,8 @@ kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", versio
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 metrox-android = { module = "dev.zacsweers.metro:metrox-android", version.ref = "metro" }
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "androidx-navigation3" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "androidx-navigation3" }
@@ -68,6 +71,7 @@ filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditor" }
 
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "androidx-paging" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
