@@ -55,7 +55,7 @@ data class EntryTagCrossRef(
 
 @Entity(
     tableName = "media",
-    indices = [Index("entry_id")],
+    indices = [Index("entry_id", "order")],
     foreignKeys =
         [
             ForeignKey(

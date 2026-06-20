@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ac7a2ae03ed05717339c7a3e6df23a06",
+    "identityHash": "0b129543f5b8cfc265570badda9b4d29",
     "entities": [
       {
         "tableName": "entries",
@@ -204,13 +204,14 @@
         },
         "indices": [
           {
-            "name": "index_media_entry_id",
+            "name": "index_media_entry_id_order",
             "unique": false,
             "columnNames": [
-              "entry_id"
+              "entry_id",
+              "order"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_media_entry_id` ON `${TABLE_NAME}` (`entry_id`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_media_entry_id_order` ON `${TABLE_NAME}` (`entry_id`, `order`)"
           }
         ],
         "foreignKeys": [
@@ -230,7 +231,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ac7a2ae03ed05717339c7a3e6df23a06')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0b129543f5b8cfc265570badda9b4d29')"
     ]
   }
 }
