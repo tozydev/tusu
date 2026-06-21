@@ -57,6 +57,7 @@ kotlin {
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.richeditor.compose)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.materialKolor)
             implementation(libs.androidx.paging.compose)
         }
@@ -64,6 +65,7 @@ kotlin {
             implementation(libs.kotest.framework.engine)
             implementation(libs.kotest.assertions.core)
         }
+        @Suppress("unused")
         val androidHostTest by getting {
             dependencies {
                 implementation(libs.kotest.runner.junit6)
