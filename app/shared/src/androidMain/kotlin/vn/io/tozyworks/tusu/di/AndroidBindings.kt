@@ -7,6 +7,9 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.filesDir
 import vn.io.tozyworks.tusu.data.db.TusuDatabase
 import vn.io.tozyworks.tusu.data.db.getDatabaseBuilder
 
@@ -21,4 +24,9 @@ object AndroidBindings {
     @SingleIn(AppScope::class)
     fun provideTusuDatabase(application: Application): TusuDatabase =
         TusuDatabase.create(getDatabaseBuilder(application))
+
+    @AppDir
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideAppDir(): PlatformFile = FileKit.filesDir
 }

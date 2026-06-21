@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import vn.io.tozyworks.tusu.data.seedTestData
 import vn.io.tozyworks.tusu.di.AppGraph
+import vn.io.tozyworks.tusu.ui.integration.InitCoil3
 import vn.io.tozyworks.tusu.ui.navigation.AppNavigation
 import vn.io.tozyworks.tusu.ui.theme.AppTheme
 
@@ -21,6 +22,8 @@ fun App(appGraph: AppGraph) {
             seedTestData(appGraph.tusuDatabase)
         }
     }
+
+    InitCoil3(appGraph.appDir)
 
     CompositionLocalProvider(
         LocalAppGraph provides appGraph,
