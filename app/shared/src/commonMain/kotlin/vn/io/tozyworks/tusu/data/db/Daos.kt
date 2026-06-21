@@ -26,12 +26,15 @@ interface EntryDao {
 
 @Dao
 interface TagDao {
-    @Insert suspend fun insertAll(tagSeeds: List<TagEntity>)
+    @Insert suspend fun insertAll(tags: List<TagEntity>)
 }
 
-@Dao interface MediaDao {}
+@Dao
+interface MediaDao {
+    @Insert suspend fun insertAll(media: List<MediaEntity>)
+}
 
 @Dao
 interface EntryTagDao {
-    @Insert suspend fun insertAll(entryTagSeeds: List<EntryTagCrossRef>)
+    @Insert suspend fun insertAll(entryTags: List<EntryTagCrossRef>)
 }
