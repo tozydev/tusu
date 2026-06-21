@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -36,7 +37,13 @@ fun AppNavigation(startRoute: AppRoutes = AppRoutes.Feed) {
         entryProvider =
             entryProvider {
                 entry<AppRoutes.Feed> {
-                    FeedScreen()
+                    context(appGraph.dateTimeFormatter) {
+                        FeedScreen(
+                            viewModel = metroViewModel(),
+                            onNavigateToEditor = { id -> backStack += AppRoutes.Editor(id) },
+                            onNavigateToSettings = { backStack += AppRoutes.Settings },
+                        )
+                    }
                 }
 
                 entry<AppRoutes.Settings> {

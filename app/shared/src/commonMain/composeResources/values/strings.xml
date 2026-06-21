@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Tusu</string>
+    <string name="settings_desc">Settings</string>
+    <string name="fab_compose">Compose</string>
+    <string name="tag_filter_all">All</string>
+    <string name="format_date_today">Today</string>
+    <string name="format_date_yesterday">Yesterday</string>
+    <string name="format_date_days_ago">%1$d days ago</string>
+    <string name="format_date_weeks_ago">%1$d weeks ago</string>
+</resources>

@@ -10,6 +10,11 @@ import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
 import kotlin.reflect.KClass
+import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
+import vn.io.tozyworks.tusu.data.db.EntryDao
+import vn.io.tozyworks.tusu.data.db.TagDao
+import vn.io.tozyworks.tusu.data.db.TusuDatabase
 
 @BindingContainer
 @ContributesTo(AppScope::class)
@@ -32,4 +37,18 @@ object AppBindings {
             override val manualAssistedFactoryProviders
                 get() = manualAssistedFactoryProviders
         }
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideTimeZone(): TimeZone = TimeZone.currentSystemDefault()
+
+    @Provides @SingleIn(AppScope::class) fun provideClock(): Clock = Clock.System
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideEntryDao(database: TusuDatabase): EntryDao = database.entryDao()
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideTagDao(database: TusuDatabase): TagDao = database.tagDao()
 }

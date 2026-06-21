@@ -55,6 +55,7 @@ kotlin {
             implementation(libs.androidx.navigation3.ui)
             implementation(libs.androidx.navigationevent.compose)
             implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.coil.compose)
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs.compose)

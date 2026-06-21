@@ -29,6 +29,7 @@ richeditor = "1.0.0-rc14"
 kotlinx-datetime = "0.8.0"
 materialKolor = "5.0.0-alpha07"
 androidx-paging = "3.4.2"
+kotlinx-coroutines = "1.11.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -72,7 +73,8 @@ filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose
 richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose", version.ref = "richeditor" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
-androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "androidx-paging" }
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "androidx-paging" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

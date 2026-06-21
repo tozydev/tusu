@@ -40,7 +40,7 @@ internal object TestData {
     val media7Id = Uuid.fromLongs(0, 107) // pexels-vubui-30248863.jpg
     val media8Id = Uuid.fromLongs(0, 108) // pexels-son-hoa-nguyen-2155579462-33969968.jpg
     val media9Id = Uuid.fromLongs(0, 109) // pexels-hoanggiahuy-13443167.jpg
-    val media10Id = Uuid.fromLongs(0, 110) // pexels-jh-2162248197-38088673.jpg
+    val media10Id = Uuid.fromLongs(0, 110) // 00000000-0000-0000-0000-00000000006e.jpg
 
     // ============================================================================================
     // 3. ENTRY IDENTIFIERS (10 Entries)
@@ -175,7 +175,7 @@ internal object TestData {
                 id = media10Id,
                 entryId = entry3Id,
                 mimeType = "image/jpeg",
-                filename = "pexels-jh-2162248197-38088673.jpg",
+                filename = "00000000-0000-0000-0000-00000000006e.jpg",
                 path = "./media/00/00/00000000-0000-0000-0000-00000000006e.jpg",
                 order = 2.0f,
                 height = 4000,
