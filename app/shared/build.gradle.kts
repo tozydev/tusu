@@ -13,6 +13,8 @@ plugins {
 }
 
 kotlin {
+    jvm()
+
     android {
         namespace = "vn.io.tozyworks.tusu.app.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
