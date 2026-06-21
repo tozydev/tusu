@@ -34,10 +34,12 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
-            implementation(libs.metrox.android)
+            api(libs.metrox.android)
         }
         commonMain.dependencies {
             api(projects.core)
+            api(libs.metrox.viewmodel.compose)
+
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)

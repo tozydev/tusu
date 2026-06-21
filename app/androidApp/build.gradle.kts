@@ -18,7 +18,6 @@ dependencies {
 
     implementation(libs.compose.uiToolingPreview)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.metrox.android)
 
     debugImplementation(libs.compose.uiTooling)
 }

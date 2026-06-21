@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.staticCompositionLocalOf
+import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import vn.io.tozyworks.tusu.data.seedTestData
@@ -21,7 +22,10 @@ fun App(appGraph: AppGraph) {
         }
     }
 
-    CompositionLocalProvider(LocalAppGraph provides appGraph) {
+    CompositionLocalProvider(
+        LocalAppGraph provides appGraph,
+        LocalMetroViewModelFactory provides appGraph.metroViewModelFactory,
+    ) {
         AppTheme {
             AppNavigation()
         }
