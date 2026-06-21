@@ -36,8 +36,7 @@ class FeedViewModel(
     dateTimeFormatter: DateTimeFormatter,
 ) : ViewModel() {
     private val _tagIdFilter = MutableStateFlow<Uuid?>(null)
-    val tagIdFilter: StateFlow<Uuid?>
-        get() = _tagIdFilter.asStateFlow()
+    val tagIdFilter: StateFlow<Uuid?> = _tagIdFilter.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val feedItemsPaging =

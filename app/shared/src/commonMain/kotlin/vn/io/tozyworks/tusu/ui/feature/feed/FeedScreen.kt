@@ -209,8 +209,7 @@ private fun FeedTopAppBar(
                 onClick = onNavigateToSettings,
                 colors =
                     IconButtonDefaults.filledIconButtonColors(
-                        containerColor =
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
             ) {
