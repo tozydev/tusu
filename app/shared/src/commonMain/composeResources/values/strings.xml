@@ -1,6 +1,23 @@
 <resources>
     <string name="app_name">Tusu</string>
     <string name="settings_desc">Settings</string>
+    <string name="back_desc">Back</string>
+    <string name="select_emoji_desc">Select Emoji</string>
+    <string name="more_menu_desc">More</string>
+    <string name="remove_media_desc">Remove media %s</string>
+    <string name="add_media_desc">Add media</string>
+    <string name="time_picker_type_toggle_desc">Toggle time picker type</string>
+    <string name="time_picker_title">Select Time</string>
+    <string name="add_media">Add media</string>
+    <string name="select_emoji_title">Emoji</string>
+    <string name="remove_current_emoji">Remove</string>
+    <string name="edit_btn">Edit</string>
+    <string name="done_btn">Done</string>
+    <string name="ok_btn">OK</string>
+    <string name="cancel_btn">Cancel</string>
+    <string name="now_btn">Now</string>
+    <string name="entry_content_prompt">What's on your mind?</string>
+    <string name="error_entry_not_found">Entry not found</string>
     <string name="fab_compose">Compose</string>
     <string name="tag_filter_all">All</string>
     <string name="format_date_today">Today</string>

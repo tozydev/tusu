@@ -10,5 +10,5 @@ sealed interface AppRoutes : NavKey {
 
     @Serializable data object Settings : AppRoutes
 
-    @Serializable data class Editor(val entryId: Uuid? = null) : AppRoutes
+    @Serializable data class EntryEditor(val entryId: Uuid? = null) : AppRoutes
 }

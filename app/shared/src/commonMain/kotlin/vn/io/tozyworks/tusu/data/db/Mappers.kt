@@ -41,11 +41,20 @@ fun Media.toEntity(entryId: Uuid) =
     )
 
 fun EntryWithRelations.toModel() =
+    entry.toModel(
+        tags = tags,
+        media = media,
+    )
+
+fun EntryEntity.toModel(
+    tags: List<TagEntity> = emptyList(),
+    media: List<MediaEntity> = emptyList(),
+) =
     Entry(
-        id = entry.id,
-        recordedAt = entry.recordedAt,
-        content = entry.content,
-        emoji = entry.emoji,
+        id = id,
+        recordedAt = recordedAt,
+        content = content,
+        emoji = emoji,
         tags = tags.map { it.toModel() },
         media = media.map { it.toModel() },
     )

@@ -55,14 +55,14 @@ class FeedViewModel(
                         beforeDate == null && afterDate != null -> {
                             FeedItemUi.DateHeader(
                                 afterDate,
-                                dateTimeFormatter.formatDate(afterDate),
+                                dateTimeFormatter.formatRelativeDate(afterDate),
                             )
                         }
 
                         beforeDate != null && afterDate != null && beforeDate != afterDate -> {
                             FeedItemUi.DateHeader(
                                 afterDate,
-                                dateTimeFormatter.formatDate(afterDate),
+                                dateTimeFormatter.formatRelativeDate(afterDate),
                             )
                         }
 

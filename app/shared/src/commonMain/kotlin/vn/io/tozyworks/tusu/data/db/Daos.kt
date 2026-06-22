@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.Flow
 
@@ -30,7 +31,24 @@ interface EntryDao {
         order by e.recorded_at desc, m.`order` asc
         """
     )
-    fun pagingSourceWithTagFilter(tagId:Uuid): PagingSource<Int, EntryWithRelations>
+    fun pagingSourceWithTagFilter(tagId: Uuid): PagingSource<Int, EntryWithRelations>
+
+    @Transaction
+    @Query("SELECT * FROM entries WHERE id = :id")
+    fun getAsFlow(id: Uuid): Flow<EntryWithRelations?>
+
+    @Insert suspend fun insert(entity: EntryEntity)
+
+    @Query("UPDATE entries SET content = :newContent WHERE id = :entryId")
+    suspend fun updateContent(entryId: Uuid, newContent: String)
+
+    @Query("UPDATE entries SET recorded_at = :newRecordedAt WHERE id = :entryId")
+    suspend fun updateRecordedAt(entryId: Uuid, newRecordedAt: Instant)
+
+    @Query("UPDATE entries SET emoji = :newEmoji WHERE id = :entryId")
+    suspend fun updateEmoji(entryId: Uuid, newEmoji: String?)
+
+    @Query("DELETE FROM entries WHERE id = :entryId") suspend fun delete(entryId: Uuid)
 
     @Query("SELECT id FROM entries LIMIT 1") suspend fun getFirstEntryId(): Uuid?
 
@@ -46,6 +64,20 @@ interface TagDao {
 
 @Dao
 interface MediaDao {
+
+    @Query("SELECT * FROM media WHERE id = :mediaId ")
+    suspend fun getMedia(mediaId: Uuid): MediaEntity?
+
+    @Query("DELETE FROM media WHERE id = :mediaId")
+    suspend fun deleteById(mediaId: Uuid)
+
+    @Transaction
+    suspend fun deleteAndReturning(mediaId: Uuid): MediaEntity? {
+        val entity = getMedia(mediaId)
+        deleteById(mediaId)
+        return entity
+    }
+
     @Insert suspend fun insertAll(media: List<MediaEntity>)
 }
 

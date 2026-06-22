@@ -33,8 +33,10 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.compose.uiToolingPreview)
             api(libs.metrox.android)
+
+            implementation(libs.compose.uiToolingPreview)
+            implementation(libs.androidx.emoji2.emojipicker)
         }
         commonMain.dependencies {
             api(projects.core)
@@ -48,6 +50,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.androidx.lifecycle.viewmodel.navigation3)
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.room.paging)
             implementation(libs.androidx.sqlite.bundled)
