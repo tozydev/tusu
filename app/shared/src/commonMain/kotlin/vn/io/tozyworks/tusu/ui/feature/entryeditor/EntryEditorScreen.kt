@@ -1,13 +1,10 @@
 package vn.io.tozyworks.tusu.ui.feature.entryeditor
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,10 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -43,10 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.font.FontWeight
@@ -56,9 +47,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
-import coil3.compose.AsyncImage
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
+import io.github.vinceglb.filekit.PlatformFile
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.datetime.LocalDate
@@ -68,26 +59,23 @@ import org.jetbrains.compose.resources.stringResource
 import vn.io.tozyworks.tusu.domain.model.Media
 import vn.io.tozyworks.tusu.domain.model.Tag
 import vn.io.tozyworks.tusu.generated.resources.Res
-import vn.io.tozyworks.tusu.generated.resources.add_media
-import vn.io.tozyworks.tusu.generated.resources.add_media_desc
 import vn.io.tozyworks.tusu.generated.resources.back_desc
 import vn.io.tozyworks.tusu.generated.resources.done_btn
 import vn.io.tozyworks.tusu.generated.resources.edit_btn
 import vn.io.tozyworks.tusu.generated.resources.entry_content_prompt
-import vn.io.tozyworks.tusu.generated.resources.ic_add_photo_alternate_24px
 import vn.io.tozyworks.tusu.generated.resources.ic_add_reaction_24px
 import vn.io.tozyworks.tusu.generated.resources.ic_arrow_back_24px
-import vn.io.tozyworks.tusu.generated.resources.ic_close_24px
 import vn.io.tozyworks.tusu.generated.resources.ic_more_vert_24px
 import vn.io.tozyworks.tusu.generated.resources.ic_schedule_24px
 import vn.io.tozyworks.tusu.generated.resources.ic_sell_24px
 import vn.io.tozyworks.tusu.generated.resources.more_menu_desc
-import vn.io.tozyworks.tusu.generated.resources.remove_media_desc
 import vn.io.tozyworks.tusu.generated.resources.select_emoji_desc
 import vn.io.tozyworks.tusu.ui.component.DatePickerModal
 import vn.io.tozyworks.tusu.ui.component.TimePickerModal
 import vn.io.tozyworks.tusu.ui.feature.entryeditor.components.EmojiPickerModal
 import vn.io.tozyworks.tusu.ui.feature.entryeditor.components.EntryMediaBrowser
+import vn.io.tozyworks.tusu.ui.feature.entryeditor.components.EntryMediaEditor
+import vn.io.tozyworks.tusu.ui.feature.entryeditor.components.MediaPickerModal
 import vn.io.tozyworks.tusu.ui.formatter.DateTimeFormatter
 
 context(dateTimeFormatter: DateTimeFormatter)
@@ -164,7 +152,8 @@ fun EntryEditorScreen(
                         onContentBlur = viewModel::saveContent,
                         onContentFocusChange = { isContentFocus = it },
                         media = loadedUiState.media,
-                        onRemoveMedia = viewModel::onRemoveMedia,
+                        onAddMedia = viewModel::addMedia,
+                        onRemoveMedia = viewModel::removeMedia,
                     )
                 }
                 EntryEditorUiState.Loading -> {
@@ -195,9 +184,11 @@ private fun EntryEditorContent(
     onContentBlur: () -> Unit,
     onContentFocusChange: (Boolean) -> Unit,
     media: List<Media>,
+    onAddMedia: (List<PlatformFile>) -> Unit,
     onRemoveMedia: (Uuid) -> Unit,
 ) {
     val scrollState = rememberScrollState()
+    var showMediaPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
@@ -214,7 +205,7 @@ private fun EntryEditorContent(
         } else {
             EntryMediaEditor(
                 mediaList = media,
-                onAddMedia = { /*TODO*/ },
+                onAddMedia = { showMediaPicker = true },
                 onRemoveMedia = onRemoveMedia,
             )
         }
@@ -363,6 +354,15 @@ private fun EntryEditorContent(
     }
 
     when {
+        showMediaPicker -> {
+            MediaPickerModal(
+                onDismiss = { showMediaPicker = false },
+                onSelectMedia = {
+                    showMediaPicker = false
+                    onAddMedia(it)
+                },
+            )
+        }
         showDatePicker -> {
             DatePickerModal(
                 onConfirm = { epochMillis ->
@@ -383,80 +383,6 @@ private fun EntryEditorContent(
                 initialHour = recordedTime.hour,
                 initialMinute = recordedTime.minute,
             )
-        }
-    }
-}
-
-@Composable
-private fun EntryMediaEditor(
-    mediaList: List<Media>,
-    onAddMedia: () -> Unit,
-    onRemoveMedia: (Uuid) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(mediaList, { it.id }) { media ->
-            Box(
-                modifier =
-                    Modifier.size(width = 186.dp, height = 220.dp)
-                        .clip(MaterialTheme.shapes.extraLarge)
-            ) {
-                AsyncImage(
-                    model = media.path,
-                    contentDescription = null,
-                    modifier = Modifier.size(width = 186.dp, height = 220.dp),
-                    contentScale = ContentScale.Crop,
-                )
-                Box(
-                    modifier =
-                        Modifier.align(Alignment.TopEnd)
-                            .padding(12.dp)
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
-                            .clickable { onRemoveMedia(media.id) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_close_24px),
-                        contentDescription =
-                            stringResource(Res.string.remove_media_desc, media.id.toString()),
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-        }
-        item {
-            Box(
-                modifier =
-                    Modifier.size(width = 186.dp, height = 220.dp)
-                        .clip(MaterialTheme.shapes.extraLarge)
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
-                        .clickable { onAddMedia() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add_photo_alternate_24px),
-                        contentDescription = stringResource(Res.string.add_media_desc),
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(36.dp),
-                    )
-                    Text(
-                        text = stringResource(Res.string.add_media),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
         }
     }
 }

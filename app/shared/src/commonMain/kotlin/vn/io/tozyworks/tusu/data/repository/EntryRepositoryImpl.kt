@@ -46,6 +46,8 @@ class EntryRepositoryImpl(private val entryDao: EntryDao, private val clock: Clo
 
     override fun getEntryFlow(id: Uuid): Flow<Entry?> = entryDao.getAsFlow(id).map { it?.toModel() }
 
+    override suspend fun getEntry(id: Uuid): Entry? = entryDao.getEntry(id)?.toModel()
+
     @OptIn(ExperimentalUuidApi::class)
     override suspend fun createEmptyEntry(): Entry {
         val entryId = Uuid.generateV7()

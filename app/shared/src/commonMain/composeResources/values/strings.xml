@@ -16,6 +16,8 @@
     <string name="ok_btn">OK</string>
     <string name="cancel_btn">Cancel</string>
     <string name="now_btn">Now</string>
+    <string name="take_photo_btn">Take Photo</string>
+    <string name="choose_gallery_btn">Choose from Gallery</string>
     <string name="entry_content_prompt">What's on your mind?</string>
     <string name="error_entry_not_found">Entry not found</string>
     <string name="fab_compose">Compose</string>

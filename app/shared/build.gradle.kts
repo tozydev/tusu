@@ -41,6 +41,7 @@ kotlin {
         commonMain.dependencies {
             api(projects.core)
             api(libs.metrox.viewmodel.compose)
+            api(libs.kotlinLogging)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

@@ -37,6 +37,17 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE id = :id")
     fun getAsFlow(id: Uuid): Flow<EntryWithRelations?>
 
+    @Transaction
+    @Query(
+        """
+        select distinct e.* from entries e
+        left join media m on e.id = m.entry_id
+        where e.id = :id
+        order by m.`order` asc
+        """
+    )
+    suspend fun getEntry(id: Uuid): EntryWithRelations?
+
     @Insert suspend fun insert(entity: EntryEntity)
 
     @Query("UPDATE entries SET content = :newContent WHERE id = :entryId")
@@ -68,8 +79,7 @@ interface MediaDao {
     @Query("SELECT * FROM media WHERE id = :mediaId ")
     suspend fun getMedia(mediaId: Uuid): MediaEntity?
 
-    @Query("DELETE FROM media WHERE id = :mediaId")
-    suspend fun deleteById(mediaId: Uuid)
+    @Query("DELETE FROM media WHERE id = :mediaId") suspend fun deleteById(mediaId: Uuid)
 
     @Transaction
     suspend fun deleteAndReturning(mediaId: Uuid): MediaEntity? {

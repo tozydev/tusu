@@ -11,6 +11,8 @@ interface EntryRepository {
 
     fun getEntryFlow(id: Uuid): Flow<Entry?>
 
+    suspend fun getEntry(id: Uuid): Entry?
+
     suspend fun createEmptyEntry(): Entry
 
     suspend fun updateContent(entryId: Uuid, newContent: String)

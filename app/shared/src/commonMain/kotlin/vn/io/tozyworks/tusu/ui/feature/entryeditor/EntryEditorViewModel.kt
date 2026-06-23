@@ -11,6 +11,8 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
+import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.vinceglb.filekit.PlatformFile
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
@@ -136,7 +138,16 @@ class EntryEditorViewModel(
         }
     }
 
-    fun onRemoveMedia(mediaId: Uuid) {
+    fun addMedia(files: List<PlatformFile>) {
+        viewModelScope.launch {
+            _uiState.updateLoaded {
+                val media = mediaRepository.addMedia(it.entryId, files)
+                it.copy(media = it.media + media)
+            }
+        }
+    }
+
+    fun removeMedia(mediaId: Uuid) {
         viewModelScope.launch {
             mediaRepository.deleteMedia(mediaId)
         }
