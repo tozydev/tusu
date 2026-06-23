@@ -1,0 +1,68 @@
+package vn.io.tozydev.tusu.data.db
+
+import kotlin.uuid.Uuid
+import vn.io.tozydev.tusu.domain.model.Entry
+import vn.io.tozydev.tusu.domain.model.Media
+import vn.io.tozydev.tusu.domain.model.Tag
+
+fun TagEntity.toModel() =
+    Tag(
+        id = id,
+        name = name,
+    )
+
+fun Tag.toEntity() =
+    TagEntity(
+        id = id,
+        name = name,
+    )
+
+fun MediaEntity.toModel() =
+    Media(
+        id = id,
+        mimeType = mimeType,
+        filename = filename,
+        path = path,
+        order = order,
+        height = height,
+        width = width,
+    )
+
+fun Media.toEntity(entryId: Uuid) =
+    MediaEntity(
+        id = id,
+        entryId = entryId,
+        mimeType = mimeType,
+        filename = filename,
+        path = path,
+        order = order,
+        height = height,
+        width = width,
+    )
+
+fun EntryWithRelations.toModel() =
+    entry.toModel(
+        tags = tags,
+        media = media,
+    )
+
+fun EntryEntity.toModel(
+    tags: List<TagEntity> = emptyList(),
+    media: List<MediaEntity> = emptyList(),
+) =
+    Entry(
+        id = id,
+        recordedAt = recordedAt,
+        content = content,
+        emoji = emoji,
+        tags = tags.map { it.toModel() },
+        media = media.map { it.toModel() },
+    )
+
+fun Entry.toEntity() =
+    EntryEntity(
+        id = id,
+        recordedAt = recordedAt,
+        content = content,
+        emoji = emoji,
+    )

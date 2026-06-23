@@ -12,7 +12,7 @@ kotlin {
     jvm()
 
     android {
-        namespace = "vn.io.tozyworks.tusu.core"
+        namespace = "vn.io.tozydev.tusu.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
