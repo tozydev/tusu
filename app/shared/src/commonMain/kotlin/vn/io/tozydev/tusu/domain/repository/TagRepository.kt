@@ -5,4 +5,6 @@ import vn.io.tozydev.tusu.domain.model.Tag
 
 interface TagRepository {
     fun getTagsFlow(): Flow<List<Tag>>
+
+    suspend fun createTag(name: String): Tag
 }

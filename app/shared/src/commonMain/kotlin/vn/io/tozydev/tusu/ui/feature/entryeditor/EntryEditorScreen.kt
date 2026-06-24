@@ -59,10 +59,12 @@ import org.jetbrains.compose.resources.stringResource
 import vn.io.tozydev.tusu.domain.model.Media
 import vn.io.tozydev.tusu.domain.model.Tag
 import vn.io.tozydev.tusu.generated.resources.Res
+import vn.io.tozydev.tusu.generated.resources.add_tag_desc
 import vn.io.tozydev.tusu.generated.resources.back_desc
 import vn.io.tozydev.tusu.generated.resources.done_btn
 import vn.io.tozydev.tusu.generated.resources.edit_btn
 import vn.io.tozydev.tusu.generated.resources.entry_content_prompt
+import vn.io.tozydev.tusu.generated.resources.ic_add_24px
 import vn.io.tozydev.tusu.generated.resources.ic_add_reaction_24px
 import vn.io.tozydev.tusu.generated.resources.ic_arrow_back_24px
 import vn.io.tozydev.tusu.generated.resources.ic_more_vert_24px
@@ -76,6 +78,7 @@ import vn.io.tozydev.tusu.ui.feature.entryeditor.components.EmojiPickerModal
 import vn.io.tozydev.tusu.ui.feature.entryeditor.components.EntryMediaBrowser
 import vn.io.tozydev.tusu.ui.feature.entryeditor.components.EntryMediaEditor
 import vn.io.tozydev.tusu.ui.feature.entryeditor.components.MediaPickerModal
+import vn.io.tozydev.tusu.ui.feature.entryeditor.components.TagPickerModal
 import vn.io.tozydev.tusu.ui.formatter.DateTimeFormatter
 
 context(dateTimeFormatter: DateTimeFormatter)
@@ -86,6 +89,7 @@ fun EntryEditorScreen(
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val allTags by viewModel.allTags.collectAsStateWithLifecycle()
 
     var isContentFocus by remember { mutableStateOf(false) }
 
@@ -147,7 +151,11 @@ fun EntryEditorScreen(
                         onRecordedDateSelect = viewModel::setRecordedDate,
                         recordedTime = loadedUiState.recordedTime,
                         onRecordedTimeSelect = viewModel::setRecordedTime,
+                        allTags = allTags,
                         tags = loadedUiState.tags,
+                        onTagSelect = viewModel::selectTag,
+                        onTagDeselect = viewModel::deselectTag,
+                        onCreateTag = viewModel::createAndSelectTag,
                         contentState = viewModel.contentState,
                         onContentBlur = viewModel::saveContent,
                         onContentFocusChange = { isContentFocus = it },
@@ -179,7 +187,11 @@ private fun EntryEditorContent(
     onRecordedDateSelect: (epochMillis: Long) -> Unit,
     recordedTime: LocalTime,
     onRecordedTimeSelect: (LocalTime) -> Unit,
+    allTags: List<Tag>,
     tags: List<Tag>,
+    onTagSelect: (Uuid) -> Unit,
+    onTagDeselect: (Uuid) -> Unit,
+    onCreateTag: (String) -> Unit,
     contentState: RichTextState,
     onContentBlur: () -> Unit,
     onContentFocusChange: (Boolean) -> Unit,
@@ -191,6 +203,11 @@ private fun EntryEditorContent(
     var showMediaPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    var showTagPicker by remember { mutableStateOf(false) }
+
+    fun openTagPicker() {
+        showTagPicker = true
+    }
 
     val formattedShortMonth =
         remember(recordedDate) { dateTimeFormatter.formatShortMonth(recordedDate) }
@@ -284,7 +301,7 @@ private fun EntryEditorContent(
 
                     if (tags.isEmpty()) {
                         Surface(
-                            onClick = {},
+                            onClick = ::openTagPicker,
                             shape = MaterialTheme.shapes.small,
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -305,7 +322,7 @@ private fun EntryEditorContent(
 
                     tags.forEach {
                         Surface(
-                            onClick = {},
+                            onClick = ::openTagPicker,
                             shape = MaterialTheme.shapes.small,
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -320,6 +337,27 @@ private fun EntryEditorContent(
                                     style = MaterialTheme.typography.labelMedium,
                                     maxLines = 1,
                                     softWrap = false,
+                                )
+                            }
+                        }
+                    }
+
+                    if (editorMode == EntryEditorMode.Edit) {
+                        Surface(
+                            onClick = ::openTagPicker,
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.height(28.dp),
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxHeight().padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_add_24px),
+                                    contentDescription = stringResource(Res.string.add_tag_desc),
+                                    modifier = Modifier.size(16.dp),
                                 )
                             }
                         }
@@ -382,6 +420,16 @@ private fun EntryEditorContent(
                 onDismissRequest = { showTimePicker = false },
                 initialHour = recordedTime.hour,
                 initialMinute = recordedTime.minute,
+            )
+        }
+        showTagPicker -> {
+            TagPickerModal(
+                allTags = allTags,
+                selectedTags = tags,
+                onTagSelect = onTagSelect,
+                onTagDeselect = onTagDeselect,
+                onCreateTag = onCreateTag,
+                onDismiss = { showTagPicker = false },
             )
         }
     }

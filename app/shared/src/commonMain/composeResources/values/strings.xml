@@ -4,12 +4,15 @@
     <string name="back_desc">Back</string>
     <string name="select_emoji_desc">Select Emoji</string>
     <string name="more_menu_desc">More</string>
-    <string name="remove_media_desc">Remove media %s</string>
+    <string name="add_tag_desc">Add tag</string>
+    <string name="remove_media_desc">Remove media %1$s</string>
     <string name="add_media_desc">Add media</string>
     <string name="time_picker_type_toggle_desc">Toggle time picker type</string>
     <string name="time_picker_title">Select Time</string>
     <string name="add_media">Add media</string>
     <string name="select_emoji_title">Emoji</string>
+    <string name="enter_tag_name_placeholder">Enter tag name</string>
+    <string name="create_new_tag">Create #%1$s</string>
     <string name="remove_current_emoji">Remove</string>
     <string name="edit_btn">Edit</string>
     <string name="done_btn">Done</string>

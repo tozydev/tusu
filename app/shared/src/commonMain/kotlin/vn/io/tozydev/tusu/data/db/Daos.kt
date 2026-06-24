@@ -55,6 +55,12 @@ interface EntryDao {
     @Query("UPDATE entries SET emoji = :newEmoji WHERE id = :entryId")
     suspend fun updateEmoji(entryId: Uuid, newEmoji: String?)
 
+    @Query("INSERT INTO entry_tags (entry_id, tag_id) VALUES (:entryId, :tagId)")
+    suspend fun assignTag(entryId: Uuid, tagId: Uuid)
+
+    @Query("DELETE FROM entry_tags WHERE entry_id = :entryId AND tag_id = :tagId")
+    suspend fun unassignTag(entryId: Uuid, tagId: Uuid)
+
     @Query("DELETE FROM entries WHERE id = :entryId") suspend fun delete(entryId: Uuid)
 
     @Query("SELECT id FROM entries LIMIT 1") suspend fun getFirstEntryId(): Uuid?
@@ -65,6 +71,8 @@ interface EntryDao {
 @Dao
 interface TagDao {
     @Query("SELECT * FROM tags") fun getAllAsFlow(): Flow<List<TagEntity>>
+
+    @Insert suspend fun insert(tag: TagEntity)
 
     @Insert suspend fun insertAll(tags: List<TagEntity>)
 }

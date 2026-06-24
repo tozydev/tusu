@@ -19,5 +19,9 @@ interface EntryRepository {
 
     suspend fun updateEmoji(entryId: Uuid, newEmoji: String?)
 
+    suspend fun assignTag(entryId: Uuid, tagId: Uuid)
+
+    suspend fun unassignTag(entryId: Uuid, tagId: Uuid)
+
     suspend fun deleteEntry(entryId: Uuid)
 }

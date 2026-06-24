@@ -21,10 +21,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +41,7 @@ import vn.io.tozydev.tusu.domain.model.Media
 import vn.io.tozydev.tusu.domain.model.Tag
 import vn.io.tozydev.tusu.domain.repository.EntryRepository
 import vn.io.tozydev.tusu.domain.repository.MediaRepository
+import vn.io.tozydev.tusu.domain.repository.TagRepository
 import vn.io.tozydev.tusu.generated.resources.Res
 import vn.io.tozydev.tusu.generated.resources.error_entry_not_found
 import vn.io.tozydev.tusu.ui.model.UiText
@@ -47,12 +50,22 @@ import vn.io.tozydev.tusu.ui.model.UiText
 class EntryEditorViewModel(
     @Assisted val initialEntryId: Uuid?,
     private val entryRepository: EntryRepository,
+    private val tagRepository: TagRepository,
     private val mediaRepository: MediaRepository,
     private val appScope: CoroutineScope,
     private val timeZone: TimeZone,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<EntryEditorUiState>(EntryEditorUiState.Loading)
     val uiState = _uiState.asStateFlow()
+
+    val allTags =
+        tagRepository
+            .getTagsFlow()
+            .stateIn(
+                viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList(),
+            )
 
     val contentState = RichTextState()
 
@@ -204,6 +217,38 @@ class EntryEditorViewModel(
         }
     }
 
+    fun selectTag(tagId: Uuid) {
+        _uiState.updateLoaded {
+            viewModelScope.launch {
+                entryRepository.assignTag(it.entryId, tagId)
+            }
+            it.copy(tags = it.tags + allTags.value.first { tag -> tag.id == tagId })
+        }
+    }
+
+    fun deselectTag(tagId: Uuid) {
+        _uiState.updateLoaded {
+            viewModelScope.launch {
+                entryRepository.unassignTag(it.entryId, tagId)
+            }
+            it.copy(tags = it.tags.filterNot { tag -> tag.id == tagId })
+        }
+    }
+
+    fun createAndSelectTag(name: String) {
+        viewModelScope.launch {
+            val newTag = tagRepository.createTag(name)
+
+            val currentEntryId = _uiState.value.ifLoaded { entryId } ?: return@launch
+
+            entryRepository.assignTag(currentEntryId, newTag.id)
+
+            _uiState.updateLoaded {
+                it.copy(tags = it.tags + newTag)
+            }
+        }
+    }
+
     private companion object {
         val SAVE_DEBOUNCE = 500.milliseconds
         val DAY_IN_MILLIS = 1.days.inWholeMilliseconds
@@ -238,11 +283,12 @@ sealed interface EntryEditorUiState {
     data class Error(val message: UiText) : EntryEditorUiState
 }
 
-inline fun EntryEditorUiState.ifLoaded(block: EntryEditorUiState.Loaded.() -> Unit) {
+inline fun <R> EntryEditorUiState.ifLoaded(block: EntryEditorUiState.Loaded.() -> R): R? =
     if (this is EntryEditorUiState.Loaded) {
         block()
+    } else {
+        null
     }
-}
 
 inline fun MutableStateFlow<EntryEditorUiState>.updateLoaded(
     block: (EntryEditorUiState.Loaded) -> EntryEditorUiState

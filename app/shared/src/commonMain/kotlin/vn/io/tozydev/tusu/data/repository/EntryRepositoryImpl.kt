@@ -75,6 +75,14 @@ class EntryRepositoryImpl(private val entryDao: EntryDao, private val clock: Clo
         entryDao.updateEmoji(entryId, newEmoji)
     }
 
+    override suspend fun assignTag(entryId: Uuid, tagId: Uuid) {
+        entryDao.assignTag(entryId, tagId)
+    }
+
+    override suspend fun unassignTag(entryId: Uuid, tagId: Uuid) {
+        entryDao.unassignTag(entryId, tagId)
+    }
+
     override suspend fun deleteEntry(entryId: Uuid) {
         entryDao.delete(entryId)
     }
