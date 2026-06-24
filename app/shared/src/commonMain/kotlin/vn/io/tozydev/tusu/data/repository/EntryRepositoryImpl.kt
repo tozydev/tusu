@@ -44,8 +44,6 @@ class EntryRepositoryImpl(private val entryDao: EntryDao, private val clock: Clo
             .map { data -> data.map { it.toModel() } }
     }
 
-    override fun getEntryFlow(id: Uuid): Flow<Entry?> = entryDao.getAsFlow(id).map { it?.toModel() }
-
     override suspend fun getEntry(id: Uuid): Entry? = entryDao.getEntry(id)?.toModel()
 
     @OptIn(ExperimentalUuidApi::class)

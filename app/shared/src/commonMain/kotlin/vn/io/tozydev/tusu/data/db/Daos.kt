@@ -34,10 +34,6 @@ interface EntryDao {
     fun pagingSourceWithTagFilter(tagId: Uuid): PagingSource<Int, EntryWithRelations>
 
     @Transaction
-    @Query("SELECT * FROM entries WHERE id = :id")
-    fun getAsFlow(id: Uuid): Flow<EntryWithRelations?>
-
-    @Transaction
     @Query(
         """
         select distinct e.* from entries e

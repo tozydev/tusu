@@ -9,8 +9,6 @@ import vn.io.tozydev.tusu.domain.model.Entry
 interface EntryRepository {
     fun getEntriesPagingFlow(pageSize: Int = 20, tagIdFilter: Uuid? = null): Flow<PagingData<Entry>>
 
-    fun getEntryFlow(id: Uuid): Flow<Entry?>
-
     suspend fun getEntry(id: Uuid): Entry?
 
     suspend fun createEmptyEntry(): Entry

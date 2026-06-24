@@ -11,6 +11,7 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.vinceglb.filekit.PlatformFile
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
@@ -65,26 +66,26 @@ class EntryEditorViewModel(
 
     private fun loadEntry(id: Uuid) {
         viewModelScope.launch {
-            entryRepository.getEntryFlow(id).collect { entry ->
-                if (entry != null) {
-                    contentState.setMarkdown(entry.content)
-                    val localDateTime = entry.recordedAt.toLocalDateTime(timeZone)
-                    _uiState.update {
-                        EntryEditorUiState.Loaded(
-                            entryId = entry.id,
-                            mode = EntryEditorMode.ReadOnly,
-                            recordedAt = entry.recordedAt,
-                            recordedDate = localDateTime.date,
-                            recordedTime = localDateTime.time,
-                            emoji = entry.emoji,
-                            tags = entry.tags,
-                            media = entry.media,
-                        )
-                    }
-                } else {
-                    _uiState.update {
-                        EntryEditorUiState.Error(UiText(Res.string.error_entry_not_found))
-                    }
+            logger.info { "Loading entry $id" }
+            val entry = entryRepository.getEntry(id)
+            if (entry == null) {
+                _uiState.update {
+                    EntryEditorUiState.Error(UiText(Res.string.error_entry_not_found))
+                }
+            } else {
+                contentState.setMarkdown(entry.content)
+                val localDateTime = entry.recordedAt.toLocalDateTime(timeZone)
+                _uiState.update {
+                    EntryEditorUiState.Loaded(
+                        entryId = entry.id,
+                        mode = EntryEditorMode.ReadOnly,
+                        recordedAt = entry.recordedAt,
+                        recordedDate = localDateTime.date,
+                        recordedTime = localDateTime.time,
+                        emoji = entry.emoji,
+                        tags = entry.tags,
+                        media = entry.media,
+                    )
                 }
             }
         }
@@ -206,6 +207,8 @@ class EntryEditorViewModel(
     private companion object {
         val SAVE_DEBOUNCE = 500.milliseconds
         val DAY_IN_MILLIS = 1.days.inWholeMilliseconds
+
+        val logger = KotlinLogging.logger {}
 
         private fun Long.toEpochDays() = this / DAY_IN_MILLIS
     }
