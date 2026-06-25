@@ -1,19 +1,24 @@
-*.iml
-.kotlin
-.gradle
-**/build/
-xcuserdata
-!src/**/build/
-local.properties
-.idea
+### General
 .DS_Store
-captures
-.externalNativeBuild
-.cxx
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-!*.xcodeproj/project.xcworkspace/
-!*.xcworkspace/contents.xcworkspacedata
-**/xcshareddata/WorkspaceSettings.xcsettings
-node_modules/
+build/
+out/
+!**/src/**/build/
+!**/src/**/out/
+*.log
+
+### IntelliJ
+*.iml
+*.ipr
+*.iws
+app/androidApp/release/
+app/androidApp/debug/
+
+### Gradle
+.gradle/
+local.properties
+
+### Java
+*.hprof
+
+### Kotlin
+.kotlin/
