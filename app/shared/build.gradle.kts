@@ -72,11 +72,8 @@ kotlin {
             implementation(libs.kotest.framework.engine)
             implementation(libs.kotest.assertions.core)
         }
-        @Suppress("unused")
-        val androidHostTest by getting {
-            dependencies {
-                implementation(libs.kotest.runner.junit6)
-            }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.kotest.runner.junit6)
         }
     }
 }
