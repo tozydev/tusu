@@ -5,7 +5,7 @@ plugins {
 }
 
 application {
-    mainClass = "vn.io.tozydev.tusu.ApplicationKt"
+    mainClass = "vn.id.tozydev.tusu.ApplicationKt"
 }
 
 dependencies {

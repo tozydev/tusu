@@ -23,11 +23,11 @@ dependencies {
 }
 
 android {
-    namespace = "vn.io.tozydev.tusu"
+    namespace = "vn.id.tozydev.tusu"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "vn.io.tozydev.tusu"
+        applicationId = "vn.id.tozydev.tusu"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

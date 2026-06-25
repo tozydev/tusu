@@ -16,7 +16,7 @@ kotlin {
     jvm()
 
     android {
-        namespace = "vn.io.tozydev.tusu.app.shared"
+        namespace = "vn.id.tozydev.tusu.app.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
