@@ -122,7 +122,7 @@ fun EntryEditorScreen(
                 editorMode = loadedUiState?.mode ?: EntryEditorMode.ReadOnly,
                 emoji = loadedUiState?.emoji,
                 onEmojiSelected = viewModel::setEmoji,
-                onNavigateBack = onNavigateBack,
+                onNavigateBack = handleBack,
                 onModeSwitch = viewModel::setEditorMode,
                 onOpenMoreMenu = { /*TODO*/ },
             )
