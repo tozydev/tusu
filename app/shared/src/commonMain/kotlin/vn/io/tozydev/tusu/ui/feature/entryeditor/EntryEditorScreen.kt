@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -24,6 +26,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -61,12 +64,14 @@ import vn.io.tozydev.tusu.domain.model.Tag
 import vn.io.tozydev.tusu.generated.resources.Res
 import vn.io.tozydev.tusu.generated.resources.add_tag_desc
 import vn.io.tozydev.tusu.generated.resources.back_desc
+import vn.io.tozydev.tusu.generated.resources.delete_btn
 import vn.io.tozydev.tusu.generated.resources.done_btn
 import vn.io.tozydev.tusu.generated.resources.edit_btn
 import vn.io.tozydev.tusu.generated.resources.entry_content_prompt
 import vn.io.tozydev.tusu.generated.resources.ic_add_24px
 import vn.io.tozydev.tusu.generated.resources.ic_add_reaction_24px
 import vn.io.tozydev.tusu.generated.resources.ic_arrow_back_24px
+import vn.io.tozydev.tusu.generated.resources.ic_delete_24px
 import vn.io.tozydev.tusu.generated.resources.ic_more_vert_24px
 import vn.io.tozydev.tusu.generated.resources.ic_schedule_24px
 import vn.io.tozydev.tusu.generated.resources.ic_sell_24px
@@ -124,7 +129,10 @@ fun EntryEditorScreen(
                 onEmojiSelected = viewModel::setEmoji,
                 onNavigateBack = handleBack,
                 onModeSwitch = viewModel::setEditorMode,
-                onOpenMoreMenu = { /*TODO*/ },
+                onDeleteEntry = {
+                    viewModel.deleteEntry()
+                    onNavigateBack()
+                },
             )
         },
     ) { innerPadding ->
@@ -442,9 +450,10 @@ private fun EntryEditorTopBar(
     onEmojiSelected: (String?) -> Unit,
     onNavigateBack: () -> Unit,
     onModeSwitch: (EntryEditorMode) -> Unit,
-    onOpenMoreMenu: () -> Unit,
+    onDeleteEntry: () -> Unit,
 ) {
     var showEmojiModal by remember { mutableStateOf(false) }
+    var moreMenuExpanded by remember { mutableStateOf(false) }
     TopAppBar(
         title = {},
         navigationIcon = {
@@ -501,12 +510,18 @@ private fun EntryEditorTopBar(
                 }
             }
 
-            IconButton(onClick = onOpenMoreMenu) {
+            IconButton(onClick = { moreMenuExpanded = true }) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_more_vert_24px),
                     contentDescription = stringResource(Res.string.more_menu_desc),
                 )
             }
+
+            MoreDropdownMenu(
+                expanded = moreMenuExpanded,
+                onDismiss = { moreMenuExpanded = false },
+                onDeleteEntry = onDeleteEntry,
+            )
         },
     )
 
@@ -518,6 +533,31 @@ private fun EntryEditorTopBar(
             },
             onDismiss = { showEmojiModal = false },
             initialEmoji = emoji,
+        )
+    }
+}
+
+@Composable
+private fun MoreDropdownMenu(
+    expanded: Boolean = false,
+    onDismiss: () -> Unit,
+    onDeleteEntry: () -> Unit,
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+    ) {
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.delete_btn)) },
+            leadingIcon = {
+                Icon(painterResource(Res.drawable.ic_delete_24px), contentDescription = null)
+            },
+            onClick = onDeleteEntry,
+            colors =
+                MenuDefaults.itemColors(
+                    textColor = MaterialTheme.colorScheme.error,
+                    leadingIconColor = MaterialTheme.colorScheme.error,
+                ),
         )
     }
 }

@@ -249,6 +249,16 @@ class EntryEditorViewModel(
         }
     }
 
+    fun deleteEntry() {
+        _uiState.value.ifLoaded {
+            appScope.launch {
+                withContext(Dispatchers.IO) {
+                    entryRepository.deleteEntry(entryId)
+                }
+            }
+        }
+    }
+
     private companion object {
         val SAVE_DEBOUNCE = 500.milliseconds
         val DAY_IN_MILLIS = 1.days.inWholeMilliseconds
