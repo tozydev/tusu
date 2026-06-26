@@ -40,9 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,8 +56,10 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import io.github.vinceglb.filekit.PlatformFile
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.painterResource
@@ -96,10 +101,20 @@ fun EntryEditorScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val allTags by viewModel.allTags.collectAsStateWithLifecycle()
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val contentFocusRequester = remember { FocusRequester() }
     var isContentFocus by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.observeContentChanges()
+    }
+
+    LaunchedEffect((uiState as? EntryEditorUiState.Loaded)?.mode) {
+        if ((uiState as? EntryEditorUiState.Loaded)?.mode == EntryEditorMode.Edit) {
+            contentFocusRequester.requestFocus()
+            delay(200.milliseconds)
+            keyboardController?.show()
+        }
     }
 
     val handleBack =
@@ -165,6 +180,7 @@ fun EntryEditorScreen(
                         onTagDeselect = viewModel::deselectTag,
                         onCreateTag = viewModel::createAndSelectTag,
                         contentState = viewModel.contentState,
+                        contentFocusRequester = contentFocusRequester,
                         onContentBlur = viewModel::saveContent,
                         onContentFocusChange = { isContentFocus = it },
                         media = loadedUiState.media,
@@ -201,6 +217,7 @@ private fun EntryEditorContent(
     onTagDeselect: (Uuid) -> Unit,
     onCreateTag: (String) -> Unit,
     contentState: RichTextState,
+    contentFocusRequester: FocusRequester,
     onContentBlur: () -> Unit,
     onContentFocusChange: (Boolean) -> Unit,
     media: List<Media>,
@@ -377,12 +394,15 @@ private fun EntryEditorContent(
         BasicRichTextEditor(
             state = contentState,
             modifier =
-                Modifier.fillMaxWidth().padding(horizontal = 20.dp).onFocusChanged { focusState ->
-                    onContentFocusChange(focusState.isFocused)
-                    if (!focusState.isFocused) {
-                        onContentBlur()
+                Modifier.fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .onFocusChanged { focusState ->
+                        onContentFocusChange(focusState.isFocused)
+                        if (!focusState.isFocused) {
+                            onContentBlur()
+                        }
                     }
-                },
+                    .focusRequester(contentFocusRequester),
             textStyle = MaterialTheme.typography.bodyLarge,
             readOnly = editorMode.isReadOnly,
             minLines = 6,
