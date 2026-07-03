@@ -390,7 +390,7 @@ internal object TestData {
         )
 }
 
-internal suspend fun seedTestData(db: TusuDatabase) {
+suspend fun seedTestData(db: TusuDatabase) {
     db.useWriterConnection {
         it.immediateTransaction {
             if (db.entryDao().getFirstEntryId() != null) {
