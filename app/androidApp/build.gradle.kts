@@ -30,8 +30,9 @@ android {
         applicationId = "vn.id.tozydev.tusu"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        // Calver Scheme: <0Y>_<0M>_<MICRO_2>_[MODIFIER_2]
+        versionCode = 26_07_00_00
+        versionName = version.toString()
     }
     packaging {
         resources {
@@ -48,6 +49,11 @@ android {
         }
         release {
             isMinifyEnabled = false
+            packaging {
+                resources {
+                    excludes += "/test-data/**"
+                }
+            }
         }
     }
     compileOptions {
