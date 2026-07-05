@@ -403,7 +403,10 @@ private fun EntryEditorContent(
                         }
                     }
                     .focusRequester(contentFocusRequester),
-            textStyle = MaterialTheme.typography.bodyLarge,
+            textStyle =
+                MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
             readOnly = editorMode.isReadOnly,
             minLines = 6,
             decorationBox = { innerContent ->
