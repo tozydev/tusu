@@ -67,6 +67,12 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.materialKolor)
             implementation(libs.androidx.paging.compose)
+
+            api(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
+
+            implementation(libs.composeSettings.ui)
+            implementation(libs.composeSettings.ui.expressive)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework.engine)

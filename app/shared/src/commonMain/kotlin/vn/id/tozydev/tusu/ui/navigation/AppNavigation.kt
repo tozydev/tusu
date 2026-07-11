@@ -54,7 +54,7 @@ fun AppNavigation(startRoute: AppRoutes = AppRoutes.Feed) {
                 }
 
                 entry<AppRoutes.Settings> {
-                    SettingsScreen()
+                    SettingsScreen(onNavigateBack = { backStack.removeLastOrNull() })
                 }
 
                 entry<AppRoutes.EntryEditor> { route ->

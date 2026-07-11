@@ -30,4 +30,11 @@
     <string name="format_date_yesterday">Yesterday</string>
     <string name="format_date_days_ago">%1$d days ago</string>
     <string name="format_date_weeks_ago">%1$d weeks ago</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_appearance_subtitle">Theme</string>
+    <string name="settings_backup_restore_title">Backup &amp; Restore</string>
+    <string name="settings_backup_restore_subtitle">Backup &amp; Restore</string>
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_subtitle">%1$s %2$s</string>
 </resources>
