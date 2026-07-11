@@ -46,28 +46,28 @@ interface EntryDao {
 
     @Insert suspend fun insert(entity: EntryEntity)
 
-    @Query("UPDATE entries SET content = :newContent WHERE id = :entryId")
+    @Query("update entries set content = :newContent where id = :entryId")
     suspend fun updateContent(entryId: Uuid, newContent: String)
 
-    @Query("UPDATE entries SET recorded_at = :newRecordedAt WHERE id = :entryId")
+    @Query("update entries set recorded_at = :newRecordedAt where id = :entryId")
     suspend fun updateRecordedAt(entryId: Uuid, newRecordedAt: Instant)
 
-    @Query("UPDATE entries SET emoji = :newEmoji WHERE id = :entryId")
+    @Query("update entries set emoji = :newEmoji where id = :entryId")
     suspend fun updateEmoji(entryId: Uuid, newEmoji: String?)
 
-    @Query("INSERT INTO entry_tags (entry_id, tag_id) VALUES (:entryId, :tagId)")
+    @Query("insert into entry_tags (entry_id, tag_id) values(:entryId, :tagId)")
     suspend fun assignTag(entryId: Uuid, tagId: Uuid)
 
-    @Query("DELETE FROM entry_tags WHERE entry_id = :entryId AND tag_id = :tagId")
+    @Query("delete from entry_tags where entry_id = :entryId and tag_id = :tagId")
     suspend fun unassignTag(entryId: Uuid, tagId: Uuid)
 
-    @Query("DELETE FROM entries WHERE id = :entryId") suspend fun delete(entryId: Uuid)
+    @Query("delete from entries where id = :entryId") suspend fun delete(entryId: Uuid)
 
-    @Query("SELECT * FROM entries") suspend fun getAll(): List<EntryEntity>
+    @Query("select * from entries") suspend fun getAll(): List<EntryEntity>
 
-    @Query("DELETE FROM entries") suspend fun deleteAll()
+    @Query("delete from entries") suspend fun deleteAll()
 
-    @Query("SELECT id FROM entries LIMIT 1") suspend fun getFirstEntryId(): Uuid?
+    @Query("select id from entries LIMIT 1") suspend fun getFirstEntryId(): Uuid?
 
     @Insert suspend fun insertAll(entries: List<EntryEntity>)
 
@@ -95,11 +95,11 @@ interface EntryDao {
 
 @Dao
 interface TagDao {
-    @Query("SELECT * FROM tags") fun getAllAsFlow(): Flow<List<TagEntity>>
+    @Query("select * from tags") fun getAllAsFlow(): Flow<List<TagEntity>>
 
-    @Query("SELECT * FROM tags") suspend fun getAll(): List<TagEntity>
+    @Query("select * from tags") suspend fun getAll(): List<TagEntity>
 
-    @Query("DELETE FROM tags") suspend fun deleteAll()
+    @Query("delete from tags") suspend fun deleteAll()
 
     @Insert suspend fun insert(tag: TagEntity)
 
@@ -109,10 +109,10 @@ interface TagDao {
 @Dao
 interface MediaDao {
 
-    @Query("SELECT * FROM media WHERE id = :mediaId ")
+    @Query("select * from media where id = :mediaId ")
     suspend fun getMedia(mediaId: Uuid): MediaEntity?
 
-    @Query("DELETE FROM media WHERE id = :mediaId") suspend fun deleteById(mediaId: Uuid)
+    @Query("delete from media where id = :mediaId") suspend fun deleteById(mediaId: Uuid)
 
     @Transaction
     suspend fun deleteAndReturning(mediaId: Uuid): MediaEntity? {
@@ -121,18 +121,18 @@ interface MediaDao {
         return entity
     }
 
-    @Query("SELECT * FROM media") suspend fun getAll(): List<MediaEntity>
+    @Query("select * from media") suspend fun getAll(): List<MediaEntity>
 
-    @Query("DELETE FROM media") suspend fun deleteAll()
+    @Query("delete from media") suspend fun deleteAll()
 
     @Insert suspend fun insertAll(media: List<MediaEntity>)
 }
 
 @Dao
 interface EntryTagDao {
-    @Query("SELECT * FROM entry_tags") suspend fun getAll(): List<EntryTagCrossRef>
+    @Query("select * from entry_tags") suspend fun getAll(): List<EntryTagCrossRef>
 
-    @Query("DELETE FROM entry_tags") suspend fun deleteAll()
+    @Query("delete from entry_tags") suspend fun deleteAll()
 
     @Insert suspend fun insertAll(entryTags: List<EntryTagCrossRef>)
 }
