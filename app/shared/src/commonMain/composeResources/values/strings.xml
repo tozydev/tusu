@@ -35,6 +35,17 @@
     <string name="settings_appearance_subtitle">Theme</string>
     <string name="settings_backup_restore_title">Backup &amp; Restore</string>
     <string name="settings_backup_restore_subtitle">Backup &amp; Restore</string>
+    <string name="settings_backup_desc">Export all your journal data and media to a ZIP file.</string>
+    <string name="settings_restore_desc">Restore your journal data and media from a previously exported ZIP file. WARNING: This will overwrite all your current entries, tags, and media.</string>
+    <string name="settings_backup_btn">Export Backup</string>
+    <string name="settings_restore_btn">Restore Backup</string>
+    <string name="settings_backup_restoring">Restoring backup...</string>
+    <string name="settings_backup_exporting">Creating backup...</string>
+    <string name="settings_export_data_title">Export Data</string>
+    <string name="settings_restore_data_title">Restore Data</string>
+    <string name="settings_restore_data_subtitle">Import data from a previously saved backup file.</string>
+    <string name="settings_create_backup">Create Backup</string>
+    <string name="settings_select_backup_file">Select Backup file</string>
     <string name="settings_about_title">About</string>
     <string name="settings_about_subtitle">%1$s %2$s</string>
 </resources>

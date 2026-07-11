@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.datetime.TimeZone
 import vn.id.tozydev.tusu.data.db.EntryDao
+import vn.id.tozydev.tusu.data.db.EntryTagDao
 import vn.id.tozydev.tusu.data.db.MediaDao
 import vn.id.tozydev.tusu.data.db.TagDao
 import vn.id.tozydev.tusu.data.db.TusuDatabase
@@ -63,4 +64,8 @@ object AppBindings {
     @Provides
     @SingleIn(AppScope::class)
     fun provideMediaDao(database: TusuDatabase): MediaDao = database.mediaDao()
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideEntryTagDao(database: TusuDatabase): EntryTagDao = database.entryTagDao()
 }

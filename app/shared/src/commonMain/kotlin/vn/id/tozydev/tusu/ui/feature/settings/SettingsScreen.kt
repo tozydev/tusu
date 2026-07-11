@@ -26,6 +26,7 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
@@ -35,6 +36,9 @@ import vn.id.tozydev.tusu.generated.resources.settings_about_title
 import vn.id.tozydev.tusu.generated.resources.settings_appearance_title
 import vn.id.tozydev.tusu.generated.resources.settings_backup_restore_title
 import vn.id.tozydev.tusu.generated.resources.settings_title
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import vn.id.tozydev.tusu.ui.feature.settings.screens.SettingsAboutScreen
 import vn.id.tozydev.tusu.ui.feature.settings.screens.SettingsAppearanceScreen
 import vn.id.tozydev.tusu.ui.feature.settings.screens.SettingsBackupScreen
@@ -111,6 +115,11 @@ private fun SettingsNavigation(backStack: NavBackStack<NavKey>) {
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
+        entryDecorators =
+            listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+            ),
         entryProvider =
             entryProvider {
                 entry<SettingsRoutes.Main> {
@@ -130,7 +139,7 @@ private fun SettingsNavigation(backStack: NavBackStack<NavKey>) {
                     SettingsAppearanceScreen()
                 }
                 entry<SettingsRoutes.Backup> {
-                    SettingsBackupScreen()
+                    SettingsBackupScreen(viewModel = metroViewModel())
                 }
                 entry<SettingsRoutes.About> {
                     SettingsAboutScreen()
