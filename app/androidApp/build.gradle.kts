@@ -31,7 +31,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         // Calver Scheme: <0Y>_<0M>_<MICRO_2>_[MODIFIER_2]
-        versionCode = 26_07_01_00
+        versionCode = 26_07_02_00
         versionName = version.toString()
     }
     packaging {
