@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,7 +43,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,8 +51,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,7 +69,6 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.painterResource
@@ -158,9 +161,17 @@ fun EntryEditorScreen(
             )
         },
     ) { innerPadding ->
+        val layoutDirection = LocalLayoutDirection.current
         Column(
             modifier =
-                Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)
+                Modifier.fillMaxSize()
+                    .padding(
+                        start = innerPadding.calculateStartPadding(layoutDirection),
+                        top = innerPadding.calculateTopPadding(),
+                        end = innerPadding.calculateEndPadding(layoutDirection),
+                        bottom = 0.dp,
+                    )
+                    .consumeWindowInsets(innerPadding)
         ) {
             when (uiState) {
                 is EntryEditorUiState.Error -> {
@@ -196,6 +207,7 @@ fun EntryEditorScreen(
                         media = loadedUiState.media,
                         onAddMedia = viewModel::addMedia,
                         onRemoveMedia = viewModel::removeMedia,
+                        bottomPadding = innerPadding.calculateBottomPadding(),
                     )
                 }
                 EntryEditorUiState.Loading -> {
@@ -233,14 +245,27 @@ private fun EntryEditorContent(
     media: List<Media>,
     onAddMedia: (List<PlatformFile>) -> Unit,
     onRemoveMedia: (Uuid) -> Unit,
+    bottomPadding: Dp,
 ) {
     val scrollState = rememberScrollState()
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
-    val coroutineScope = rememberCoroutineScope()
+    var isFocused by remember { mutableStateOf(false) }
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     var showMediaPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showTagPicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(contentState.selection, bottomPadding, isFocused, textLayoutResult) {
+        if (isFocused) {
+            val layoutResult = textLayoutResult
+            val selection = contentState.selection
+            if (layoutResult != null && selection.collapsed) {
+                val cursorRect = layoutResult.getCursorRect(selection.start)
+                bringIntoViewRequester.bringIntoView(cursorRect)
+            }
+        }
+    }
 
     fun openTagPicker() {
         showTagPicker = true
@@ -251,7 +276,10 @@ private fun EntryEditorContent(
     val formattedTime = remember(recordedAt) { dateTimeFormatter.formatTime(recordedAt) }
 
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(scrollState),
+        modifier =
+            Modifier.fillMaxSize()
+                .padding(bottom = bottomPadding + 16.dp)
+                .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (editorMode.isReadOnly) {
@@ -410,6 +438,7 @@ private fun EntryEditorContent(
                     .padding(horizontal = 20.dp)
                     .bringIntoViewRequester(bringIntoViewRequester)
                     .onFocusChanged { focusState ->
+                        isFocused = focusState.isFocused
                         onContentFocusChange(focusState.isFocused)
                         if (!focusState.isFocused) {
                             onContentBlur()
@@ -422,14 +451,8 @@ private fun EntryEditorContent(
                 ),
             readOnly = editorMode.isReadOnly,
             minLines = 6,
-            onTextLayout = { textLayoutResult ->
-                val selection = contentState.selection
-                if (selection.collapsed) {
-                    val cursorRect = textLayoutResult.getCursorRect(selection.start)
-                    coroutineScope.launch {
-                        bringIntoViewRequester.bringIntoView(cursorRect)
-                    }
-                }
+            onTextLayout = { layoutResult ->
+                textLayoutResult = layoutResult
             },
             decorationBox = { innerContent ->
                 innerContent()
