@@ -51,11 +51,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -189,6 +189,10 @@ fun EntryEditorScreen(
                 is EntryEditorUiState.Loaded -> {
                     val loadedUiState = uiState as EntryEditorUiState.Loaded
                     EntryEditorContent(
+                        modifier =
+                            Modifier.padding(
+                                bottom = innerPadding.calculateBottomPadding() + 16.dp
+                            ),
                         editorMode = loadedUiState.mode,
                         recordedAt = loadedUiState.recordedAt,
                         recordedDate = loadedUiState.recordedDate,
@@ -207,7 +211,6 @@ fun EntryEditorScreen(
                         media = loadedUiState.media,
                         onAddMedia = viewModel::addMedia,
                         onRemoveMedia = viewModel::removeMedia,
-                        bottomPadding = innerPadding.calculateBottomPadding(),
                     )
                 }
                 EntryEditorUiState.Loading -> {
@@ -245,18 +248,19 @@ private fun EntryEditorContent(
     media: List<Media>,
     onAddMedia: (List<PlatformFile>) -> Unit,
     onRemoveMedia: (Uuid) -> Unit,
-    bottomPadding: Dp,
+    modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var isFocused by remember { mutableStateOf(false) }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var viewportHeight by remember { mutableStateOf(0) }
     var showMediaPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showTagPicker by remember { mutableStateOf(false) }
 
-    LaunchedEffect(contentState.selection, bottomPadding, isFocused, textLayoutResult) {
+    LaunchedEffect(contentState.selection, viewportHeight, isFocused, textLayoutResult) {
         if (isFocused) {
             val layoutResult = textLayoutResult
             val selection = contentState.selection
@@ -277,8 +281,11 @@ private fun EntryEditorContent(
 
     Column(
         modifier =
-            Modifier.fillMaxSize()
-                .padding(bottom = bottomPadding + 16.dp)
+            modifier
+                .fillMaxSize()
+                .onGloballyPositioned { coordinates ->
+                    viewportHeight = coordinates.size.height
+                }
                 .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {

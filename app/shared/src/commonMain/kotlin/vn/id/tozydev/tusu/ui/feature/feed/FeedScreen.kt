@@ -32,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
@@ -90,7 +89,13 @@ fun FeedScreen(
                     listState = listState,
                     lazyFeedItems = lazyFeedItems,
                     onNavigateToEditor = onNavigateToEditor,
-                    bottomPadding = innerPadding.calculateBottomPadding(),
+                    contentPadding =
+                        PaddingValues(
+                            start = 16.dp,
+                            top = 8.dp,
+                            end = 16.dp,
+                            bottom = 8.dp + innerPadding.calculateBottomPadding(),
+                        ),
                 )
             }
         }
@@ -103,17 +108,11 @@ private fun FeedItemList(
     listState: LazyListState,
     lazyFeedItems: LazyPagingItems<FeedItemUi>,
     onNavigateToEditor: (Uuid?) -> Unit,
-    bottomPadding: Dp,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     LazyColumn(
         state = listState,
-        contentPadding =
-            PaddingValues(
-                start = 16.dp,
-                top = 8.dp,
-                end = 16.dp,
-                bottom = 8.dp + bottomPadding,
-            ),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
