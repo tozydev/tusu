@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
@@ -79,11 +80,18 @@ fun FeedScreen(
         topBar = { FeedTopAppBar(scrollBehavior, onNavigateToSettings) },
         floatingActionButton = { ComposeEntryFab(onNavigateToEditor, isScrollingUp) },
     ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding())
+        ) {
             TagFiltersRow(tags, tagIdFilter, viewModel::setTagIdFilter)
 
             Box(modifier = Modifier.weight(1f)) {
-                FeedItemList(listState, lazyFeedItems, onNavigateToEditor)
+                FeedItemList(
+                    listState = listState,
+                    lazyFeedItems = lazyFeedItems,
+                    onNavigateToEditor = onNavigateToEditor,
+                    bottomPadding = innerPadding.calculateBottomPadding(),
+                )
             }
         }
     }
@@ -95,10 +103,17 @@ private fun FeedItemList(
     listState: LazyListState,
     lazyFeedItems: LazyPagingItems<FeedItemUi>,
     onNavigateToEditor: (Uuid?) -> Unit,
+    bottomPadding: Dp,
 ) {
     LazyColumn(
         state = listState,
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding =
+            PaddingValues(
+                start = 16.dp,
+                top = 8.dp,
+                end = 16.dp,
+                bottom = 8.dp + bottomPadding,
+            ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
