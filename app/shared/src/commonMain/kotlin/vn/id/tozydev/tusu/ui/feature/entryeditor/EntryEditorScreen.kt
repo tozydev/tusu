@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -39,6 +41,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +65,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.painterResource
@@ -156,9 +160,7 @@ fun EntryEditorScreen(
     ) { innerPadding ->
         Column(
             modifier =
-                Modifier.fillMaxSize()
-                    .padding(innerPadding)
-                    .consumeWindowInsets(innerPadding)
+                Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)
         ) {
             when (uiState) {
                 is EntryEditorUiState.Error -> {
@@ -233,6 +235,8 @@ private fun EntryEditorContent(
     onRemoveMedia: (Uuid) -> Unit,
 ) {
     val scrollState = rememberScrollState()
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
     var showMediaPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -404,6 +408,7 @@ private fun EntryEditorContent(
             modifier =
                 Modifier.fillMaxWidth()
                     .padding(horizontal = 20.dp)
+                    .bringIntoViewRequester(bringIntoViewRequester)
                     .onFocusChanged { focusState ->
                         onContentFocusChange(focusState.isFocused)
                         if (!focusState.isFocused) {
@@ -417,6 +422,15 @@ private fun EntryEditorContent(
                 ),
             readOnly = editorMode.isReadOnly,
             minLines = 6,
+            onTextLayout = { textLayoutResult ->
+                val selection = contentState.selection
+                if (selection.collapsed) {
+                    val cursorRect = textLayoutResult.getCursorRect(selection.start)
+                    coroutineScope.launch {
+                        bringIntoViewRequester.bringIntoView(cursorRect)
+                    }
+                }
+            },
             decorationBox = { innerContent ->
                 innerContent()
                 if (contentState.annotatedString.isEmpty()) {
