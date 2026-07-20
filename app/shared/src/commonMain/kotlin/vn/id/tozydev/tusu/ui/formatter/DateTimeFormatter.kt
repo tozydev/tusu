@@ -50,13 +50,13 @@ interface DateTimeFormatter {
         }
 
         override fun formatRelativeDate(date: LocalDate): UiText {
-            // todo magic constants
             return when (val daysBetween = date.daysUntil(clock.todayIn(timeZone))) {
-                0 -> UiText(Res.string.format_date_today)
-                1 -> UiText(Res.string.format_date_yesterday)
-                in 2..6 -> UiText(Res.string.format_date_days_ago, daysBetween)
-                in 7..29 -> {
-                    val weeks = daysBetween / 7
+                TODAY -> UiText(Res.string.format_date_today)
+                YESTERDAY -> UiText(Res.string.format_date_yesterday)
+                in MIN_DAYS_AGO..MAX_DAYS_AGO ->
+                    UiText(Res.string.format_date_days_ago, daysBetween)
+                in MIN_WEEKS_AGO..MAX_WEEKS_AGO -> {
+                    val weeks = daysBetween / DAYS_IN_WEEK
                     UiText(Res.string.format_date_weeks_ago, weeks)
                 }
                 else -> UiText(relativeDateFormat.format(date))
@@ -69,5 +69,15 @@ interface DateTimeFormatter {
 
         override fun formatShortMonth(date: LocalDate): UiText =
             UiText(shortMonthFormat.format(date))
+
+        companion object {
+            private const val TODAY = 0
+            private const val YESTERDAY = 1
+            private const val MIN_DAYS_AGO = 2
+            private const val MAX_DAYS_AGO = 6
+            private const val MIN_WEEKS_AGO = 7
+            private const val MAX_WEEKS_AGO = 29
+            private const val DAYS_IN_WEEK = 7
+        }
     }
 }
