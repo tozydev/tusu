@@ -37,6 +37,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import kotlin.uuid.Uuid
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -116,24 +118,31 @@ private fun FeedItemList(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        val itemCount = lazyFeedItems.itemCount
-        for (i in 0 until itemCount) {
-            when (val item = lazyFeedItems[i]) {
-                is FeedItemUi.DateHeader -> {
-                    stickyHeader(key = "header_${item.date}") {
-                        FeedItemDateHeader(item)
+        items(
+            count = lazyFeedItems.itemCount,
+            key =
+                lazyFeedItems.itemKey { item ->
+                    when (item) {
+                        is FeedItemUi.DateHeader -> "header_${item.date}"
+                        is FeedItemUi.EntryItem -> item.entry.id
                     }
-                }
-
+                },
+            contentType =
+                lazyFeedItems.itemContentType { item ->
+                    when (item) {
+                        is FeedItemUi.DateHeader -> "header"
+                        is FeedItemUi.EntryItem -> "entry"
+                    }
+                },
+        ) { index ->
+            when (val item = lazyFeedItems[index]) {
+                is FeedItemUi.DateHeader -> FeedItemDateHeader(item)
                 is FeedItemUi.EntryItem -> {
-                    item(key = item.entry.id) {
-                        EntryCard(
-                            entry = item.entry,
-                            onClick = { onNavigateToEditor(item.entry.id) },
-                        )
-                    }
+                    EntryCard(
+                        entry = item.entry,
+                        onClick = { onNavigateToEditor(item.entry.id) },
+                    )
                 }
-
                 null -> {}
             }
         }
