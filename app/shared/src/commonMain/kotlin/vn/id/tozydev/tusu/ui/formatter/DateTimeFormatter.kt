@@ -44,8 +44,8 @@ interface DateTimeFormatter {
             instant.toLocalDateTime(timeZone).format(localTimeFormat)
 
         private val relativeDateFormat = LocalDate.Format {
-            chars(" ")
             monthName(MonthNames.ENGLISH_ABBREVIATED)
+            chars(" ")
             day()
             chars(", ")
             year()
