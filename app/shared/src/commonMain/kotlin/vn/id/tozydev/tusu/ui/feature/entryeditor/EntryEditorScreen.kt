@@ -264,7 +264,11 @@ private fun EntryEditorContent(
         if (isFocused) {
             val layoutResult = textLayoutResult
             val selection = contentState.selection
-            if (layoutResult != null && selection.collapsed) {
+            if (
+                layoutResult != null &&
+                    selection.collapsed &&
+                    selection.start in 0..layoutResult.layoutInput.text.length
+            ) {
                 val cursorRect = layoutResult.getCursorRect(selection.start)
                 bringIntoViewRequester.bringIntoView(cursorRect)
             }
