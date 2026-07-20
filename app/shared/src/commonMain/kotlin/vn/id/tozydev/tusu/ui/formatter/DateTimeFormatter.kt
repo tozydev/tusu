@@ -11,7 +11,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.format
-import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
@@ -26,8 +25,6 @@ interface DateTimeFormatter {
     fun formatTime(instant: Instant): String
 
     fun formatRelativeDate(date: LocalDate): UiText
-
-    fun formatDate(date: LocalDate): UiText
 
     fun formatShortMonth(date: LocalDate): UiText
 
@@ -44,6 +41,7 @@ interface DateTimeFormatter {
             instant.toLocalDateTime(timeZone).format(localTimeFormat)
 
         private val relativeDateFormat = LocalDate.Format {
+            // todo support i18n for month names
             monthName(MonthNames.ENGLISH_ABBREVIATED)
             chars(" ")
             day()
@@ -64,18 +62,6 @@ interface DateTimeFormatter {
                 else -> UiText(relativeDateFormat.format(date))
             }
         }
-
-        private val dateFormat = LocalDate.Format {
-            dayOfWeek(DayOfWeekNames.ENGLISH_ABBREVIATED)
-            chars(", ")
-            monthName(MonthNames.ENGLISH_ABBREVIATED)
-            chars(" ")
-            day()
-            chars(", ")
-            year()
-        }
-
-        override fun formatDate(date: LocalDate): UiText = UiText(dateFormat.format(date))
 
         private val shortMonthFormat = LocalDate.Format {
             monthName(MonthNames.ENGLISH_ABBREVIATED)
