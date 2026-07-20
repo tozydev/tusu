@@ -51,18 +51,24 @@ class FeedViewModel(
                 pagingData.insertSeparators<FeedItemUi.EntryItem, FeedItemUi> { before, after ->
                     val beforeDate = before?.entry?.recordedAt?.toLocalDate(timeZone)
                     val afterDate = after?.entry?.recordedAt?.toLocalDate(timeZone)
+                    val beforeRelative = beforeDate?.let {
+                        dateTimeFormatter.formatRelativeDate(it)
+                    }
+                    val afterRelative = afterDate?.let { dateTimeFormatter.formatRelativeDate(it) }
                     when {
-                        beforeDate == null && afterDate != null -> {
+                        beforeRelative == null && afterRelative != null -> {
                             FeedItemUi.DateHeader(
                                 afterDate,
-                                dateTimeFormatter.formatRelativeDate(afterDate),
+                                afterRelative,
                             )
                         }
 
-                        beforeDate != null && afterDate != null && beforeDate != afterDate -> {
+                        beforeRelative != null &&
+                            afterRelative != null &&
+                            beforeRelative != afterRelative -> {
                             FeedItemUi.DateHeader(
                                 afterDate,
-                                dateTimeFormatter.formatRelativeDate(afterDate),
+                                afterRelative,
                             )
                         }
 
