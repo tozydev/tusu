@@ -64,7 +64,6 @@ import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
-import io.github.vinceglb.filekit.PlatformFile
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -76,6 +75,7 @@ import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.domain.model.Media
 import vn.id.tozydev.tusu.domain.model.Tag
 import vn.id.tozydev.tusu.generated.resources.Res
+import vn.id.tozydev.tusu.generated.resources.add_media_desc
 import vn.id.tozydev.tusu.generated.resources.add_tag_desc
 import vn.id.tozydev.tusu.generated.resources.back_desc
 import vn.id.tozydev.tusu.generated.resources.delete_btn
@@ -83,6 +83,7 @@ import vn.id.tozydev.tusu.generated.resources.done_btn
 import vn.id.tozydev.tusu.generated.resources.edit_btn
 import vn.id.tozydev.tusu.generated.resources.entry_content_prompt
 import vn.id.tozydev.tusu.generated.resources.ic_add_24px
+import vn.id.tozydev.tusu.generated.resources.ic_add_photo_alternate_24px
 import vn.id.tozydev.tusu.generated.resources.ic_add_reaction_24px
 import vn.id.tozydev.tusu.generated.resources.ic_arrow_back_24px
 import vn.id.tozydev.tusu.generated.resources.ic_delete_24px
@@ -143,6 +144,8 @@ fun EntryEditorScreen(
         onBackCompleted = handleBack,
     )
 
+    var showMediaPicker by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -152,6 +155,7 @@ fun EntryEditorScreen(
                 editorMode = loadedUiState?.mode ?: EntryEditorMode.ReadOnly,
                 emoji = loadedUiState?.emoji,
                 onEmojiSelected = viewModel::setEmoji,
+                onAddMedia = { showMediaPicker = true },
                 onNavigateBack = handleBack,
                 onModeSwitch = viewModel::setEditorMode,
                 onDeleteEntry = {
@@ -209,7 +213,6 @@ fun EntryEditorScreen(
                         onContentBlur = viewModel::saveContent,
                         onContentFocusChange = { isContentFocus = it },
                         media = loadedUiState.media,
-                        onAddMedia = viewModel::addMedia,
                         onRemoveMedia = viewModel::removeMedia,
                     )
                 }
@@ -223,6 +226,16 @@ fun EntryEditorScreen(
                 }
             }
         }
+    }
+
+    if (showMediaPicker) {
+        MediaPickerModal(
+            onDismiss = { showMediaPicker = false },
+            onSelectMedia = {
+                showMediaPicker = false
+                viewModel.addMedia(it)
+            },
+        )
     }
 }
 
@@ -246,7 +259,6 @@ private fun EntryEditorContent(
     onContentBlur: () -> Unit,
     onContentFocusChange: (Boolean) -> Unit,
     media: List<Media>,
-    onAddMedia: (List<PlatformFile>) -> Unit,
     onRemoveMedia: (Uuid) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -255,7 +267,6 @@ private fun EntryEditorContent(
     var isFocused by remember { mutableStateOf(false) }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     var viewportHeight by remember { mutableStateOf(0) }
-    var showMediaPicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showTagPicker by remember { mutableStateOf(false) }
@@ -293,14 +304,15 @@ private fun EntryEditorContent(
                 .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (editorMode.isReadOnly) {
-            EntryMediaBrowser(media)
-        } else {
-            EntryMediaEditor(
-                mediaList = media,
-                onAddMedia = { showMediaPicker = true },
-                onRemoveMedia = onRemoveMedia,
-            )
+        if (media.isNotEmpty()) {
+            if (editorMode.isReadOnly) {
+                EntryMediaBrowser(media)
+            } else {
+                EntryMediaEditor(
+                    mediaList = media,
+                    onRemoveMedia = onRemoveMedia,
+                )
+            }
         }
 
         Column(
@@ -448,23 +460,21 @@ private fun EntryEditorContent(
                 Modifier.fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .bringIntoViewRequester(bringIntoViewRequester)
+                    .focusRequester(contentFocusRequester)
                     .onFocusChanged { focusState ->
                         isFocused = focusState.isFocused
                         onContentFocusChange(focusState.isFocused)
                         if (!focusState.isFocused) {
                             onContentBlur()
                         }
-                    }
-                    .focusRequester(contentFocusRequester),
+                    },
             textStyle =
                 MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface
                 ),
             readOnly = editorMode.isReadOnly,
             minLines = 6,
-            onTextLayout = { layoutResult ->
-                textLayoutResult = layoutResult
-            },
+            onTextLayout = { textLayoutResult = it },
             decorationBox = { innerContent ->
                 innerContent()
                 if (contentState.annotatedString.isEmpty()) {
@@ -479,15 +489,6 @@ private fun EntryEditorContent(
     }
 
     when {
-        showMediaPicker -> {
-            MediaPickerModal(
-                onDismiss = { showMediaPicker = false },
-                onSelectMedia = {
-                    showMediaPicker = false
-                    onAddMedia(it)
-                },
-            )
-        }
         showDatePicker -> {
             DatePickerModal(
                 onConfirm = { epochMillis ->
@@ -527,6 +528,7 @@ private fun EntryEditorTopBar(
     editorMode: EntryEditorMode,
     emoji: String?,
     onEmojiSelected: (String?) -> Unit,
+    onAddMedia: () -> Unit,
     onNavigateBack: () -> Unit,
     onModeSwitch: (EntryEditorMode) -> Unit,
     onDeleteEntry: () -> Unit,
@@ -572,6 +574,20 @@ private fun EntryEditorTopBar(
                             contentDescription = stringResource(Res.string.select_emoji_desc),
                         )
                     }
+                }
+
+                FilledIconButton(
+                    onClick = onAddMedia,
+                    colors =
+                        IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add_photo_alternate_24px),
+                        contentDescription = stringResource(Res.string.add_media_desc),
+                    )
                 }
             }
         },
