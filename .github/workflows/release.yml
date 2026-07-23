@@ -1,6 +1,19 @@
 name: Release
 on:
   workflow_dispatch:
+    inputs:
+      tag-prefix:
+        description: Suffix added to the tag.
+        type: choice
+        default: ""
+        options:
+          - ""
+          - "-preview"
+
+      prerelease:
+        description: Whether to mark the GitHub release as a prerelease.
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,5 +27,8 @@ jobs:
         uses: tozydev/gh-actions/calver-release@main
         with:
           extra-files: gradle.properties
+          tag-prefix: ${{ inputs.tag-prefix }}
+          prerelease: ${{ inputs.prerelease }}
+          commit-message: "chore(release): {tag}"
           app-client-id: ${{ vars.SOHYOL_APP_CLIENT_ID }}
           app-private-key: ${{ secrets.SOHYOL_APP_PRIVATE_KEY }}
