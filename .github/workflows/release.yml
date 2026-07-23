@@ -2,8 +2,7 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      tag-prefix:
-        description: Suffix added to the tag.
+      modifier:
         type: choice
         default: ""
         options:
@@ -11,7 +10,6 @@ on:
           - "-preview"
 
       prerelease:
-        description: Whether to mark the GitHub release as a prerelease.
         type: boolean
         default: false
 
@@ -22,13 +20,64 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.calver-release.outputs.version }}
+      tag: ${{ steps.calver-release.outputs.tag }}
     steps:
       - name: CalVer Release
+        id: calver-release
         uses: tozydev/gh-actions/calver-release@main
         with:
           extra-files: gradle.properties
-          tag-prefix: ${{ inputs.tag-prefix }}
+          modifier: ${{ inputs.modifier }}
           prerelease: ${{ inputs.prerelease }}
-          commit-message: "chore(release): {tag}"
           app-client-id: ${{ vars.SOHYOL_APP_CLIENT_ID }}
           app-private-key: ${{ secrets.SOHYOL_APP_PRIVATE_KEY }}
+
+  build-artifact:
+    runs-on: ubuntu-latest
+    needs: release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains
+          java-version: 25
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Grant gradlew execute permission
+        run: chmod +x ./gradlew
+
+      - name: Decode Keystore File
+        env:
+          ENCODED_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$ENCODED_KEYSTORE" | base64 -d > "${{ runner.temp }}/release.keystore"
+
+      - name: Build Release APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:androidApp:assembleRelease
+
+      - name: Rename artifact
+        run: |
+          mkdir out
+          mv app/androidApp/build/outputs/apk/release/*.apk out/tusu-${{ needs.release.outputs.version }}.apk
+
+      - name: Upload artifact to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload ${{ needs.release.outputs.tag }} out/*.apk
