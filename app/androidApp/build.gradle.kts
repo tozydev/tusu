@@ -30,8 +30,7 @@ android {
         applicationId = "vn.id.tozydev.tusu"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        // Calver Scheme: <0Y>_<0M>_<MICRO_2>_[MODIFIER_2]
-        versionCode = 26_07_02_00
+        versionCode = calculateVersionCode(version.toString())
         versionName = version.toString()
     }
     packaging {
@@ -43,12 +42,28 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreFile = System.getenv("KEYSTORE_FILE")?.let { file(it) }
+            if (keystoreFile != null && keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
         }
         release {
             isMinifyEnabled = false
+            val releaseSigning = signingConfigs.findByName("release")
+            if (releaseSigning?.storeFile?.exists() == true) {
+                signingConfig = releaseSigning
+            }
             packaging {
                 resources {
                     excludes += "/test-data/**"
@@ -60,4 +75,25 @@ android {
         sourceCompatibility = JavaVersion.VERSION_25
         targetCompatibility = JavaVersion.VERSION_25
     }
+}
+
+/**
+ * Calculates version code from [version] string and return version code in format
+ * `0Y_0M_MICRO_MODIFIER`.
+ */
+fun calculateVersionCode(version: String): Int {
+    val modifierCode = 0
+    val parts = version.substringBefore('-').split('.').map { it.toIntOrNull() }
+    require(parts.size == 3) {
+        "Invalid version format, required: MAJOR.MINOR.MICRO-MODIFIER, got: $version"
+    }
+
+    val (year, month, micro) = parts
+    require(year != null && month != null && micro != null) {
+        "Invalid version format, required: MAJOR.MINOR.MICRO-MODIFIER, got: $version"
+    }
+    return "%02d_%02d_%02d_%02d"
+        .format(year % 100, month, micro, modifierCode)
+        .replace("_", "")
+        .toInt()
 }

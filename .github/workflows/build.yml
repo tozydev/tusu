@@ -1,0 +1,88 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: jetbrains
+          java-version: 25
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Grant gradlew execute permission
+        run: chmod +x ./gradlew
+
+      - name: Build Debug APK
+        if: github.event_name != 'release'
+        run: ./gradlew :app:androidApp:assembleDebug
+
+      - name: Upload Debug APK Artifact
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v7
+        with:
+          name: debug-apk
+          path: app/androidApp/build/outputs/apk/debug/*.apk
+
+      - name: Decode Keystore File
+        if: github.event_name == 'release'
+        env:
+          ENCODED_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$ENCODED_KEYSTORE" | base64 -d > "${{ runner.temp }}/release.keystore"
+
+      - name: Build Release APK
+        if: github.event_name == 'release'
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:androidApp:assembleRelease
+
+      - name: Upload Release APK Artifact
+        if: github.event_name == 'release'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-apk
+          path: app/androidApp/build/outputs/apk/release/*.apk
+
+  publish-artifact:
+    runs-on: ubuntu-slim
+    needs: build
+    if: github.event_name == 'release'
+    permissions:
+      contents: write
+    steps:
+      - name: Download Release APK Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: release-apk
+          path: dist
+
+      - name: Rename Release APK Artifact
+        env:
+          TAG: ${{ github.ref_name }}
+        run: mv dist/*.apk dist/tusu-${TAG#v}.apk
+
+      - name: Upload Release APK Artifact to GitHub Release
+        run: gh release upload ${{ github.ref_name }} dist/*.apk
