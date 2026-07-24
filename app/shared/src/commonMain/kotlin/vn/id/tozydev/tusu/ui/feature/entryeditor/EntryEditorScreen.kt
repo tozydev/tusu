@@ -41,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -266,7 +267,7 @@ private fun EntryEditorContent(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     var isFocused by remember { mutableStateOf(false) }
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    var viewportHeight by remember { mutableStateOf(0) }
+    var viewportHeight by remember { mutableIntStateOf(0) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showTagPicker by remember { mutableStateOf(false) }
