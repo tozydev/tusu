@@ -17,28 +17,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.back_desc
+import vn.id.tozydev.tusu.generated.resources.cd_back
 import vn.id.tozydev.tusu.generated.resources.ic_arrow_back_24px
 import vn.id.tozydev.tusu.generated.resources.settings_about_title
 import vn.id.tozydev.tusu.generated.resources.settings_appearance_title
-import vn.id.tozydev.tusu.generated.resources.settings_backup_restore_title
+import vn.id.tozydev.tusu.generated.resources.settings_backup_title
 import vn.id.tozydev.tusu.generated.resources.settings_title
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import dev.zacsweers.metrox.viewmodel.metroViewModel
 import vn.id.tozydev.tusu.ui.feature.settings.screens.SettingsAboutScreen
 import vn.id.tozydev.tusu.ui.feature.settings.screens.SettingsAppearanceScreen
 import vn.id.tozydev.tusu.ui.feature.settings.screens.SettingsBackupScreen
@@ -87,7 +86,7 @@ private fun SettingsTopBar(currentRoute: NavKey?, onNavigateBack: () -> Unit) {
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_arrow_back_24px),
-                    contentDescription = stringResource(Res.string.back_desc),
+                    contentDescription = stringResource(Res.string.cd_back),
                 )
             }
         },
@@ -101,7 +100,7 @@ private fun SettingsTitle(currentRoute: NavKey?) {
         titleRes =
             when (currentRoute) {
                 SettingsRoutes.Appearance -> Res.string.settings_appearance_title
-                SettingsRoutes.Backup -> Res.string.settings_backup_restore_title
+                SettingsRoutes.Backup -> Res.string.settings_backup_title
                 SettingsRoutes.About -> Res.string.settings_about_title
                 else -> Res.string.settings_title
             }

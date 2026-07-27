@@ -38,9 +38,9 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.domain.model.Tag
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.back_desc
-import vn.id.tozydev.tusu.generated.resources.create_new_tag
-import vn.id.tozydev.tusu.generated.resources.enter_tag_name_placeholder
+import vn.id.tozydev.tusu.generated.resources.cd_back
+import vn.id.tozydev.tusu.generated.resources.entry_editor_tag_create
+import vn.id.tozydev.tusu.generated.resources.entry_editor_tag_placeholder
 import vn.id.tozydev.tusu.generated.resources.ic_add_24px
 import vn.id.tozydev.tusu.generated.resources.ic_arrow_back_24px
 import vn.id.tozydev.tusu.generated.resources.ic_close_24px
@@ -96,7 +96,7 @@ fun TagPickerModal(
                             state = searchFieldState,
                             modifier = Modifier.fillMaxWidth(),
                             placeholder = {
-                                Text(stringResource(Res.string.enter_tag_name_placeholder))
+                                Text(stringResource(Res.string.entry_editor_tag_placeholder))
                             },
                             trailingIcon = {
                                 if (searchFieldState.text.isNotBlank()) {
@@ -120,7 +120,7 @@ fun TagPickerModal(
                         IconButton(onClick = onDismiss) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_arrow_back_24px),
-                                contentDescription = stringResource(Res.string.back_desc),
+                                contentDescription = stringResource(Res.string.cd_back),
                             )
                         }
                     },
@@ -149,7 +149,7 @@ fun TagPickerModal(
                             ) {
                                 Text(
                                     stringResource(
-                                        Res.string.create_new_tag,
+                                        Res.string.entry_editor_tag_create,
                                         searchFieldState.text,
                                     )
                                 )

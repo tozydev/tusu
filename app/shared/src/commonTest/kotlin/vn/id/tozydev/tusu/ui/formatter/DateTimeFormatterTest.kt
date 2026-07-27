@@ -7,9 +7,9 @@ import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.format_date_full
-import vn.id.tozydev.tusu.generated.resources.format_date_today
-import vn.id.tozydev.tusu.generated.resources.format_date_yesterday
+import vn.id.tozydev.tusu.generated.resources.datetime_full
+import vn.id.tozydev.tusu.generated.resources.datetime_today
+import vn.id.tozydev.tusu.generated.resources.datetime_yesterday
 import vn.id.tozydev.tusu.generated.resources.month_jul
 import vn.id.tozydev.tusu.generated.resources.month_jun
 import vn.id.tozydev.tusu.ui.model.UiText
@@ -26,22 +26,22 @@ class DateTimeFormatterTest : ShouldSpec() {
     init {
         should("format today correctly") {
             val date = LocalDate(2026, 7, 27)
-            formatter.formatRelativeDate(date) shouldBe UiText(Res.string.format_date_today)
+            formatter.formatRelativeDate(date) shouldBe UiText(Res.string.datetime_today)
         }
 
         should("format yesterday correctly") {
             val date = LocalDate(2026, 7, 26)
-            formatter.formatRelativeDate(date) shouldBe UiText(Res.string.format_date_yesterday)
+            formatter.formatRelativeDate(date) shouldBe UiText(Res.string.datetime_yesterday)
         }
 
         should("format 2 days ago or older as explicit date resource") {
             val date2Days = LocalDate(2026, 7, 25)
             formatter.formatRelativeDate(date2Days) shouldBe
-                UiText(Res.string.format_date_full, UiText(Res.string.month_jul), 25, 2026)
+                UiText(Res.string.datetime_full, UiText(Res.string.month_jul), 25, 2026)
 
             val date30Days = LocalDate(2026, 6, 27)
             formatter.formatRelativeDate(date30Days) shouldBe
-                UiText(Res.string.format_date_full, UiText(Res.string.month_jun), 27, 2026)
+                UiText(Res.string.datetime_full, UiText(Res.string.month_jun), 27, 2026)
         }
 
         should("format short month using localized string resource") {

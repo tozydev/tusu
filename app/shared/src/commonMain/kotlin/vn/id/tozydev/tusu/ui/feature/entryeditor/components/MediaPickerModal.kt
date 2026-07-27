@@ -26,11 +26,11 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.add_media
-import vn.id.tozydev.tusu.generated.resources.choose_gallery_btn
+import vn.id.tozydev.tusu.generated.resources.entry_editor_media_choose_gallery
+import vn.id.tozydev.tusu.generated.resources.entry_editor_media_picker_title
+import vn.id.tozydev.tusu.generated.resources.entry_editor_media_take_photo
 import vn.id.tozydev.tusu.generated.resources.ic_add_a_photo_24px
 import vn.id.tozydev.tusu.generated.resources.ic_add_photo_alternate_24px
-import vn.id.tozydev.tusu.generated.resources.take_photo_btn
 import vn.id.tozydev.tusu.ui.integration.CameraFacingOption
 import vn.id.tozydev.tusu.ui.integration.rememberCameraPickerLauncher
 
@@ -65,7 +65,7 @@ fun MediaPickerModal(
 
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Text(
-            text = stringResource(Res.string.add_media),
+            text = stringResource(Res.string.entry_editor_media_picker_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
@@ -94,7 +94,7 @@ fun MediaPickerModal(
                 },
             ) {
                 Text(
-                    text = stringResource(Res.string.take_photo_btn),
+                    text = stringResource(Res.string.entry_editor_media_take_photo),
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -114,7 +114,7 @@ fun MediaPickerModal(
                 },
             ) {
                 Text(
-                    text = stringResource(Res.string.choose_gallery_btn),
+                    text = stringResource(Res.string.entry_editor_media_choose_gallery),
                     style = MaterialTheme.typography.titleMedium,
                 )
             }

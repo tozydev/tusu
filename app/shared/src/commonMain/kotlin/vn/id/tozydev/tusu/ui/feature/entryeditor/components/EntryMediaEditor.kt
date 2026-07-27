@@ -26,8 +26,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.domain.model.Media
 import vn.id.tozydev.tusu.generated.resources.Res
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_remove_media
 import vn.id.tozydev.tusu.generated.resources.ic_close_24px
-import vn.id.tozydev.tusu.generated.resources.remove_media_desc
 
 @Composable
 fun EntryMediaEditor(
@@ -65,7 +65,10 @@ fun EntryMediaEditor(
                     Icon(
                         painter = painterResource(Res.drawable.ic_close_24px),
                         contentDescription =
-                            stringResource(Res.string.remove_media_desc, media.id.toString()),
+                            stringResource(
+                                Res.string.entry_editor_cd_remove_media,
+                                media.id.toString(),
+                            ),
                         tint = Color.White,
                         modifier = Modifier.size(20.dp),
                     )

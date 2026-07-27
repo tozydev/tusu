@@ -1,34 +1,21 @@
 <resources>
+    <!-- Common & Actions -->
     <string name="app_name">Tusu</string>
-    <string name="settings_desc">Settings</string>
-    <string name="back_desc">Back</string>
-    <string name="select_emoji_desc">Select Emoji</string>
-    <string name="more_menu_desc">More</string>
-    <string name="add_tag_desc">Add tag</string>
-    <string name="remove_media_desc">Remove media %1$s</string>
-    <string name="add_media_desc">Add media</string>
-    <string name="time_picker_type_toggle_desc">Toggle time picker type</string>
-    <string name="time_picker_title">Select Time</string>
-    <string name="add_media">Add media</string>
-    <string name="select_emoji_title">Emoji</string>
-    <string name="enter_tag_name_placeholder">Enter tag name</string>
-    <string name="create_new_tag">Create #%1$s</string>
-    <string name="remove_current_emoji">Remove</string>
-    <string name="edit_btn">Edit</string>
-    <string name="done_btn">Done</string>
-    <string name="ok_btn">OK</string>
-    <string name="cancel_btn">Cancel</string>
-    <string name="delete_btn">Delete</string>
-    <string name="now_btn">Now</string>
-    <string name="take_photo_btn">Take Photo</string>
-    <string name="choose_gallery_btn">Choose from Gallery</string>
-    <string name="entry_content_prompt">What's on your mind?</string>
-    <string name="error_entry_not_found">Entry not found</string>
-    <string name="fab_compose">Compose</string>
-    <string name="tag_filter_all">All</string>
-    <string name="format_date_today">Today</string>
-    <string name="format_date_yesterday">Yesterday</string>
-    <string name="format_date_full">%1$s %2$d, %3$d</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_done">Done</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_now">Now</string>
+
+    <!-- Accessibility Content Descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_more_menu">More</string>
+
+    <!-- Date & Time Formats -->
+    <string name="datetime_today">Today</string>
+    <string name="datetime_yesterday">Yesterday</string>
+    <string name="datetime_full">%1$s %2$d, %3$d</string>
     <string name="month_jan">Jan</string>
     <string name="month_feb">Feb</string>
     <string name="month_mar">Mar</string>
@@ -41,22 +28,47 @@
     <string name="month_oct">Oct</string>
     <string name="month_nov">Nov</string>
     <string name="month_dec">Dec</string>
+
+    <!-- Components: Date & Time Pickers -->
+    <string name="time_picker_title">Select Time</string>
+    <string name="time_picker_cd_toggle_type">Toggle time picker type</string>
+
+    <!-- Feature: Feed -->
+    <string name="feed_fab_compose">Compose</string>
+    <string name="feed_tag_all">All</string>
+    <string name="feed_cd_settings">Settings</string>
+
+    <!-- Feature: Entry Editor -->
+    <string name="entry_editor_prompt">What\'s on your mind?</string>
+    <string name="entry_editor_error_not_found">Entry not found</string>
+    <string name="entry_editor_cd_add_tag">Add tag</string>
+    <string name="entry_editor_cd_select_emoji">Select Emoji</string>
+    <string name="entry_editor_cd_add_media">Add media</string>
+    <string name="entry_editor_cd_remove_media">Remove media %1$s</string>
+    <string name="entry_editor_tag_placeholder">Enter tag name</string>
+    <string name="entry_editor_tag_create">Create #%1$s</string>
+    <string name="entry_editor_emoji_picker_title">Emoji</string>
+    <string name="entry_editor_emoji_remove">Remove</string>
+    <string name="entry_editor_media_picker_title">Add media</string>
+    <string name="entry_editor_media_take_photo">Take Photo</string>
+    <string name="entry_editor_media_choose_gallery">Choose from Gallery</string>
+
+    <!-- Feature: Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_appearance_title">Appearance</string>
     <string name="settings_appearance_subtitle">Theme</string>
-    <string name="settings_backup_restore_title">Backup &amp; Restore</string>
-    <string name="settings_backup_restore_subtitle">Backup &amp; Restore</string>
-    <string name="settings_backup_desc">Export all your journal data and media to a ZIP file.</string>
-    <string name="settings_restore_desc">Restore your journal data and media from a previously exported ZIP file. WARNING: This will overwrite all your current entries, tags, and media.</string>
-    <string name="settings_backup_btn">Export Backup</string>
-    <string name="settings_restore_btn">Restore Backup</string>
-    <string name="settings_backup_restoring">Restoring backup...</string>
+    <string name="settings_backup_title">Backup &amp; Restore</string>
+    <string name="settings_backup_subtitle">Backup &amp; Restore</string>
+    <string name="settings_backup_export_title">Export Data</string>
+    <string name="settings_backup_export_desc">Export all your journal data and media to a ZIP file.</string>
+    <string name="settings_backup_export_action">Create Backup</string>
     <string name="settings_backup_exporting">Creating backup...</string>
-    <string name="settings_export_data_title">Export Data</string>
-    <string name="settings_restore_data_title">Restore Data</string>
-    <string name="settings_restore_data_subtitle">Import data from a previously saved backup file.</string>
-    <string name="settings_create_backup">Create Backup</string>
-    <string name="settings_select_backup_file">Select Backup file</string>
+    <string name="settings_backup_restore_title">Restore Data</string>
+    <string name="settings_backup_restore_subtitle">Import data from a previously saved backup file.</string>
+    <string name="settings_backup_restore_dialog_desc">Restore your journal data and media from a previously exported ZIP file. WARNING: This will overwrite all your current entries, tags, and media.</string>
+    <string name="settings_backup_restore_action">Restore Backup</string>
+    <string name="settings_backup_restoring">Restoring backup...</string>
+    <string name="settings_backup_select_file">Select Backup file</string>
     <string name="settings_about_title">About</string>
     <string name="settings_about_subtitle">%1$s %2$s</string>
 </resources>

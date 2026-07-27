@@ -40,13 +40,13 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.cancel_btn
+import vn.id.tozydev.tusu.generated.resources.action_cancel
+import vn.id.tozydev.tusu.generated.resources.action_now
+import vn.id.tozydev.tusu.generated.resources.action_ok
 import vn.id.tozydev.tusu.generated.resources.ic_keyboard_24px
 import vn.id.tozydev.tusu.generated.resources.ic_schedule_24px
-import vn.id.tozydev.tusu.generated.resources.now_btn
-import vn.id.tozydev.tusu.generated.resources.ok_btn
+import vn.id.tozydev.tusu.generated.resources.time_picker_cd_toggle_type
 import vn.id.tozydev.tusu.generated.resources.time_picker_title
-import vn.id.tozydev.tusu.generated.resources.time_picker_type_toggle_desc
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -116,7 +116,7 @@ fun TimePickerModal(
                                 Modifier.size(ButtonDefaults.ExtraSmallIconSize)
                                     .padding(end = ButtonDefaults.ExtraSmallIconSpacing),
                         )
-                        Text(stringResource(Res.string.now_btn))
+                        Text(stringResource(Res.string.action_now))
                     }
                 }
 
@@ -131,17 +131,17 @@ fun TimePickerModal(
                         Icon(
                             painter = painterResource(toggleIcon),
                             contentDescription =
-                                stringResource(Res.string.time_picker_type_toggle_desc),
+                                stringResource(Res.string.time_picker_cd_toggle_type),
                         )
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(onClick = onDismissRequest) {
-                        Text(stringResource(Res.string.cancel_btn))
+                        Text(stringResource(Res.string.action_cancel))
                     }
                     TextButton(
                         onClick = { onConfirm(timePickerState.hour, timePickerState.minute) }
                     ) {
-                        Text(stringResource(Res.string.ok_btn))
+                        Text(stringResource(Res.string.action_ok))
                     }
                 }
             }

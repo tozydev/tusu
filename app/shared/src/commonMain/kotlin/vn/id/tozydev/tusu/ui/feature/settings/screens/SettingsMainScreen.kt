@@ -24,8 +24,8 @@ import vn.id.tozydev.tusu.generated.resources.settings_about_subtitle
 import vn.id.tozydev.tusu.generated.resources.settings_about_title
 import vn.id.tozydev.tusu.generated.resources.settings_appearance_subtitle
 import vn.id.tozydev.tusu.generated.resources.settings_appearance_title
-import vn.id.tozydev.tusu.generated.resources.settings_backup_restore_subtitle
-import vn.id.tozydev.tusu.generated.resources.settings_backup_restore_title
+import vn.id.tozydev.tusu.generated.resources.settings_backup_subtitle
+import vn.id.tozydev.tusu.generated.resources.settings_backup_title
 import vn.id.tozydev.tusu.ui.model.UiText
 
 private data class SettingsItem(
@@ -52,8 +52,8 @@ fun SettingsMainScreen(
                 onClick = onNavigateToAppearance,
             ),
             SettingsItem(
-                title = UiText(Res.string.settings_backup_restore_title),
-                subtitle = UiText(Res.string.settings_backup_restore_subtitle),
+                title = UiText(Res.string.settings_backup_title),
+                subtitle = UiText(Res.string.settings_backup_subtitle),
                 iconRes = Res.drawable.ic_backup_24px,
                 onClick = onNavigateToBackupAndRestore,
             ),

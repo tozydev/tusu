@@ -42,21 +42,21 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.cancel_btn
+import vn.id.tozydev.tusu.generated.resources.action_cancel
 import vn.id.tozydev.tusu.generated.resources.ic_download_24px
 import vn.id.tozydev.tusu.generated.resources.ic_save_24px
 import vn.id.tozydev.tusu.generated.resources.ic_upload_24px
 import vn.id.tozydev.tusu.generated.resources.ic_upload_file_24px
-import vn.id.tozydev.tusu.generated.resources.settings_backup_desc
+import vn.id.tozydev.tusu.generated.resources.settings_backup_export_action
+import vn.id.tozydev.tusu.generated.resources.settings_backup_export_desc
+import vn.id.tozydev.tusu.generated.resources.settings_backup_export_title
 import vn.id.tozydev.tusu.generated.resources.settings_backup_exporting
+import vn.id.tozydev.tusu.generated.resources.settings_backup_restore_action
+import vn.id.tozydev.tusu.generated.resources.settings_backup_restore_dialog_desc
+import vn.id.tozydev.tusu.generated.resources.settings_backup_restore_subtitle
+import vn.id.tozydev.tusu.generated.resources.settings_backup_restore_title
 import vn.id.tozydev.tusu.generated.resources.settings_backup_restoring
-import vn.id.tozydev.tusu.generated.resources.settings_create_backup
-import vn.id.tozydev.tusu.generated.resources.settings_export_data_title
-import vn.id.tozydev.tusu.generated.resources.settings_restore_btn
-import vn.id.tozydev.tusu.generated.resources.settings_restore_data_subtitle
-import vn.id.tozydev.tusu.generated.resources.settings_restore_data_title
-import vn.id.tozydev.tusu.generated.resources.settings_restore_desc
-import vn.id.tozydev.tusu.generated.resources.settings_select_backup_file
+import vn.id.tozydev.tusu.generated.resources.settings_backup_select_file
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -123,13 +123,13 @@ fun SettingsBackupScreen(
             SettingsMenuLink(
                 title = {
                     Text(
-                        stringResource(Res.string.settings_export_data_title),
+                        stringResource(Res.string.settings_backup_export_title),
                         fontWeight = FontWeight.SemiBold,
                     )
                 },
                 subtitle = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(stringResource(Res.string.settings_backup_desc))
+                        Text(stringResource(Res.string.settings_backup_export_desc))
                         Button(
                             onClick = {
                                 if (!isExporting && !isImporting) {
@@ -158,7 +158,7 @@ fun SettingsBackupScreen(
                                         Modifier.size(ButtonDefaults.SmallIconSize)
                                             .padding(end = 4.dp),
                                 )
-                                Text(stringResource(Res.string.settings_create_backup))
+                                Text(stringResource(Res.string.settings_backup_export_action))
                             }
                         }
                     }
@@ -181,13 +181,13 @@ fun SettingsBackupScreen(
             SettingsMenuLink(
                 title = {
                     Text(
-                        stringResource(Res.string.settings_restore_data_title),
+                        stringResource(Res.string.settings_backup_restore_title),
                         fontWeight = FontWeight.SemiBold,
                     )
                 },
                 subtitle = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(stringResource(Res.string.settings_restore_data_subtitle))
+                        Text(stringResource(Res.string.settings_backup_restore_subtitle))
                         OutlinedButton(
                             onClick = {
                                 if (!isExporting && !isImporting) {
@@ -212,7 +212,7 @@ fun SettingsBackupScreen(
                                         Modifier.size(ButtonDefaults.SmallIconSize)
                                             .padding(end = 4.dp),
                                 )
-                                Text(stringResource(Res.string.settings_select_backup_file))
+                                Text(stringResource(Res.string.settings_backup_select_file))
                             }
                         }
                     }
@@ -252,7 +252,7 @@ fun SettingsBackupScreen(
                             containerColor = MaterialTheme.colorScheme.error
                         ),
                 ) {
-                    Text(stringResource(Res.string.settings_restore_btn))
+                    Text(stringResource(Res.string.settings_backup_restore_action))
                 }
             },
             dismissButton = {
@@ -262,11 +262,11 @@ fun SettingsBackupScreen(
                         selectedRestoreFile = null
                     }
                 ) {
-                    Text(stringResource(Res.string.cancel_btn))
+                    Text(stringResource(Res.string.action_cancel))
                 }
             },
-            title = { Text(stringResource(Res.string.settings_restore_btn)) },
-            text = { Text(stringResource(Res.string.settings_restore_desc)) },
+            title = { Text(stringResource(Res.string.settings_backup_restore_action)) },
+            text = { Text(stringResource(Res.string.settings_backup_restore_dialog_desc)) },
         )
     }
 }

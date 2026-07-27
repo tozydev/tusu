@@ -27,8 +27,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.emoji2.emojipicker.EmojiPickerView
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.remove_current_emoji
-import vn.id.tozydev.tusu.generated.resources.select_emoji_title
+import vn.id.tozydev.tusu.generated.resources.entry_editor_emoji_picker_title
+import vn.id.tozydev.tusu.generated.resources.entry_editor_emoji_remove
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +55,7 @@ actual fun EmojiPickerModal(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
-                        text = stringResource(Res.string.select_emoji_title),
+                        text = stringResource(Res.string.entry_editor_emoji_picker_title),
                         style = MaterialTheme.typography.titleMediumEmphasized,
                     )
 
@@ -86,7 +86,7 @@ actual fun EmojiPickerModal(
                         }
                     ) {
                         Text(
-                            text = stringResource(Res.string.remove_current_emoji),
+                            text = stringResource(Res.string.entry_editor_emoji_remove),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.labelLarge,
                         )

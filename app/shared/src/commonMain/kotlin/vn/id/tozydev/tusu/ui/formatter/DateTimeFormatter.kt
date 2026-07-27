@@ -16,9 +16,9 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.StringResource
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.format_date_full
-import vn.id.tozydev.tusu.generated.resources.format_date_today
-import vn.id.tozydev.tusu.generated.resources.format_date_yesterday
+import vn.id.tozydev.tusu.generated.resources.datetime_full
+import vn.id.tozydev.tusu.generated.resources.datetime_today
+import vn.id.tozydev.tusu.generated.resources.datetime_yesterday
 import vn.id.tozydev.tusu.generated.resources.month_apr
 import vn.id.tozydev.tusu.generated.resources.month_aug
 import vn.id.tozydev.tusu.generated.resources.month_dec
@@ -54,11 +54,11 @@ interface DateTimeFormatter {
 
         override fun formatRelativeDate(date: LocalDate): UiText {
             return when (date.daysUntil(clock.todayIn(timeZone))) {
-                TODAY -> UiText(Res.string.format_date_today)
-                YESTERDAY -> UiText(Res.string.format_date_yesterday)
+                TODAY -> UiText(Res.string.datetime_today)
+                YESTERDAY -> UiText(Res.string.datetime_yesterday)
                 else ->
                     UiText(
-                        Res.string.format_date_full,
+                        Res.string.datetime_full,
                         UiText(getShortMonthResource(date.month)),
                         date.day,
                         date.year,

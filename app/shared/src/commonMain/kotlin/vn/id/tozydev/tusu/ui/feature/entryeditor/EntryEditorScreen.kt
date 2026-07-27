@@ -76,13 +76,15 @@ import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.domain.model.Media
 import vn.id.tozydev.tusu.domain.model.Tag
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.add_media_desc
-import vn.id.tozydev.tusu.generated.resources.add_tag_desc
-import vn.id.tozydev.tusu.generated.resources.back_desc
-import vn.id.tozydev.tusu.generated.resources.delete_btn
-import vn.id.tozydev.tusu.generated.resources.done_btn
-import vn.id.tozydev.tusu.generated.resources.edit_btn
-import vn.id.tozydev.tusu.generated.resources.entry_content_prompt
+import vn.id.tozydev.tusu.generated.resources.action_delete
+import vn.id.tozydev.tusu.generated.resources.action_done
+import vn.id.tozydev.tusu.generated.resources.action_edit
+import vn.id.tozydev.tusu.generated.resources.cd_back
+import vn.id.tozydev.tusu.generated.resources.cd_more_menu
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_add_media
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_add_tag
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_select_emoji
+import vn.id.tozydev.tusu.generated.resources.entry_editor_prompt
 import vn.id.tozydev.tusu.generated.resources.ic_add_24px
 import vn.id.tozydev.tusu.generated.resources.ic_add_photo_alternate_24px
 import vn.id.tozydev.tusu.generated.resources.ic_add_reaction_24px
@@ -91,8 +93,6 @@ import vn.id.tozydev.tusu.generated.resources.ic_delete_24px
 import vn.id.tozydev.tusu.generated.resources.ic_more_vert_24px
 import vn.id.tozydev.tusu.generated.resources.ic_schedule_24px
 import vn.id.tozydev.tusu.generated.resources.ic_sell_24px
-import vn.id.tozydev.tusu.generated.resources.more_menu_desc
-import vn.id.tozydev.tusu.generated.resources.select_emoji_desc
 import vn.id.tozydev.tusu.ui.component.DatePickerModal
 import vn.id.tozydev.tusu.ui.component.TimePickerModal
 import vn.id.tozydev.tusu.ui.feature.entryeditor.components.EmojiPickerModal
@@ -445,7 +445,8 @@ private fun EntryEditorContent(
                             ) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_add_24px),
-                                    contentDescription = stringResource(Res.string.add_tag_desc),
+                                    contentDescription =
+                                        stringResource(Res.string.entry_editor_cd_add_tag),
                                     modifier = Modifier.size(16.dp),
                                 )
                             }
@@ -480,7 +481,7 @@ private fun EntryEditorContent(
                 innerContent()
                 if (contentState.annotatedString.isEmpty()) {
                     Text(
-                        text = stringResource(Res.string.entry_content_prompt),
+                        text = stringResource(Res.string.entry_editor_prompt),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     )
@@ -553,7 +554,7 @@ private fun EntryEditorTopBar(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_arrow_back_24px),
-                        contentDescription = stringResource(Res.string.back_desc),
+                        contentDescription = stringResource(Res.string.cd_back),
                     )
                 }
 
@@ -572,7 +573,8 @@ private fun EntryEditorTopBar(
                     } else {
                         Icon(
                             painter = painterResource(Res.drawable.ic_add_reaction_24px),
-                            contentDescription = stringResource(Res.string.select_emoji_desc),
+                            contentDescription =
+                                stringResource(Res.string.entry_editor_cd_select_emoji),
                         )
                     }
                 }
@@ -587,7 +589,7 @@ private fun EntryEditorTopBar(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_add_photo_alternate_24px),
-                        contentDescription = stringResource(Res.string.add_media_desc),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_add_media),
                     )
                 }
             }
@@ -596,12 +598,12 @@ private fun EntryEditorTopBar(
             when (editorMode) {
                 EntryEditorMode.ReadOnly -> {
                     Button(onClick = { onModeSwitch(EntryEditorMode.Edit) }) {
-                        Text(stringResource(Res.string.edit_btn))
+                        Text(stringResource(Res.string.action_edit))
                     }
                 }
                 EntryEditorMode.Edit -> {
                     Button(onClick = { onModeSwitch(EntryEditorMode.ReadOnly) }) {
-                        Text(stringResource(Res.string.done_btn))
+                        Text(stringResource(Res.string.action_done))
                     }
                 }
             }
@@ -609,7 +611,7 @@ private fun EntryEditorTopBar(
             IconButton(onClick = { moreMenuExpanded = true }) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_more_vert_24px),
-                    contentDescription = stringResource(Res.string.more_menu_desc),
+                    contentDescription = stringResource(Res.string.cd_more_menu),
                 )
             }
 
@@ -644,7 +646,7 @@ private fun MoreDropdownMenu(
         onDismissRequest = onDismiss,
     ) {
         DropdownMenuItem(
-            text = { Text(stringResource(Res.string.delete_btn)) },
+            text = { Text(stringResource(Res.string.action_delete)) },
             leadingIcon = {
                 Icon(painterResource(Res.drawable.ic_delete_24px), contentDescription = null)
             },

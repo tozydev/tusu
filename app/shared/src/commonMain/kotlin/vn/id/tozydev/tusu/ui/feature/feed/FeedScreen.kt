@@ -45,11 +45,11 @@ import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.domain.model.Tag
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.app_name
-import vn.id.tozydev.tusu.generated.resources.fab_compose
+import vn.id.tozydev.tusu.generated.resources.feed_cd_settings
+import vn.id.tozydev.tusu.generated.resources.feed_fab_compose
+import vn.id.tozydev.tusu.generated.resources.feed_tag_all
 import vn.id.tozydev.tusu.generated.resources.ic_filled_edit_24px
 import vn.id.tozydev.tusu.generated.resources.ic_settings_24px
-import vn.id.tozydev.tusu.generated.resources.settings_desc
-import vn.id.tozydev.tusu.generated.resources.tag_filter_all
 import vn.id.tozydev.tusu.ui.feature.feed.components.EntryCard
 import vn.id.tozydev.tusu.ui.feature.feed.components.TagFilterChip
 import vn.id.tozydev.tusu.ui.formatter.DateTimeFormatter
@@ -170,7 +170,7 @@ private fun FeedItemDateHeader(item: FeedItemUi.DateHeader) {
     ) {
         Text(
             text = item.text.asString(),
-            style = MaterialTheme.typography.titleLargeEmphasized,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -187,7 +187,7 @@ private fun TagFiltersRow(tags: List<Tag>, tagIdFilter: Uuid?, setTagIdFilter: (
     ) {
         item {
             TagFilterChip(
-                text = stringResource(Res.string.tag_filter_all),
+                text = stringResource(Res.string.feed_tag_all),
                 isSelected = tagIdFilter == null,
                 onClick = { setTagIdFilter(null) },
             )
@@ -209,7 +209,7 @@ private fun ComposeEntryFab(onNavigateToEditor: (Uuid?) -> Unit, isScrollingUp: 
         onClick = { onNavigateToEditor(null) },
         expanded = isScrollingUp,
         icon = { Icon(painterResource(Res.drawable.ic_filled_edit_24px), null) },
-        text = { Text(stringResource(Res.string.fab_compose)) },
+        text = { Text(stringResource(Res.string.feed_fab_compose)) },
     )
 }
 
@@ -222,7 +222,7 @@ private fun FeedTopAppBar(
         title = {
             Text(
                 text = stringResource(Res.string.app_name),
-                style = MaterialTheme.typography.displaySmallEmphasized,
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
             )
         },
@@ -238,7 +238,7 @@ private fun FeedTopAppBar(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_settings_24px),
-                    contentDescription = stringResource(Res.string.settings_desc),
+                    contentDescription = stringResource(Res.string.feed_cd_settings),
                 )
             }
         },

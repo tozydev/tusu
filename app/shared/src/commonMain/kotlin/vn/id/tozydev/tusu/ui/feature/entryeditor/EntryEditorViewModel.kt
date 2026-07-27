@@ -43,7 +43,7 @@ import vn.id.tozydev.tusu.domain.repository.EntryRepository
 import vn.id.tozydev.tusu.domain.repository.MediaRepository
 import vn.id.tozydev.tusu.domain.repository.TagRepository
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.error_entry_not_found
+import vn.id.tozydev.tusu.generated.resources.entry_editor_error_not_found
 import vn.id.tozydev.tusu.ui.model.UiText
 
 @AssistedInject
@@ -83,7 +83,7 @@ class EntryEditorViewModel(
             val entry = entryRepository.getEntry(id)
             if (entry == null) {
                 _uiState.update {
-                    EntryEditorUiState.Error(UiText(Res.string.error_entry_not_found))
+                    EntryEditorUiState.Error(UiText(Res.string.entry_editor_error_not_found))
                 }
             } else {
                 contentState.setMarkdown(entry.content)

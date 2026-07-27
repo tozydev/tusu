@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.DialogProperties
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.cancel_btn
-import vn.id.tozydev.tusu.generated.resources.ok_btn
+import vn.id.tozydev.tusu.generated.resources.action_cancel
+import vn.id.tozydev.tusu.generated.resources.action_ok
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,12 +29,12 @@ fun DatePickerModal(
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(onClick = { onConfirm(datePickerState.selectedDateMillis) }) {
-                Text(stringResource(Res.string.ok_btn))
+                Text(stringResource(Res.string.action_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text(stringResource(Res.string.cancel_btn))
+                Text(stringResource(Res.string.action_cancel))
             }
         },
         properties = DialogProperties(usePlatformDefaultWidth = false),
