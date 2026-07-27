@@ -13,7 +13,15 @@ sealed interface UiText {
     fun asString(): String {
         return when (this) {
             is Dynamic -> value
-            is Resource -> stringResource(resource, *args.toTypedArray())
+            is Resource ->
+                stringResource(
+                    resource,
+                    *args
+                        .map { arg ->
+                            if (arg is UiText) arg.asString() else arg
+                        }
+                        .toTypedArray(),
+                )
         }
     }
 }
