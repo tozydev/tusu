@@ -28,8 +28,6 @@
     <string name="tag_filter_all">All</string>
     <string name="format_date_today">Today</string>
     <string name="format_date_yesterday">Yesterday</string>
-    <string name="format_date_days_ago">%1$d days ago</string>
-    <string name="format_date_weeks_ago">%1$d weeks ago</string>
     <string name="settings_title">Settings</string>
     <string name="settings_appearance_title">Appearance</string>
     <string name="settings_appearance_subtitle">Theme</string>

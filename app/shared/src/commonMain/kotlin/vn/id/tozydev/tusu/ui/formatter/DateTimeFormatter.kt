@@ -15,9 +15,7 @@ import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import vn.id.tozydev.tusu.generated.resources.Res
-import vn.id.tozydev.tusu.generated.resources.format_date_days_ago
 import vn.id.tozydev.tusu.generated.resources.format_date_today
-import vn.id.tozydev.tusu.generated.resources.format_date_weeks_ago
 import vn.id.tozydev.tusu.generated.resources.format_date_yesterday
 import vn.id.tozydev.tusu.ui.model.UiText
 
@@ -50,15 +48,9 @@ interface DateTimeFormatter {
         }
 
         override fun formatRelativeDate(date: LocalDate): UiText {
-            return when (val daysBetween = date.daysUntil(clock.todayIn(timeZone))) {
+            return when (date.daysUntil(clock.todayIn(timeZone))) {
                 TODAY -> UiText(Res.string.format_date_today)
                 YESTERDAY -> UiText(Res.string.format_date_yesterday)
-                in MIN_DAYS_AGO..MAX_DAYS_AGO ->
-                    UiText(Res.string.format_date_days_ago, daysBetween)
-                in MIN_WEEKS_AGO..MAX_WEEKS_AGO -> {
-                    val weeks = daysBetween / DAYS_IN_WEEK
-                    UiText(Res.string.format_date_weeks_ago, weeks)
-                }
                 else -> UiText(relativeDateFormat.format(date))
             }
         }
@@ -73,11 +65,6 @@ interface DateTimeFormatter {
         companion object {
             private const val TODAY = 0
             private const val YESTERDAY = 1
-            private const val MIN_DAYS_AGO = 2
-            private const val MAX_DAYS_AGO = 6
-            private const val MIN_WEEKS_AGO = 7
-            private const val MAX_WEEKS_AGO = 29
-            private const val DAYS_IN_WEEK = 7
         }
     }
 }
