@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -14,9 +15,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
@@ -24,8 +27,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FlexibleBottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -50,19 +55,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import com.mohamedrejeb.richeditor.model.HeadingStyle
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 import kotlin.time.Duration.Companion.milliseconds
@@ -83,16 +94,41 @@ import vn.id.tozydev.tusu.generated.resources.cd_back
 import vn.id.tozydev.tusu.generated.resources.cd_more_menu
 import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_add_media
 import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_add_tag
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_bold
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_bullet_list
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_code
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_h1
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_h2
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_h3
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_italic
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_ordered_list
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_quote
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_redo
 import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_select_emoji
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_strikethrough
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_timestamp
+import vn.id.tozydev.tusu.generated.resources.entry_editor_cd_undo
 import vn.id.tozydev.tusu.generated.resources.entry_editor_prompt
 import vn.id.tozydev.tusu.generated.resources.ic_add_24px
 import vn.id.tozydev.tusu.generated.resources.ic_add_photo_alternate_24px
 import vn.id.tozydev.tusu.generated.resources.ic_add_reaction_24px
 import vn.id.tozydev.tusu.generated.resources.ic_arrow_back_24px
+import vn.id.tozydev.tusu.generated.resources.ic_code_24px
 import vn.id.tozydev.tusu.generated.resources.ic_delete_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_bold_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_h1_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_h2_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_h3_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_italic_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_list_bulleted_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_list_numbered_rtl_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_quote_24px
+import vn.id.tozydev.tusu.generated.resources.ic_format_strikethrough_24px
 import vn.id.tozydev.tusu.generated.resources.ic_more_vert_24px
+import vn.id.tozydev.tusu.generated.resources.ic_redo_24px
 import vn.id.tozydev.tusu.generated.resources.ic_schedule_24px
 import vn.id.tozydev.tusu.generated.resources.ic_sell_24px
+import vn.id.tozydev.tusu.generated.resources.ic_undo_24px
 import vn.id.tozydev.tusu.ui.component.DatePickerModal
 import vn.id.tozydev.tusu.ui.component.TimePickerModal
 import vn.id.tozydev.tusu.ui.feature.entryeditor.components.EmojiPickerModal
@@ -146,6 +182,7 @@ fun EntryEditorScreen(
     )
 
     var showMediaPicker by remember { mutableStateOf(false) }
+    var showTagPicker by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -156,7 +193,6 @@ fun EntryEditorScreen(
                 editorMode = loadedUiState?.mode ?: EntryEditorMode.ReadOnly,
                 emoji = loadedUiState?.emoji,
                 onEmojiSelected = viewModel::setEmoji,
-                onAddMedia = { showMediaPicker = true },
                 onNavigateBack = handleBack,
                 onModeSwitch = viewModel::setEditorMode,
                 onDeleteEntry = {
@@ -164,6 +200,18 @@ fun EntryEditorScreen(
                     onNavigateBack()
                 },
             )
+        },
+        bottomBar = {
+            val loadedUiState = uiState as? EntryEditorUiState.Loaded
+            if (loadedUiState?.mode == EntryEditorMode.Edit) {
+                EntryEditorBottomBar(
+                    isContentFocus = isContentFocus,
+                    contentState = viewModel.contentState,
+                    onAddMedia = { showMediaPicker = true },
+                    onOpenTagPicker = { showTagPicker = true },
+                    recordedAt = loadedUiState.recordedAt,
+                )
+            }
         },
     ) { innerPadding ->
         val layoutDirection = LocalLayoutDirection.current
@@ -204,11 +252,8 @@ fun EntryEditorScreen(
                         onRecordedDateSelect = viewModel::setRecordedDate,
                         recordedTime = loadedUiState.recordedTime,
                         onRecordedTimeSelect = viewModel::setRecordedTime,
-                        allTags = allTags,
                         tags = loadedUiState.tags,
-                        onTagSelect = viewModel::selectTag,
-                        onTagDeselect = viewModel::deselectTag,
-                        onCreateTag = viewModel::createAndSelectTag,
+                        onOpenTagPicker = { showTagPicker = true },
                         contentState = viewModel.contentState,
                         contentFocusRequester = contentFocusRequester,
                         onContentBlur = viewModel::saveContent,
@@ -238,6 +283,18 @@ fun EntryEditorScreen(
             },
         )
     }
+
+    val loadedState = uiState as? EntryEditorUiState.Loaded
+    if (showTagPicker && loadedState != null) {
+        TagPickerModal(
+            allTags = allTags,
+            selectedTags = loadedState.tags,
+            onTagSelect = viewModel::selectTag,
+            onTagDeselect = viewModel::deselectTag,
+            onCreateTag = viewModel::createAndSelectTag,
+            onDismiss = { showTagPicker = false },
+        )
+    }
 }
 
 context(dateTimeFormatter: DateTimeFormatter)
@@ -250,11 +307,8 @@ private fun EntryEditorContent(
     onRecordedDateSelect: (epochMillis: Long) -> Unit,
     recordedTime: LocalTime,
     onRecordedTimeSelect: (LocalTime) -> Unit,
-    allTags: List<Tag>,
     tags: List<Tag>,
-    onTagSelect: (Uuid) -> Unit,
-    onTagDeselect: (Uuid) -> Unit,
-    onCreateTag: (String) -> Unit,
+    onOpenTagPicker: () -> Unit,
     contentState: RichTextState,
     contentFocusRequester: FocusRequester,
     onContentBlur: () -> Unit,
@@ -270,7 +324,6 @@ private fun EntryEditorContent(
     var viewportHeight by remember { mutableIntStateOf(0) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var showTagPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(contentState.selection, viewportHeight, isFocused, textLayoutResult) {
         if (isFocused) {
@@ -285,10 +338,6 @@ private fun EntryEditorContent(
                 bringIntoViewRequester.bringIntoView(cursorRect)
             }
         }
-    }
-
-    fun openTagPicker() {
-        showTagPicker = true
     }
 
     val formattedShortMonth =
@@ -390,7 +439,7 @@ private fun EntryEditorContent(
 
                     if (tags.isEmpty()) {
                         Surface(
-                            onClick = ::openTagPicker,
+                            onClick = onOpenTagPicker,
                             shape = MaterialTheme.shapes.small,
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -411,7 +460,7 @@ private fun EntryEditorContent(
 
                     tags.forEach {
                         Surface(
-                            onClick = ::openTagPicker,
+                            onClick = onOpenTagPicker,
                             shape = MaterialTheme.shapes.small,
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -433,7 +482,7 @@ private fun EntryEditorContent(
 
                     if (editorMode == EntryEditorMode.Edit) {
                         Surface(
-                            onClick = ::openTagPicker,
+                            onClick = onOpenTagPicker,
                             shape = MaterialTheme.shapes.small,
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -512,16 +561,6 @@ private fun EntryEditorContent(
                 initialMinute = recordedTime.minute,
             )
         }
-        showTagPicker -> {
-            TagPickerModal(
-                allTags = allTags,
-                selectedTags = tags,
-                onTagSelect = onTagSelect,
-                onTagDeselect = onTagDeselect,
-                onCreateTag = onCreateTag,
-                onDismiss = { showTagPicker = false },
-            )
-        }
     }
 }
 
@@ -530,7 +569,6 @@ private fun EntryEditorTopBar(
     editorMode: EntryEditorMode,
     emoji: String?,
     onEmojiSelected: (String?) -> Unit,
-    onAddMedia: () -> Unit,
     onNavigateBack: () -> Unit,
     onModeSwitch: (EntryEditorMode) -> Unit,
     onDeleteEntry: () -> Unit,
@@ -577,20 +615,6 @@ private fun EntryEditorTopBar(
                                 stringResource(Res.string.entry_editor_cd_select_emoji),
                         )
                     }
-                }
-
-                FilledIconButton(
-                    onClick = onAddMedia,
-                    colors =
-                        IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add_photo_alternate_24px),
-                        contentDescription = stringResource(Res.string.entry_editor_cd_add_media),
-                    )
                 }
             }
         },
@@ -656,6 +680,261 @@ private fun MoreDropdownMenu(
                     textColor = MaterialTheme.colorScheme.error,
                     leadingIconColor = MaterialTheme.colorScheme.error,
                 ),
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+context(dateTimeFormatter: DateTimeFormatter)
+@Composable
+private fun EntryEditorBottomBar(
+    isContentFocus: Boolean,
+    contentState: RichTextState,
+    onAddMedia: () -> Unit,
+    onOpenTagPicker: () -> Unit,
+    recordedAt: Instant,
+    modifier: Modifier = Modifier,
+) {
+    FlexibleBottomAppBar(
+        modifier = modifier.fillMaxWidth().imePadding(),
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+        expandedHeight = 52.dp,
+    ) {
+        LazyRow(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            item(key = "add_media") {
+                IconButton(
+                    onClick = onAddMedia,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add_photo_alternate_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_add_media),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+
+            item(key = "add_tag") {
+                IconButton(
+                    onClick = onOpenTagPicker,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_sell_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_add_tag),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+
+            if (isContentFocus) {
+                item(key = "h1") {
+                    RichTextStyleButton(
+                        onClick = {
+                            if (contentState.currentHeadingStyle != HeadingStyle.H1) {
+                                contentState.setHeadingStyle(HeadingStyle.H1)
+                            } else {
+                                contentState.setHeadingStyle(HeadingStyle.Normal)
+                            }
+                        },
+                        isSelected = contentState.currentHeadingStyle == HeadingStyle.H1,
+                        icon = painterResource(Res.drawable.ic_format_h1_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_h1),
+                    )
+                }
+
+                item(key = "h2") {
+                    RichTextStyleButton(
+                        onClick = {
+                            if (contentState.currentHeadingStyle != HeadingStyle.H2) {
+                                contentState.setHeadingStyle(HeadingStyle.H2)
+                            } else {
+                                contentState.setHeadingStyle(HeadingStyle.Normal)
+                            }
+                        },
+                        isSelected = contentState.currentHeadingStyle == HeadingStyle.H2,
+                        icon = painterResource(Res.drawable.ic_format_h2_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_h2),
+                    )
+                }
+
+                item(key = "h3") {
+                    RichTextStyleButton(
+                        onClick = {
+                            if (contentState.currentHeadingStyle != HeadingStyle.H3) {
+                                contentState.setHeadingStyle(HeadingStyle.H3)
+                            } else {
+                                contentState.setHeadingStyle(HeadingStyle.Normal)
+                            }
+                        },
+                        isSelected = contentState.currentHeadingStyle == HeadingStyle.H3,
+                        icon = painterResource(Res.drawable.ic_format_h3_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_h3),
+                    )
+                }
+
+                item(key = "bold") {
+                    RichTextStyleButton(
+                        onClick = {
+                            contentState.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                        },
+                        isSelected = contentState.currentSpanStyle.fontWeight == FontWeight.Bold,
+                        icon = painterResource(Res.drawable.ic_format_bold_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_bold),
+                    )
+                }
+
+                item(key = "italic") {
+                    RichTextStyleButton(
+                        onClick = {
+                            contentState.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
+                        },
+                        isSelected = contentState.currentSpanStyle.fontStyle == FontStyle.Italic,
+                        icon = painterResource(Res.drawable.ic_format_italic_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_italic),
+                    )
+                }
+
+                item(key = "strikethrough") {
+                    RichTextStyleButton(
+                        onClick = {
+                            contentState.toggleSpanStyle(
+                                SpanStyle(textDecoration = TextDecoration.LineThrough)
+                            )
+                        },
+                        isSelected =
+                            contentState.currentSpanStyle.textDecoration?.contains(
+                                TextDecoration.LineThrough
+                            ) == true,
+                        icon = painterResource(Res.drawable.ic_format_strikethrough_24px),
+                        contentDescription =
+                            stringResource(Res.string.entry_editor_cd_strikethrough),
+                    )
+                }
+
+                item(key = "bullet_list") {
+                    RichTextStyleButton(
+                        onClick = { contentState.toggleUnorderedList() },
+                        isSelected = contentState.isUnorderedList,
+                        icon = painterResource(Res.drawable.ic_format_list_bulleted_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_bullet_list),
+                    )
+                }
+
+                item(key = "ordered_list") {
+                    RichTextStyleButton(
+                        onClick = { contentState.toggleOrderedList() },
+                        isSelected = contentState.isOrderedList,
+                        icon = painterResource(Res.drawable.ic_format_list_numbered_rtl_24px),
+                        contentDescription =
+                            stringResource(Res.string.entry_editor_cd_ordered_list),
+                    )
+                }
+
+                item(key = "quote") {
+                    RichTextStyleButton(
+                        onClick = {
+                            val current = contentState.toMarkdown()
+                            contentState.setMarkdown("$current\n> ")
+                        },
+                        isSelected = false,
+                        icon = painterResource(Res.drawable.ic_format_quote_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_quote),
+                    )
+                }
+
+                item(key = "code") {
+                    RichTextStyleButton(
+                        onClick = { contentState.toggleCodeSpan() },
+                        isSelected = contentState.isCodeSpan,
+                        icon = painterResource(Res.drawable.ic_code_24px),
+                        contentDescription = stringResource(Res.string.entry_editor_cd_code),
+                    )
+                }
+
+                item(key = "timestamp") {
+                    IconButton(
+                        onClick = {
+                            val timeStr = dateTimeFormatter.formatTime(recordedAt)
+                            contentState.setMarkdown(contentState.toMarkdown() + " [$timeStr] ")
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_schedule_24px),
+                            contentDescription =
+                                stringResource(Res.string.entry_editor_cd_timestamp),
+                        )
+                    }
+                }
+            }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(
+                onClick = { contentState.history.undo() },
+                enabled = contentState.history.canUndo,
+                modifier = Modifier.size(40.dp),
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_undo_24px),
+                    contentDescription = stringResource(Res.string.entry_editor_cd_undo),
+                    modifier = Modifier.size(20.dp),
+                    tint =
+                        if (contentState.history.canUndo) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                )
+            }
+
+            IconButton(
+                onClick = { contentState.history.redo() },
+                enabled = contentState.history.canRedo,
+                modifier = Modifier.size(40.dp),
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_redo_24px),
+                    contentDescription = stringResource(Res.string.entry_editor_cd_redo),
+                    modifier = Modifier.size(20.dp),
+                    tint =
+                        if (contentState.history.canRedo) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RichTextStyleButton(
+    onClick: () -> Unit,
+    isSelected: Boolean,
+    icon: Painter,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+) {
+    IconButton(
+        onClick = onClick,
+        colors =
+            IconButtonDefaults.iconButtonColors(
+                containerColor =
+                    if (isSelected) MaterialTheme.colorScheme.secondaryContainer
+                    else Color.Transparent,
+                contentColor =
+                    if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        modifier = modifier.size(40.dp),
+    ) {
+        Icon(
+            painter = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
         )
     }
 }
