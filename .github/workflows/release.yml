@@ -42,6 +42,8 @@ jobs:
       gradle-args: :app:androidApp:assembleRelease
       upload-artifacts-path: app/androidApp/build/outputs/apk/release/*.apk
       upload-artifacts-name: release-artifacts
+      env-vars: |
+        KEYSTORE_FILE=/home/runner/work/_temp/release.keystore
     secrets:
       github-token: ${{ github.token }}
       keystore-base64: ${{ secrets.KEYSTORE_BASE64 }}
