@@ -9,31 +9,10 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: jetbrains
-          java-version: 25
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
-
-      - name: Grant gradlew execute permission
-        run: chmod +x ./gradlew
-
-      - name: Build Debug APK
-        run: ./gradlew :app:androidApp:assembleDebug
-
-      - name: Upload Debug APK Artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: androidApp-debug-apk
-          path: app/androidApp/build/outputs/apk/debug/*.apk
+  call-build:
+    uses: tozydev/gh-actions/.github/workflows/shared-gradle-build.yml@v1
+    with:
+      gradle-args: :app:androidApp:assembleDebug
+      upload-artifacts-path: app/androidApp/build/outputs/apk/debug/*.apk
+    secrets:
+      github-token: ${{ github.token }}
