@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Tusu</string>
+
+    <string name="label_group_default_kind">Loại</string>
+    <string name="label_group_default_people">Người</string>
+    <string name="label_group_default_trips">Chuyến đi</string>
+    <string name="label_default_achievement">Thành tựu</string>
+    <string name="label_default_lesson">Bài học</string>
+    <string name="label_default_reflection">Reflection</string>
+    <string name="label_default_memory">Kỷ niệm</string>
+    <string name="label_default_gratitude">Biết ơn</string>
 </resources>

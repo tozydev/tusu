@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Tusu</string>
+
+    <string name="label_group_default_kind">Kind</string>
+    <string name="label_group_default_people">People</string>
+    <string name="label_group_default_trips">Trips</string>
+    <string name="label_default_achievement">Achievement</string>
+    <string name="label_default_lesson">Lesson</string>
+    <string name="label_default_reflection">Reflection</string>
+    <string name="label_default_memory">Memory</string>
+    <string name="label_default_gratitude">Gratitude</string>
 </resources>
