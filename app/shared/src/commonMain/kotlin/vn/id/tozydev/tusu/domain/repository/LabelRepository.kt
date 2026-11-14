@@ -21,6 +21,7 @@ interface LabelRepository {
         selection: LabelSelection,
     ): Outcome<LabelGroup, LabelError>
 
+    /** Updates the editable fields; `sortOrder` is ignored, see [reorderGroups]. */
     suspend fun updateGroup(group: LabelGroup): Outcome<Unit, LabelError>
 
     /** Deletes the group and moves its labels to "Khác"; no entry loses a label. */
@@ -31,7 +32,10 @@ interface LabelRepository {
     /** Null [groupId] creates the label in "Khác". */
     suspend fun createLabel(name: String, groupId: Uuid?): Outcome<Label, LabelError>
 
-    /** Also moves the label when its `groupId` changed. */
+    /**
+     * Also moves the label to the end of the new group when its `groupId` changed. `sortOrder` is
+     * ignored, see [reorderLabels].
+     */
     suspend fun updateLabel(label: Label): Outcome<Unit, LabelError>
 
     /** Deletes the label and removes it from every entry. */

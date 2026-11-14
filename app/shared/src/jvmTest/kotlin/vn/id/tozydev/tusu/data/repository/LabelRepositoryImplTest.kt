@@ -150,6 +150,20 @@ class LabelRepositoryImplTest :
             }
 
             context("updateGroup") {
+                test("an edit from a copy taken before a reorder keeps the new order") {
+                    withFixture { f ->
+                        val first = f.group("Loại")
+                        val second = f.group("Người")
+                        f.repo.reorderGroups(listOf(second.id, first.id)).value()
+
+                        // "Anh em" sorts before "Người" by name, so only the stored order keeps
+                        // it second.
+                        f.repo.updateGroup(first.copy(name = "Anh em")).value()
+
+                        f.groupNames() shouldContainExactly listOf("Người", "Anh em")
+                    }
+                }
+
                 test("renaming a group to its own name is not a duplicate") {
                     withFixture { f ->
                         val group = f.group("Loại")
@@ -189,7 +203,8 @@ class LabelRepositoryImplTest :
                         stored.color shouldBe 0x00AA00
                         stored.selection shouldBe LabelSelection.SINGLE
                         stored.showInComposer shouldBe false
-                        stored.sortOrder shouldBe 7
+                        // The order changes only through reorderGroups.
+                        stored.sortOrder shouldBe 0
                         stored.isDefault shouldBe false
                         stored.updatedAt shouldBe start + 5.minutes
                     }
@@ -345,7 +360,8 @@ class LabelRepositoryImplTest :
                         val stored = f.repo.observeLabels().first().single()
                         stored.name shouldBe "Hạnh phúc"
                         stored.isHidden shouldBe true
-                        stored.sortOrder shouldBe 4
+                        // The order changes only through reorderLabels.
+                        stored.sortOrder shouldBe 0
                         stored.isDefault shouldBe false
                         stored.updatedAt shouldBe start + 3.minutes
                     }
@@ -357,6 +373,20 @@ class LabelRepositoryImplTest :
                         f.repo.deleteLabel(vui.id)
 
                         f.repo.updateLabel(vui) shouldBe Outcome.Failure(LabelError.NotFound)
+                    }
+                }
+
+                test("an edit from a copy taken before a reorder keeps the new order") {
+                    withFixture { f ->
+                        val vui = f.label("Vui", null)
+                        val buon = f.label("Buồn", null)
+                        f.repo.reorderLabels(null, listOf(buon.id, vui.id)).value()
+
+                        // "An vui" sorts before "Buồn" by name, so only the stored order keeps
+                        // it second.
+                        f.repo.updateLabel(vui.copy(name = "An vui")).value()
+
+                        f.labelsIn(null) shouldContainExactly listOf("Buồn", "An vui")
                     }
                 }
 

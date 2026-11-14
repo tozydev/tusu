@@ -72,7 +72,8 @@ class LabelRepositoryImpl(private val database: TusuDatabase, private val clock:
         val stored = liveGroup(group.id)
         val cleanName = cleanName(group.name)
         checkGroupNameFree(cleanName, exceptId = group.id)
-        // isDefault and deletedAt are not editable, so they come from the stored row.
+        // isDefault and deletedAt are not editable, and the order changes only through
+        // reorderGroups, so an edit made from an older copy cannot undo a reorder.
         dao.upsertGroup(
             LabelGroupEntity(
                 id = stored.id,
@@ -81,7 +82,7 @@ class LabelRepositoryImpl(private val database: TusuDatabase, private val clock:
                 selection = group.selection,
                 showInComposer = group.showInComposer,
                 isDefault = stored.isDefault,
-                sortOrder = group.sortOrder,
+                sortOrder = stored.sortOrder,
                 updatedAt = clock.now(),
                 deletedAt = stored.deletedAt,
             ),
@@ -138,8 +139,9 @@ class LabelRepositoryImpl(private val database: TusuDatabase, private val clock:
         val targetGroupId = label.groupId
         val moved = targetGroupId != stored.groupId
         if (moved && targetGroupId != null) liveGroup(targetGroupId)
-        // A label that changes group is appended to the end of its new group.
-        val sortOrder = if (moved) nextLabelSortOrder(targetGroupId) else label.sortOrder
+        // A label that changes group is appended to the end of its new group. Otherwise the
+        // order stays as stored: it changes only through reorderLabels.
+        val sortOrder = if (moved) nextLabelSortOrder(targetGroupId) else stored.sortOrder
         dao.upsertLabel(
             LabelEntity(
                 id = stored.id,
