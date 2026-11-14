@@ -5,8 +5,6 @@ import io.kotest.matchers.shouldBe
 
 class CoreCommonTest : ShouldSpec() {
     init {
-        should("say hello to Kotest") {
-            sayHello("Kotest") shouldBe "Hello, Kotest!"
-        }
+        should("say hello to Kotest") { sayHello("Kotest") shouldBe "Hello, Kotest!" }
     }
 }

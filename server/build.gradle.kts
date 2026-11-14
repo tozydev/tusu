@@ -4,9 +4,7 @@ plugins {
     alias(libs.plugins.kotest)
 }
 
-application {
-    mainClass = "vn.id.tozydev.tusu.ApplicationKt"
-}
+application { mainClass = "vn.id.tozydev.tusu.ApplicationKt" }
 
 dependencies {
     api(projects.core)
@@ -19,6 +17,4 @@ dependencies {
     testImplementation(libs.kotest.assertions.core)
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
+tasks.withType<Test> { useJUnitPlatform() }

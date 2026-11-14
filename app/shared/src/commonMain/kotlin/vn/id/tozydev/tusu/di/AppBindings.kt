@@ -15,11 +15,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.datetime.TimeZone
-import vn.id.tozydev.tusu.data.db.EntryDao
-import vn.id.tozydev.tusu.data.db.EntryTagDao
-import vn.id.tozydev.tusu.data.db.MediaDao
-import vn.id.tozydev.tusu.data.db.TagDao
-import vn.id.tozydev.tusu.data.db.TusuDatabase
 
 @BindingContainer
 @ContributesTo(AppScope::class)
@@ -31,14 +26,14 @@ object AppBindings {
     @Provides
     @SingleIn(AppScope::class)
     fun provideMetroViewModelFactory(
-        viewModelProvides: Map<KClass<out ViewModel>, () -> ViewModel>,
+        viewModelProviders: Map<KClass<out ViewModel>, () -> ViewModel>,
         assistedFactoryProviders: Map<KClass<out ViewModel>, () -> ViewModelAssistedFactory>,
         manualAssistedFactoryProviders:
             Map<KClass<out ManualViewModelAssistedFactory>, () -> ManualViewModelAssistedFactory>,
     ): MetroViewModelFactory =
         object : MetroViewModelFactory() {
             override val viewModelProviders
-                get() = viewModelProvides
+                get() = viewModelProviders
 
             override val assistedFactoryProviders
                 get() = assistedFactoryProviders
@@ -47,25 +42,9 @@ object AppBindings {
                 get() = manualAssistedFactoryProviders
         }
 
-    @Provides
-    @SingleIn(AppScope::class)
-    fun provideTimeZone(): TimeZone = TimeZone.currentSystemDefault()
-
     @Provides @SingleIn(AppScope::class) fun provideClock(): Clock = Clock.System
 
     @Provides
     @SingleIn(AppScope::class)
-    fun provideEntryDao(database: TusuDatabase): EntryDao = database.entryDao()
-
-    @Provides
-    @SingleIn(AppScope::class)
-    fun provideTagDao(database: TusuDatabase): TagDao = database.tagDao()
-
-    @Provides
-    @SingleIn(AppScope::class)
-    fun provideMediaDao(database: TusuDatabase): MediaDao = database.mediaDao()
-
-    @Provides
-    @SingleIn(AppScope::class)
-    fun provideEntryTagDao(database: TusuDatabase): EntryTagDao = database.entryTagDao()
+    fun provideTimeZone(): TimeZone = TimeZone.currentSystemDefault()
 }

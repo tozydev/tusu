@@ -7,11 +7,7 @@ plugins {
     alias(libs.plugins.metro)
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_25
-    }
-}
+kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_25 } }
 
 dependencies {
     implementation(projects.app.shared)
@@ -33,14 +29,8 @@ android {
         versionCode = calculateVersionCode(version.toString())
         versionName = version.toString()
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    buildFeatures {
-        buildConfig = true
-    }
+    packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+    buildFeatures { buildConfig = true }
 
     signingConfigs {
         create("release") {
@@ -55,20 +45,14 @@ android {
     }
 
     buildTypes {
-        debug {
-            applicationIdSuffix = ".debug"
-        }
+        debug { applicationIdSuffix = ".debug" }
         release {
             isMinifyEnabled = false
             val releaseSigning = signingConfigs.findByName("release")
             if (releaseSigning?.storeFile?.exists() == true) {
                 signingConfig = releaseSigning
             }
-            packaging {
-                resources {
-                    excludes += "/test-data/**"
-                }
-            }
+            packaging { resources { excludes += "/test-data/**" } }
         }
     }
     compileOptions {
@@ -78,22 +62,20 @@ android {
 }
 
 /**
- * Calculates version code from [version] string and return version code in format
- * `0Y_0M_MICRO_MODIFIER`.
+ * Android `versionCode` of a CalVer [version] `YYYY.M.MICRO[-preview]`, laid out as `YY MM MICRO
+ * MODIFIER` with two digits each.
+ *
+ * MODIFIER is reserved and always `00`: MICRO grows with every release of a month, so a preview and
+ * a stable build never share a version.
  */
 fun calculateVersionCode(version: String): Int {
-    val modifierCode = 0
-    val parts = version.substringBefore('-').split('.').map { it.toIntOrNull() }
-    require(parts.size == 3) {
-        "Invalid version format, required: MAJOR.MINOR.MICRO-MODIFIER, got: $version"
-    }
+    val calVer = Regex("""(\d{4})\.(1[0-2]|[1-9])\.(0|[1-9]\d?)(-preview)?""")
+    val match =
+        requireNotNull(calVer.matchEntire(version)) {
+            "Invalid version '$version': expected YYYY.M.MICRO[-preview] with M in 1..12 and " +
+                "MICRO in 0..99, without leading zeros (e.g. 2027.1.0-preview)"
+        }
+    val (year, month, micro) = match.destructured
 
-    val (year, month, micro) = parts
-    require(year != null && month != null && micro != null) {
-        "Invalid version format, required: MAJOR.MINOR.MICRO-MODIFIER, got: $version"
-    }
-    return "%02d_%02d_%02d_%02d"
-        .format(year % 100, month, micro, modifierCode)
-        .replace("_", "")
-        .toInt()
+    return (year.toInt() % 100) * 1_000_000 + month.toInt() * 10_000 + micro.toInt() * 100
 }
