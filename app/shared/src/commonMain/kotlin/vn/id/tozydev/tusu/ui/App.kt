@@ -13,7 +13,7 @@ import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 @Composable
 fun App(appGraph: AppGraph, modifier: Modifier = Modifier) {
-    setSingletonImageLoaderFactory { context -> newAppImageLoader(context, appGraph.appDir) }
+    setSingletonImageLoaderFactory { context -> newAppImageLoader(context, appGraph.cacheDir) }
     CompositionLocalProvider(LocalMetroViewModelFactory provides appGraph.metroViewModelFactory) {
         AppTheme {
             // TODO(TOZY-54): replace with the navigation host and the three-tab app frame.

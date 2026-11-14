@@ -10,16 +10,16 @@ import kotlinx.io.files.Path
 import okio.Path.Companion.toPath
 
 /**
- * Builds the app-wide image loader. The disk cache lives under [appDir] rather than the platform
- * cache folder, so one code path serves Android and the JVM alike.
+ * Builds the app-wide image loader. The disk cache lives under [cacheDir], which the platform may
+ * clear and leaves out of backups.
  */
-fun newAppImageLoader(context: PlatformContext, appDir: Path): ImageLoader =
+fun newAppImageLoader(context: PlatformContext, cacheDir: Path): ImageLoader =
     ImageLoader.Builder(context)
         .components { addPlatformFileSupport() }
         .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.25).build() }
         .diskCache {
             DiskCache.Builder()
-                .directory(Path(appDir, IMAGE_CACHE_DIR_NAME).toString().toPath())
+                .directory(Path(cacheDir, IMAGE_CACHE_DIR_NAME).toString().toPath())
                 .build()
         }
         .crossfade(true)

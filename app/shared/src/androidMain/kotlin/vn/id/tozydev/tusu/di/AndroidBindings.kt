@@ -28,6 +28,11 @@ object AndroidBindings {
 
     @Provides
     @SingleIn(AppScope::class)
+    @CacheDir
+    fun provideCacheDir(context: Context): Path = Path(context.cacheDir.absolutePath)
+
+    @Provides
+    @SingleIn(AppScope::class)
     fun provideDatabaseBuilder(context: Context): RoomDatabase.Builder<TusuDatabase> =
         tusuDatabaseBuilder(context)
 

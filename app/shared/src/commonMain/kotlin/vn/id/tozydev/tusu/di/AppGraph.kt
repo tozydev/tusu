@@ -19,6 +19,8 @@ import vn.id.tozydev.tusu.platform.MediaJobQueue
 interface AppGraph : ViewModelGraph {
     @AppDir val appDir: Path
 
+    @CacheDir val cacheDir: Path
+
     val entryRepository: EntryRepository
     val mediaRepository: MediaRepository
     val labelRepository: LabelRepository
