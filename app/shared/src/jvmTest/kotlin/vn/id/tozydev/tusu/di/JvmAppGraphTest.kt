@@ -15,6 +15,7 @@ import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.AppSettings
 import vn.id.tozydev.tusu.domain.model.ThemeMode
 import vn.id.tozydev.tusu.domain.usecase.AttachMediaUseCase
+import vn.id.tozydev.tusu.platform.CoroutineMediaJobQueue
 import vn.id.tozydev.tusu.platform.FakeImageCompressor
 
 private val testLabelNames =
@@ -56,6 +57,7 @@ class JvmAppGraphTest :
 
                     graph.attachMedia.shouldBeInstanceOf<AttachMediaUseCase>()
                     graph.imageCompressor.shouldBeInstanceOf<FakeImageCompressor>()
+                    graph.mediaJobQueue.shouldBeInstanceOf<CoroutineMediaJobQueue>()
                 } finally {
                     graph.database.close()
                     FileSystem.SYSTEM.deleteRecursively(tempDir)

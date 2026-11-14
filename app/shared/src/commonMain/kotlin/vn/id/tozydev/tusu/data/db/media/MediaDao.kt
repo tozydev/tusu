@@ -80,6 +80,26 @@ abstract class MediaDao {
     )
     abstract suspend fun isPositionTaken(entryId: Uuid, position: Int, id: Uuid): Boolean
 
+    /** Live photos whose compression job has to run (again), oldest first. */
+    @Query(
+        """
+        SELECT * FROM media
+        WHERE type = 'PHOTO' AND status = :status AND deleted_at IS NULL
+        ORDER BY updated_at, id
+        """,
+    )
+    abstract suspend fun getLivePhotosByStatus(status: MediaStatus): List<MediaEntity>
+
+    /** Stores the compressed size and marks the photo ready in one write. */
+    @Query(
+        """
+        UPDATE media
+        SET width = :width, height = :height, status = 'READY', updated_at = :updatedAt
+        WHERE id = :id
+        """,
+    )
+    abstract suspend fun markCompressed(id: Uuid, width: Int, height: Int, updatedAt: Instant)
+
     @Query("UPDATE media SET status = :status, updated_at = :updatedAt WHERE id = :id")
     abstract suspend fun updateStatus(id: Uuid, status: MediaStatus, updatedAt: Instant)
 

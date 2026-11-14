@@ -20,6 +20,7 @@ import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.Media
 import vn.id.tozydev.tusu.domain.model.MediaStatus
 import vn.id.tozydev.tusu.domain.model.MediaType
+import vn.id.tozydev.tusu.platform.RecordingMediaJobQueue
 
 private fun bytes(text: String): RawSource = Buffer().also { it.write(text.encodeToByteArray()) }
 
@@ -33,7 +34,8 @@ class AttachMediaUseCaseTest :
                     val files = FakeMediaFileStore()
                     val clock = TestClock(instantAt(8))
                     val repo = MediaRepositoryImpl(db, files, clock)
-                    val useCase = AttachMediaUseCase(files, repo, clock)
+                    val queue = RecordingMediaJobQueue()
+                    val useCase = AttachMediaUseCase(files, repo, clock, queue)
 
                     val result =
                         useCase(entryId, bytes("jpeg"), MediaType.PHOTO, "JPG", instantAt(2))
@@ -49,6 +51,25 @@ class AttachMediaUseCaseTest :
                 }
             }
 
+            test("a new photo is enqueued for compression exactly once") {
+                withTestDatabase { db ->
+                    val entryId = Uuid.random()
+                    db.entryDao().upsert(entryRow(entryId))
+                    val files = FakeMediaFileStore()
+                    val clock = TestClock(instantAt(8))
+                    val repo = MediaRepositoryImpl(db, files, clock)
+                    val queue = RecordingMediaJobQueue()
+                    val useCase = AttachMediaUseCase(files, repo, clock, queue)
+
+                    val media =
+                        useCase(entryId, bytes("jpeg"), MediaType.PHOTO, "jpg")
+                            .shouldBeInstanceOf<Outcome.Success<Media>>()
+                            .value
+
+                    queue.enqueued shouldBe listOf(media.id)
+                }
+            }
+
             test("audio is READY and goes after the existing media") {
                 withTestDatabase { db ->
                     val entryId = Uuid.random()
@@ -56,8 +77,10 @@ class AttachMediaUseCaseTest :
                     val files = FakeMediaFileStore()
                     val clock = TestClock(instantAt(8))
                     val repo = MediaRepositoryImpl(db, files, clock)
-                    val useCase = AttachMediaUseCase(files, repo, clock)
+                    val queue = RecordingMediaJobQueue()
+                    val useCase = AttachMediaUseCase(files, repo, clock, queue)
                     useCase(entryId, bytes("jpeg"), MediaType.PHOTO, "jpg")
+                    queue.enqueued.clear()
 
                     val result = useCase(entryId, bytes("voice"), MediaType.AUDIO, "m4a")
 
@@ -66,6 +89,7 @@ class AttachMediaUseCaseTest :
                     media.position shouldBe 1
                     media.localPath.endsWith(".m4a") shouldBe true
                     files.files.size shouldBe 2
+                    queue.enqueued.shouldBeEmpty()
                     repo.observeEntryMedia(entryId).first().map { it.position } shouldContainExactly
                         listOf(0, 1)
                 }
@@ -76,13 +100,15 @@ class AttachMediaUseCaseTest :
                     val files = FakeMediaFileStore()
                     val clock = TestClock(instantAt(8))
                     val repo = MediaRepositoryImpl(db, files, clock)
-                    val useCase = AttachMediaUseCase(files, repo, clock)
+                    val queue = RecordingMediaJobQueue()
+                    val useCase = AttachMediaUseCase(files, repo, clock, queue)
 
                     useCase(Uuid.random(), bytes("jpeg"), MediaType.PHOTO, "jpg") shouldBe
                         Outcome.Failure(MediaError.NotFound)
 
                     files.files.keys.shouldBeEmpty()
                     files.deleted.size shouldBe 1
+                    queue.enqueued.shouldBeEmpty()
                 }
             }
         },

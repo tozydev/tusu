@@ -12,6 +12,11 @@ kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_25 } }
 dependencies {
     implementation(projects.app.shared)
 
+    // Named by TusuApplication: its Configuration.Provider type and the coroutine launch on the
+    // app scope come from these libraries, which the shared module keeps off this classpath.
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.kotlinx.coroutines.core)
+
     implementation(libs.compose.uiToolingPreview)
     implementation(libs.androidx.activity.compose)
 

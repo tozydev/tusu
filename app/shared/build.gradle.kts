@@ -74,6 +74,8 @@ kotlin {
         androidMain.dependencies {
             api(libs.metrox.android)
 
+            implementation(libs.androidx.work.runtime)
+
             implementation(libs.compass.geolocation.mobile)
             implementation(libs.compass.geocoder.mobile)
             implementation(libs.compass.permissions.mobile)

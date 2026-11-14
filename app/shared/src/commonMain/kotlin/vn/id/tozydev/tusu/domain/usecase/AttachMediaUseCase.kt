@@ -18,6 +18,7 @@ import vn.id.tozydev.tusu.domain.model.MediaStatus
 import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.domain.repository.MediaFileStore
 import vn.id.tozydev.tusu.domain.repository.MediaRepository
+import vn.id.tozydev.tusu.platform.MediaJobQueue
 
 private val logger = KotlinLogging.logger {}
 
@@ -27,6 +28,7 @@ class AttachMediaUseCase(
     private val files: MediaFileStore,
     private val media: MediaRepository,
     private val clock: Clock,
+    private val jobs: MediaJobQueue,
 ) {
     /**
      * Photos start as PROCESSING because a background job still compresses them; audio and video
@@ -56,7 +58,10 @@ class AttachMediaUseCase(
                 updatedAt = clock.now(),
             )
         when (val added = media.add(created)) {
-            is Outcome.Success -> created
+            is Outcome.Success -> {
+                if (type == MediaType.PHOTO) jobs.enqueueCompression(id)
+                created
+            }
             is Outcome.Failure -> {
                 // Without a row the file cannot be reached, so it must not stay behind. The add
                 // error is what the caller needs; a failed cleanup only leaves a harmless orphan.
