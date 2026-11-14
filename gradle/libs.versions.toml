@@ -72,6 +72,7 @@ androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "androidx-navigation3" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "androidx-paging" }
+androidx-paging-testing = { module = "androidx.paging:paging-testing", version.ref = "androidx-paging" }
 
 # DI
 metrox-android = { module = "dev.zacsweers.metro:metrox-android", version.ref = "metro" }

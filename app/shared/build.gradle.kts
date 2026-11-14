@@ -77,6 +77,7 @@ kotlin {
             implementation(libs.kotest.assertions.core)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.androidx.room.testing)
+            implementation(libs.androidx.paging.testing)
         }
         jvmTest.dependencies { implementation(libs.kotest.runner.junit6) }
         getByName("androidHostTest").dependencies { implementation(libs.kotest.runner.junit6) }
