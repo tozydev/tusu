@@ -32,12 +32,14 @@ import vn.id.tozydev.tusu.data.db.transaction
 import vn.id.tozydev.tusu.domain.error.EntryError
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.error.getOrNull
+import vn.id.tozydev.tusu.domain.error.onFailure
 import vn.id.tozydev.tusu.domain.model.CalendarDay
 import vn.id.tozydev.tusu.domain.model.Entry
 import vn.id.tozydev.tusu.domain.model.EntryDraft
 import vn.id.tozydev.tusu.domain.model.EntryFilter
 import vn.id.tozydev.tusu.domain.model.EntryLocation
 import vn.id.tozydev.tusu.domain.repository.EntryRepository
+import vn.id.tozydev.tusu.domain.repository.MediaFileStore
 import vn.id.tozydev.tusu.text.deriveText
 
 private val logger = KotlinLogging.logger {}
@@ -47,8 +49,11 @@ private const val PAGE_SIZE = 30
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
 @Inject
-class EntryRepositoryImpl(private val database: TusuDatabase, private val clock: Clock) :
-    EntryRepository {
+class EntryRepositoryImpl(
+    private val database: TusuDatabase,
+    private val files: MediaFileStore,
+    private val clock: Clock,
+) : EntryRepository {
 
     override fun observeEntry(id: Uuid): Flow<Entry?> =
         database.entryDao().observeWithRelations(id).map { it?.toDomain() }
@@ -154,15 +159,28 @@ class EntryRepositoryImpl(private val database: TusuDatabase, private val clock:
             if (entry.deletedAt == null) null else entry.copy(deletedAt = null, updatedAt = now)
         }
 
-    override suspend fun deletePermanently(id: Uuid): Outcome<Unit, EntryError> = guardedWrite {
-        database.transaction<Outcome<Unit, EntryError>> {
-            val dao = database.entryDao()
-            if (dao.getById(id) == null) return@transaction notFound()
-            // Media and label links go with the row through foreign-key cascades.
-            dao.deleteFtsByEntryId(id)
-            dao.deleteById(id)
-            Outcome.Success(Unit)
+    override suspend fun deletePermanently(id: Uuid): Outcome<Unit, EntryError> {
+        var mediaPaths = emptyList<String>()
+        val deleted = guardedWrite {
+            database.transaction<Outcome<Unit, EntryError>> {
+                val dao = database.entryDao()
+                if (dao.getById(id) == null) return@transaction notFound()
+                mediaPaths = database.mediaDao().localPathsOf(id)
+                // Media and label links go with the row through foreign-key cascades.
+                dao.deleteFtsByEntryId(id)
+                dao.deleteById(id)
+                Outcome.Success(Unit)
+            }
         }
+        if (deleted is Outcome.Failure) return deleted
+        // The rows go first: a file without a row is only disk use, while a row without its file
+        // breaks the album. Every file is tried, so one failure does not keep the others.
+        var fileLeftBehind = false
+        for (path in mediaPaths) {
+            files.delete(path).onFailure { fileLeftBehind = true }
+        }
+        return if (fileLeftBehind) Outcome.Failure(EntryError.StorageFailed)
+        else Outcome.Success(Unit)
     }
 
     /**

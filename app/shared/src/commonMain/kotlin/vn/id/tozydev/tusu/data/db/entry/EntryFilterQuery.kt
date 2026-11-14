@@ -16,9 +16,14 @@ internal fun EntryFilter.toEntryFilterSql(): EntryFilterSql {
     val clauses = mutableListOf("e.deleted_at IS NULL")
     val args = mutableListOf<String>()
 
-    ftsMatchQuery(query)?.let { match ->
+    val match = ftsMatchQuery(query)
+    if (match != null) {
         clauses += "e.id IN (SELECT entry_id FROM entries_fts WHERE entries_fts MATCH ?)"
         args += match
+    } else if (query.isNotBlank()) {
+        // Text without a letter or digit (emoji, punctuation) is not in the index. It matches
+        // nothing; dropping the clause would list every entry as a result.
+        clauses += "0"
     }
     if (mediaTypes.isNotEmpty()) {
         clauses +=
@@ -64,7 +69,7 @@ internal fun EntryFilter.toRoomRawQuery(): RoomRawQuery {
 /**
  * The FTS5 MATCH expression for [query]: each token is folded, quoted and made a prefix, so every
  * token must match and the user can never type FTS operators. Null when no token has a letter or
- * digit, so the search adds no text clause.
+ * digit, which the index cannot match.
  */
 internal fun ftsMatchQuery(query: String): String? {
     val tokens =

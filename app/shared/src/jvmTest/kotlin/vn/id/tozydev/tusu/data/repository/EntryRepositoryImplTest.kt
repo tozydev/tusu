@@ -8,6 +8,7 @@ import com.mohamedrejeb.richeditor.json.toJson
 import com.mohamedrejeb.richeditor.model.RichTextState
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
@@ -35,6 +36,7 @@ import vn.id.tozydev.tusu.data.db.media.MediaEntity
 import vn.id.tozydev.tusu.data.db.transaction
 import vn.id.tozydev.tusu.data.db.withTestDatabase
 import vn.id.tozydev.tusu.domain.error.EntryError
+import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.Entry
 import vn.id.tozydev.tusu.domain.model.EntryDraft
@@ -80,7 +82,7 @@ private suspend fun withRepo(
     block: suspend (db: TusuDatabase, clock: TestClock, repo: EntryRepositoryImpl) -> Unit,
 ) = withTestDatabase { db ->
     val clock = TestClock(T0)
-    block(db, clock, EntryRepositoryImpl(db, clock))
+    block(db, clock, EntryRepositoryImpl(db, FakeMediaFileStore(), clock))
 }
 
 private suspend fun EntryRepositoryImpl.entryOrFail(id: Uuid): Entry =
@@ -336,6 +338,37 @@ class EntryRepositoryImplTest :
                 }
             }
 
+            test("deleting permanently deletes the files of live and trashed media") {
+                withTestDatabase { db ->
+                    val files = FakeMediaFileStore()
+                    val repo = EntryRepositoryImpl(db, files, TestClock(T0))
+                    val id = Uuid.random()
+                    repo.save(draft(id))
+                    val live = db.addMedia(id, MediaType.PHOTO)
+                    val trashed = db.addMedia(id, MediaType.AUDIO, deletedAt = T0, position = 1)
+
+                    repo.deletePermanently(id) shouldBe Outcome.Success(Unit)
+
+                    files.deleted shouldContainExactlyInAnyOrder
+                        listOf("media/$live.jpg", "media/$trashed.jpg")
+                }
+            }
+
+            test("a media file that cannot be deleted is reported after the entry is gone") {
+                withTestDatabase { db ->
+                    val files = FakeMediaFileStore()
+                    files.deleteError = MediaError.StorageFailed
+                    val repo = EntryRepositoryImpl(db, files, TestClock(T0))
+                    val id = Uuid.random()
+                    repo.save(draft(id))
+                    db.addMedia(id, MediaType.PHOTO)
+
+                    repo.deletePermanently(id) shouldBe Outcome.Failure(EntryError.StorageFailed)
+
+                    repo.observeEntry(id).first() shouldBe null
+                }
+            }
+
             test("deleting permanently a missing entry reports NotFound") {
                 withRepo { _, _, repo ->
                     repo.deletePermanently(Uuid.random()) shouldBe
@@ -489,6 +522,16 @@ class EntryRepositoryImplTest :
                         listOf(tagged)
                     repo.search(EntryFilter(query = "guom")).asSnapshot().map { it.id } shouldBe
                         listOf(placed)
+                }
+            }
+
+            test("a query without a letter or digit matches nothing") {
+                withRepo { _, _, repo ->
+                    repo.save(draft(text = "Sinh nhật 🎉"))
+
+                    repo.search(EntryFilter(query = "🎉")).asSnapshot() shouldBe emptyList()
+                    repo.search(EntryFilter(query = "???")).asSnapshot() shouldBe emptyList()
+                    repo.search(EntryFilter(query = "  ")).asSnapshot().size shouldBe 1
                 }
             }
 
