@@ -1,26 +1,20 @@
 package vn.id.tozydev.tusu.ui
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import vn.id.tozydev.tusu.di.AppGraph
-import vn.id.tozydev.tusu.ui.integration.InitCoil3
-import vn.id.tozydev.tusu.ui.navigation.AppNavigation
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
-val LocalAppGraph = staticCompositionLocalOf<AppGraph> { error("No AppGraph provided") }
-
 @Composable
-fun App(appGraph: AppGraph) {
-    InitCoil3(appGraph.appDir)
-
-    CompositionLocalProvider(
-        LocalAppGraph provides appGraph,
-        LocalMetroViewModelFactory provides appGraph.metroViewModelFactory,
-    ) {
+fun App(appGraph: AppGraph, modifier: Modifier = Modifier) {
+    CompositionLocalProvider(LocalMetroViewModelFactory provides appGraph.metroViewModelFactory) {
         AppTheme {
-            AppNavigation()
+            // TODO(TOZY-54): replace with the navigation host and the three-tab app frame.
+            Surface(modifier = modifier.fillMaxSize()) {}
         }
     }
 }

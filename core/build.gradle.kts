@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -16,15 +15,9 @@ kotlin {
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
 
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_25
-        }
-        androidResources {
-            enable = true
-        }
-        withHostTest {
-            isIncludeAndroidResources = true
-        }
+        compilerOptions { jvmTarget = JvmTarget.JVM_25 }
+        androidResources { enable = true }
+        withHostTest { isIncludeAndroidResources = true }
     }
 
     sourceSets {
@@ -35,12 +28,9 @@ kotlin {
             implementation(libs.kotest.framework.engine)
             implementation(libs.kotest.assertions.core)
         }
-        jvmTest.dependencies {
-            implementation(libs.kotest.runner.junit6)
-        }
+        jvmTest.dependencies { implementation(libs.kotest.runner.junit6) }
+        getByName("androidHostTest").dependencies { implementation(libs.kotest.runner.junit6) }
     }
 }
 
-tasks.withType<KotlinJvmTest>().configureEach {
-    useJUnitPlatform()
-}
+tasks.withType<Test>().configureEach { useJUnitPlatform() }

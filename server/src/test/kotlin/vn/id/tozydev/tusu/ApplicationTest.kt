@@ -11,9 +11,7 @@ class ApplicationTest : ShouldSpec() {
     init {
         should("return hello message from root endpoint") {
             testApplication {
-                application {
-                    module()
-                }
+                application { module() }
                 val response = client.get("/")
                 response.status shouldBe HttpStatusCode.OK
                 response.bodyAsText() shouldBe "Hello, Ktor!"

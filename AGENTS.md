@@ -27,13 +27,34 @@ Multiplatform.
 - Use the latest stable, well-maintained libraries; declare every dependency in
   `gradle/libs.versions.toml`.
 
+## Workflow (Linear)
+
+All planning, backlog and progress live in Linear (team `tozydev`, issue prefix `TOZY`); never keep
+progress files in the repo. Project documentation is kept in Linear documents and Claude artifacts,
+not in the repo.
+
+- **Read the issue first.** Before any work, read the issue, its parent, its sub-issues and its
+  comments; the issue's "Xong khi" line is the definition of done.
+- **Branch** from the issue's `gitBranchName`.
+- **Commits** are written in English and follow Conventional Commits, scoped by feature, ending
+  with the issue id: `feat(composer): auto-save after 500 ms (TOZY-123)`.
+- **TODOs always carry an issue id:** `// TODO(TOZY-123): description`. No bare `TODO`; if no issue
+  fits, create one in Backlog first. Find them with `grep -rn "TODO("`.
+- **Status:** move the issue to *In Progress* when coding starts, *In Review* when the code is done
+  and CI is running, *Done* once merged with green tests.
+- **Nothing gets lost.** Work that is cut or deferred is moved to a later issue with the `Hoãn`
+  label and a comment explaining why; deviations from the design get the `Lệch design` label. New
+  bugs and ideas become Backlog issues right away.
+- Hide unfinished features in the UI; never ship a control that does nothing.
+- **Versions** are CalVer `YYYY.M.MICRO[-preview]`, set by `version` in `gradle.properties` and
+  bumped by the release workflow. MICRO is at most 99 because `versionCode` is `YY MM MICRO 00`.
+
 ## Tech Stack
 
 - **UI:** Compose Multiplatform, Material 3 Expressive, MaterialKolor
 - **Navigation:** Navigation 3 + `lifecycle-viewmodel-navigation3`
 - **DI:** Metro (`@ContributesBinding`, `metrox-viewmodel`)
 - **Database:** Room 3 (`androidx.room3`) + `BundledSQLiteDriver`, FTS5, `room3-paging`
-  (migrating from Room 2.8.4)
 - **Settings:** DataStore Preferences
 - **Files, pickers, camera:** FileKit
 - **Images:** Coil 3

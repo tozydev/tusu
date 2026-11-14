@@ -12,7 +12,10 @@ jobs:
   call-build:
     uses: tozydev/gh-actions/.github/workflows/shared-gradle-build.yml@v1
     with:
-      gradle-args: :app:androidApp:assembleDebug
+      gradle-args: >-
+        ktfmtCheck
+        allTests :server:test
+        :app:androidApp:assembleDebug
       upload-artifacts-path: app/androidApp/build/outputs/apk/debug/*.apk
     secrets:
       github-token: ${{ github.token }}
