@@ -33,7 +33,9 @@ kotlin {
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
-            implementation(libs.kotlinx.io.core)
+            // The graph's public accessors and factory parameters use these types, so the
+            // androidApp entry point needs them on its compile classpath too.
+            api(libs.kotlinx.io.core)
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.serialization.json)
 
@@ -51,13 +53,17 @@ kotlin {
             implementation(libs.androidx.navigation3.ui)
             implementation(libs.androidx.paging.compose)
 
-            implementation(libs.androidx.room.runtime)
+            api(libs.androidx.room.runtime)
             implementation(libs.androidx.room.paging)
             implementation(libs.androidx.sqlite.bundled)
-            implementation(libs.androidx.datastore.preferences)
+            api(libs.androidx.datastore.preferences)
+
+            implementation(libs.okio)
 
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs.compose)
+            implementation(libs.filekit.coil)
+            implementation(libs.coil.core)
             implementation(libs.coil.compose)
             implementation(libs.composeMediaPlayer)
             implementation(libs.richeditor.compose)
