@@ -60,7 +60,7 @@ class AttachMediaUseCase(
         when (val added = media.add(created)) {
             is Outcome.Success -> {
                 if (type == MediaType.PHOTO) jobs.enqueueCompression(id)
-                created
+                added.value
             }
             is Outcome.Failure -> {
                 // Without a row the file cannot be reached, so it must not stay behind. The add

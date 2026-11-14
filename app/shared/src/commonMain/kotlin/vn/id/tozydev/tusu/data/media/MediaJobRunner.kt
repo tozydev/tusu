@@ -12,6 +12,7 @@ import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.error.Raise
 import vn.id.tozydev.tusu.domain.error.ensureNotNull
+import vn.id.tozydev.tusu.domain.error.onFailure
 import vn.id.tozydev.tusu.domain.error.outcome
 import vn.id.tozydev.tusu.domain.error.raise
 import vn.id.tozydev.tusu.domain.model.MediaStatus
@@ -21,6 +22,8 @@ import vn.id.tozydev.tusu.platform.ImageCompressor
 import vn.id.tozydev.tusu.platform.MediaJobQueue
 
 private val logger = KotlinLogging.logger {}
+
+private const val COMPRESSED_EXTENSION = "jpg"
 
 /**
  * Body of the photo compression job, shared by every platform queue. The job is written so it can
@@ -65,13 +68,30 @@ class MediaJobRunner(
         if (live.status != MediaStatus.PROCESSING) {
             storage { dao.updateStatus(id, MediaStatus.PROCESSING, clock.now()) }
         }
-        // Compression writes into the same file it reads, so a failure leaves the original intact.
-        val path = files.resolve(live.localPath)
-        when (val result = compressor.compress(path, path)) {
-            is Outcome.Success ->
+        // The compressor always writes a JPEG, so the result is stored under a .jpg name; a
+        // .png or .heic name would lie about the bytes. The original stays until the row points
+        // at the result, so a failure or a killed job can start again from it.
+        val compressedPath = files.newRelativePath(id, COMPRESSED_EXTENSION)
+        val result =
+            compressor.compress(files.resolve(live.localPath), files.resolve(compressedPath))
+        when (result) {
+            is Outcome.Success -> {
                 storage {
-                    dao.markCompressed(id, result.value.width, result.value.height, clock.now())
+                    dao.markCompressed(
+                        id = id,
+                        localPath = compressedPath,
+                        width = result.value.width,
+                        height = result.value.height,
+                        updatedAt = clock.now(),
+                    )
                 }
+                if (compressedPath != live.localPath) {
+                    // The photo is ready either way; a leftover original is only disk use.
+                    files.delete(live.localPath).onFailure {
+                        logger.warn { "Could not remove the original of media $id: $it" }
+                    }
+                }
+            }
             is Outcome.Failure -> {
                 logger.warn { "Compressing media $id failed: ${result.error}" }
                 storage { dao.updateStatus(id, MediaStatus.FAILED, clock.now()) }

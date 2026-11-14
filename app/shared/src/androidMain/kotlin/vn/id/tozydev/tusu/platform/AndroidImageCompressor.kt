@@ -2,6 +2,8 @@ package vn.id.tozydev.tusu.platform
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Matrix
 import android.media.ExifInterface
 import android.system.ErrnoException
@@ -73,7 +75,8 @@ class AndroidImageCompressor : ImageCompressor {
 
         val orientation =
             try {
-                ExifInterface(input)
+                // The path constructor exists on every API level; the File one needs API 29.
+                ExifInterface(input.path)
                     .getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
             } catch (e: IOException) {
                 logger.warn(e) { "Image metadata could not be read" }
@@ -103,9 +106,11 @@ class AndroidImageCompressor : ImageCompressor {
                 orientationMatrix(orientation, scale),
                 true,
             )
+        // JPEG has no alpha channel and the encoder writes transparent pixels as black.
+        val opaque = if (result.hasAlpha()) result.flattenedOnWhite() else result
         try {
             FileOutputStream(temp).use { stream ->
-                if (!result.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)) {
+                if (!opaque.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream)) {
                     raise(MediaError.ProcessingFailed)
                 }
             }
@@ -115,12 +120,22 @@ class AndroidImageCompressor : ImageCompressor {
                 StandardCopyOption.REPLACE_EXISTING,
                 StandardCopyOption.ATOMIC_MOVE,
             )
-            ImageSize(result.width, result.height)
+            ImageSize(opaque.width, opaque.height)
         } finally {
+            if (opaque !== result) opaque.recycle()
             // createBitmap returns the source itself when the matrix is the identity.
             if (result !== decoded) decoded.recycle()
             result.recycle()
         }
+    }
+
+    private fun Bitmap.flattenedOnWhite(): Bitmap {
+        val flat = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        Canvas(flat).apply {
+            drawColor(Color.WHITE)
+            drawBitmap(this@flattenedOnWhite, 0f, 0f, null)
+        }
+        return flat
     }
 
     /**

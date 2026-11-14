@@ -202,9 +202,23 @@ class MediaRepositoryImplTest :
                     val repo = MediaRepositoryImpl(db, FakeMediaFileStore(), clock)
                     val media = mediaRow(idA, entryA).toDomain().copy(updatedAt = t0)
 
-                    repo.add(media) shouldBe Outcome.Success(Unit)
+                    repo.add(media) shouldBe Outcome.Success(media.copy(updatedAt = instantAt(9)))
 
                     db.mediaDao().getById(idA)?.updatedAt shouldBe instantAt(9)
+                }
+            }
+
+            test("add moves to the end of the album when the position is already taken") {
+                withTestDatabase { db ->
+                    db.entryDao().upsert(entryRow(entryA))
+                    db.mediaDao().upsert(mediaRow(idA, entryA, position = 0))
+                    val repo = MediaRepositoryImpl(db, FakeMediaFileStore(), TestClock(t0))
+                    val idNew = Uuid.random()
+
+                    val stored = repo.add(mediaRow(idNew, entryA, position = 0).toDomain())
+
+                    (stored as? Outcome.Success)?.value?.position shouldBe 1
+                    db.mediaDao().getById(idNew)?.position shouldBe 1
                 }
             }
 

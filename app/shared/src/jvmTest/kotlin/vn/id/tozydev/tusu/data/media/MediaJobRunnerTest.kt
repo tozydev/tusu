@@ -76,6 +76,62 @@ class MediaJobRunnerTest :
                 }
             }
 
+            test("a photo that is not a JPEG moves to a .jpg file and loses its original") {
+                withTestDatabase { db ->
+                    val entryId = Uuid.random()
+                    val id = Uuid.random()
+                    db.entryDao().upsert(entryRow(entryId))
+                    db.mediaDao()
+                        .upsert(
+                            mediaRow(
+                                id = id,
+                                entryId = entryId,
+                                status = MediaStatus.PROCESSING,
+                                localPath = "$id.png",
+                            ),
+                        )
+                    val files = FakeMediaFileStore()
+                    val runner =
+                        MediaJobRunner(
+                            db,
+                            ScriptedImageCompressor(),
+                            files,
+                            TestClock(instantAt(9)),
+                        )
+
+                    runner.compress(id) shouldBe Outcome.Success(Unit)
+
+                    mediaOf(db, id).localPath shouldBe "$id.jpg"
+                    files.deleted shouldBe listOf("$id.png")
+                }
+            }
+
+            test("a failed compression keeps the original file and its path") {
+                withTestDatabase { db ->
+                    val entryId = Uuid.random()
+                    val id = Uuid.random()
+                    db.entryDao().upsert(entryRow(entryId))
+                    db.mediaDao()
+                        .upsert(
+                            mediaRow(
+                                id = id,
+                                entryId = entryId,
+                                status = MediaStatus.PROCESSING,
+                                localPath = "$id.png",
+                            ),
+                        )
+                    val files = FakeMediaFileStore()
+                    val compressor =
+                        ScriptedImageCompressor(Outcome.Failure(MediaError.ProcessingFailed))
+                    val runner = MediaJobRunner(db, compressor, files, TestClock(instantAt(9)))
+
+                    runner.compress(id) shouldBe Outcome.Failure(MediaError.ProcessingFailed)
+
+                    mediaOf(db, id).localPath shouldBe "$id.png"
+                    files.deleted.shouldBeEmpty()
+                }
+            }
+
             test("a compressor failure marks the photo FAILED and returns its error") {
                 withTestDatabase { db ->
                     val id = seed(db)

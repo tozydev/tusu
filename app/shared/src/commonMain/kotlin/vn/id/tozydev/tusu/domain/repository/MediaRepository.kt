@@ -19,7 +19,11 @@ interface MediaRepository {
     /** Media whose background job has to be queued again, e.g. after the app was killed. */
     suspend fun getByStatus(status: MediaStatus): List<Media>
 
-    suspend fun add(media: Media): Outcome<Unit, MediaError>
+    /**
+     * Returns the stored item. Its position moves to the end of the album when another live item
+     * already holds the requested one.
+     */
+    suspend fun add(media: Media): Outcome<Media, MediaError>
 
     suspend fun setStatus(id: Uuid, status: MediaStatus): Outcome<Unit, MediaError>
 

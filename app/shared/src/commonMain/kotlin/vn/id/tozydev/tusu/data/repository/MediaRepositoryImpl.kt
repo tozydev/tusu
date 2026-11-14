@@ -59,11 +59,21 @@ class MediaRepositoryImpl(
     override suspend fun getByStatus(status: MediaStatus): List<Media> =
         dao.getByStatus(status).map(MediaEntity::toDomain)
 
-    override suspend fun add(media: Media): Outcome<Unit, MediaError> = outcome {
+    override suspend fun add(media: Media): Outcome<Media, MediaError> = outcome {
         writeStorage {
             database.transaction {
                 ensure(dao.entryExists(media.entryId)) { MediaError.NotFound }
-                dao.insert(media.copy(updatedAt = clock.now()).toEntity())
+                // Callers pick the position from a snapshot, so two concurrent adds can ask for
+                // the same slot. The check runs inside the write transaction, where it is exact.
+                val position =
+                    if (dao.isPositionTaken(media.entryId, media.position, media.id)) {
+                        dao.maxLivePosition(media.entryId) + 1
+                    } else {
+                        media.position
+                    }
+                val stored = media.copy(position = position, updatedAt = clock.now())
+                dao.insert(stored.toEntity())
+                stored
             }
         }
     }
