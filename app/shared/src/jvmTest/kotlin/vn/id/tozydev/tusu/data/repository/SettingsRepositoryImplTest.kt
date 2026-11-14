@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -18,6 +19,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
 import okio.FileSystem
 import okio.Path
 import vn.id.tozydev.tusu.domain.error.Outcome
@@ -110,6 +114,23 @@ class SettingsRepositoryImplTest :
 
                 repository.update { it.copy(themeMode = ThemeMode.DARK) } shouldBe
                     Outcome.Failure(SettingsError.StorageFailed)
+            }
+
+            test("a read failure is retried and the stored settings come back") {
+                runTest {
+                    var reads = 0
+                    val stored =
+                        preferencesOf(stringPreferencesKey("theme_mode") to ThemeMode.DARK.name)
+                    val data = flow {
+                        if (reads++ == 0) throw IOException("unreadable", null)
+                        emit(stored)
+                    }
+
+                    val repository = SettingsRepositoryImpl(FailingDataStore(data))
+
+                    repository.settings.take(2).toList() shouldBe
+                        listOf(AppSettings(), AppSettings(themeMode = ThemeMode.DARK))
+                }
             }
 
             test("a read failure emits the default settings") {

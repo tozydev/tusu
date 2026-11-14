@@ -13,10 +13,13 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.retryWhen
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.error.SettingsError
 import vn.id.tozydev.tusu.domain.model.AppSettings
@@ -43,11 +46,14 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
         dataStore.data
             .map { it.toAppSettings() }
             // The interface has no error channel for reads. Writes still report StorageFailed,
-            // and the defaults keep the app usable until the file is readable again.
-            .catch { e ->
-                if (e !is IOException) throw e
+            // and the defaults keep the app usable until the file is readable again. The read
+            // is retried instead of ending the flow, so collectors get the stored settings back.
+            .retryWhen { e, attempt ->
+                if (e !is IOException) return@retryWhen false
                 logger.warn(e) { "Could not read settings, using defaults" }
                 emit(AppSettings())
+                delay(readRetryDelay(attempt))
+                true
             }
             .distinctUntilChanged()
 
@@ -62,6 +68,12 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
             Outcome.Failure(SettingsError.StorageFailed)
         }
 }
+
+/** Doubles from one second up to [MAX_READ_RETRY_DELAY]. */
+private fun readRetryDelay(attempt: Long): Duration =
+    minOf(MAX_READ_RETRY_DELAY, 1.seconds * (1L shl attempt.coerceAtMost(5).toInt()).toInt())
+
+private val MAX_READ_RETRY_DELAY = 30.seconds
 
 private fun Preferences.toAppSettings(): AppSettings {
     val defaults = AppSettings()
