@@ -14,8 +14,14 @@ abstract class LabelDao {
     abstract suspend fun getGroupById(id: Uuid): LabelGroupEntity?
 
     /** Live groups in display order. */
-    @Query("SELECT * FROM label_groups WHERE deleted_at IS NULL ORDER BY sort_order")
+    @Query("SELECT * FROM label_groups WHERE deleted_at IS NULL ORDER BY sort_order, name")
     abstract fun observeGroups(): Flow<List<LabelGroupEntity>>
+
+    @Query("SELECT * FROM label_groups WHERE deleted_at IS NULL")
+    abstract suspend fun listLiveGroups(): List<LabelGroupEntity>
+
+    @Query("SELECT MAX(sort_order) FROM label_groups WHERE deleted_at IS NULL")
+    abstract suspend fun maxGroupSortOrder(): Int?
 
     @Upsert abstract suspend fun upsertLabel(label: LabelEntity)
 
@@ -23,8 +29,33 @@ abstract class LabelDao {
     abstract suspend fun getLabelById(id: Uuid): LabelEntity?
 
     /** Live labels of every group in display order. */
-    @Query("SELECT * FROM labels WHERE deleted_at IS NULL ORDER BY sort_order")
+    @Query("SELECT * FROM labels WHERE deleted_at IS NULL ORDER BY sort_order, name")
     abstract fun observeLabels(): Flow<List<LabelEntity>>
+
+    @Query("SELECT * FROM labels WHERE deleted_at IS NULL")
+    abstract suspend fun listLiveLabels(): List<LabelEntity>
+
+    /** Live labels of one group, in display order. */
+    @Query(
+        "SELECT * FROM labels WHERE deleted_at IS NULL AND group_id = :groupId " +
+            "ORDER BY sort_order, name",
+    )
+    abstract suspend fun listLiveLabelsInGroup(groupId: Uuid): List<LabelEntity>
+
+    /** Live labels of the built-in "Khác" group (no group), in display order. */
+    @Query(
+        "SELECT * FROM labels WHERE deleted_at IS NULL AND group_id IS NULL " +
+            "ORDER BY sort_order, name",
+    )
+    abstract suspend fun listLiveLabelsInOther(): List<LabelEntity>
+
+    @Query(
+        "SELECT MAX(sort_order) FROM labels WHERE deleted_at IS NULL AND group_id = :groupId",
+    )
+    abstract suspend fun maxLabelSortOrderInGroup(groupId: Uuid): Int?
+
+    @Query("SELECT MAX(sort_order) FROM labels WHERE deleted_at IS NULL AND group_id IS NULL")
+    abstract suspend fun maxLabelSortOrderInOther(): Int?
 
     @Upsert abstract suspend fun upsertEntryLabel(entryLabel: EntryLabelEntity)
 
@@ -33,4 +64,8 @@ abstract class LabelDao {
 
     @Query("SELECT * FROM entry_labels WHERE entry_id = :entryId")
     abstract fun observeEntryLabels(entryId: Uuid): Flow<List<EntryLabelEntity>>
+
+    /** Live entry-label rows of one label, across every entry. */
+    @Query("SELECT * FROM entry_labels WHERE label_id = :labelId AND deleted_at IS NULL")
+    abstract suspend fun listLiveEntryLabelsOfLabel(labelId: Uuid): List<EntryLabelEntity>
 }
