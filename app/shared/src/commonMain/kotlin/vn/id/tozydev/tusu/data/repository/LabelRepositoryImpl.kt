@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import vn.id.tozydev.tusu.data.db.TransactionScope
 import vn.id.tozydev.tusu.data.db.TusuDatabase
+import vn.id.tozydev.tusu.data.db.entry.reindexEntriesWithLabel
 import vn.id.tozydev.tusu.data.db.label.LabelDao
 import vn.id.tozydev.tusu.data.db.label.LabelEntity
 import vn.id.tozydev.tusu.data.db.label.LabelGroupEntity
@@ -151,6 +152,8 @@ class LabelRepositoryImpl(private val database: TusuDatabase, private val clock:
                 deletedAt = stored.deletedAt,
             ),
         )
+        // The search index stores label names per entry, so a rename has to rewrite those rows.
+        if (cleanName != stored.name) database.reindexEntriesWithLabel(stored.id)
     }
 
     override suspend fun deleteLabel(id: Uuid): Outcome<Unit, LabelError> = write {
@@ -160,6 +163,7 @@ class LabelRepositoryImpl(private val database: TusuDatabase, private val clock:
         for (entryLabel in dao.listLiveEntryLabelsOfLabel(id)) {
             dao.upsertEntryLabel(entryLabel.copy(updatedAt = now, deletedAt = now))
         }
+        database.reindexEntriesWithLabel(id)
     }
 
     override suspend fun reorderLabels(

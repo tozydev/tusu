@@ -6,7 +6,6 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -25,10 +24,6 @@ import vn.id.tozydev.tusu.domain.model.LabelSelection
 
 private val start: Instant = Instant.parse("2026-11-14T01:00:00Z")
 private const val COLOR = 0x336699
-
-private class TestClock(var instant: Instant) : Clock {
-    override fun now(): Instant = instant
-}
 
 private class Fixture(val repo: LabelRepositoryImpl, val db: TusuDatabase, val clock: TestClock)
 
@@ -536,5 +531,38 @@ class LabelRepositoryImplTest :
                     }
                 }
             }
+
+            context("search index") {
+                test("a rename is searchable under the new name only") {
+                    withFixture { f ->
+                        val entryId = Uuid.random()
+                        f.insertEntry(entryId)
+                        val label = f.label("Bài học", null)
+                        f.attach(entryId, label.id)
+
+                        f.repo.updateLabel(label.copy(name = "Kỷ niệm")).value()
+
+                        f.searchIds("label_names:\"ky\"*") shouldContainExactly listOf(entryId)
+                        f.searchIds("label_names:\"bai\"*").shouldBeEmpty()
+                    }
+                }
+
+                test("a deleted label is no longer searchable") {
+                    withFixture { f ->
+                        val entryId = Uuid.random()
+                        f.insertEntry(entryId)
+                        val label = f.label("Bài học", null)
+                        f.attach(entryId, label.id)
+                        f.repo.updateLabel(label.copy(name = "Kỷ niệm")).value()
+
+                        f.repo.deleteLabel(label.id).value()
+
+                        f.searchIds("label_names:\"ky\"*").shouldBeEmpty()
+                    }
+                }
+            }
         },
     )
+
+private suspend fun Fixture.searchIds(match: String): List<Uuid> =
+    db.entryDao().searchEntryIds(match).first()

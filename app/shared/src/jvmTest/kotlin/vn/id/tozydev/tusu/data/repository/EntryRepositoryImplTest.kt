@@ -9,7 +9,6 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -49,10 +48,6 @@ import vn.id.tozydev.tusu.domain.model.MediaType
 
 private val HCM = TimeZone.of("Asia/Ho_Chi_Minh")
 private val T0: Instant = Instant.parse("2026-11-01T00:00:00Z")
-
-private class TestClock(var now: Instant) : Clock {
-    override fun now(): Instant = now
-}
 
 /** Wall-clock time in [zone], so tests read as the local day the user sees. */
 private fun at(year: Int, month: Int, day: Int, hour: Int, minute: Int = 0, zone: TimeZone = HCM) =
@@ -178,7 +173,7 @@ class EntryRepositoryImplTest :
                     val id = Uuid.random()
                     repo.save(draft(id, "Bản nháp")) shouldBe Outcome.Success(Unit)
 
-                    clock.now = T0 + 1.hours
+                    clock.instant = T0 + 1.hours
                     repo.save(draft(id, "Bản cuối")) shouldBe Outcome.Success(Unit)
 
                     val entry = repo.entryOrFail(id)
@@ -280,9 +275,9 @@ class EntryRepositoryImplTest :
                     val id = Uuid.random()
                     repo.save(draft(id))
 
-                    clock.now = T0 + 1.hours
+                    clock.instant = T0 + 1.hours
                     repo.moveToTrash(id) shouldBe Outcome.Success(Unit)
-                    clock.now = T0 + 2.hours
+                    clock.instant = T0 + 2.hours
                     repo.moveToTrash(id) shouldBe Outcome.Success(Unit)
 
                     val trashed = repo.entryOrFail(id)
@@ -312,9 +307,9 @@ class EntryRepositoryImplTest :
                     repo.save(draft(first))
                     repo.save(draft(second))
 
-                    clock.now = T0 + 1.hours
+                    clock.instant = T0 + 1.hours
                     repo.moveToTrash(first)
-                    clock.now = T0 + 2.hours
+                    clock.instant = T0 + 2.hours
                     repo.moveToTrash(second)
 
                     repo.observeTrash().first().map { it.id } shouldBe listOf(second, first)

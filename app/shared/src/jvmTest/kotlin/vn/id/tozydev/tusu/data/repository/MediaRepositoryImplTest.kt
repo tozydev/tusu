@@ -5,7 +5,6 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
-import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.first
@@ -54,11 +53,6 @@ internal class FakeMediaFileStore : MediaFileStore {
     }
 
     override suspend fun exists(relativePath: String): Boolean = relativePath in files
-}
-
-/** A clock the test moves by hand. */
-internal class TestClock(var instant: Instant) : Clock {
-    override fun now(): Instant = instant
 }
 
 internal val t0: Instant = Instant.parse("2026-11-01T00:00:00Z")
