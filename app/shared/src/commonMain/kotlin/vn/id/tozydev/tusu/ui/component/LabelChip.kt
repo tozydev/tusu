@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.materialkolor.hct.Hct
+import vn.id.tozydev.tusu.domain.model.ThemeMode
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 private const val LightContainerTone = 90.0
@@ -107,7 +108,7 @@ private val PreviewLabels =
 @Preview
 @Composable
 private fun LabelChipPreview() {
-    AppTheme(isDarkTheme = false) {
+    AppTheme(themeMode = ThemeMode.LIGHT) {
         Surface {
             Row(Modifier.padding(16.dp)) {
                 PreviewLabels.forEach { LabelChip(it, Modifier.padding(end = 8.dp), onClick = {}) }
@@ -119,7 +120,7 @@ private fun LabelChipPreview() {
 @Preview
 @Composable
 private fun LabelChipDarkPreview() {
-    AppTheme(isDarkTheme = true) {
+    AppTheme(themeMode = ThemeMode.DARK) {
         Surface {
             Row(Modifier.padding(16.dp)) {
                 PreviewLabels.forEach { LabelChip(it, Modifier.padding(end = 8.dp)) }
