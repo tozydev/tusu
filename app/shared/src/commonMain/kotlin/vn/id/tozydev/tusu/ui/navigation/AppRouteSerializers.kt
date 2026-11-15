@@ -7,14 +7,13 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 
 /** Non-Android targets cannot find route serializers by reflection, so every route is listed. */
-val AppRouteSavedStateConfiguration =
-    SavedStateConfiguration {
-        serializersModule = SerializersModule {
-            polymorphic(NavKey::class) {
-                subclass(AppRoute.Timeline::class)
-                subclass(AppRoute.Calendar::class)
-                subclass(AppRoute.Media::class)
-                subclass(AppRoute.Composer::class)
-            }
+val AppRouteSavedStateConfiguration = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(AppRoute.Timeline::class)
+            subclass(AppRoute.Calendar::class)
+            subclass(AppRoute.Media::class)
+            subclass(AppRoute.Composer::class)
         }
     }
+}

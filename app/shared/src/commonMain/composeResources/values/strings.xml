@@ -98,4 +98,19 @@
     <string name="error_app_lock_cancelled">Unlock was cancelled.</string>
     <string name="error_app_lock_failed">Could not verify it is you. Try again.</string>
     <string name="error_settings_storage_failed">Could not save the setting. Try again.</string>
+
+    <string name="nav_main_description">Main navigation</string>
+    <string name="nav_timeline">Timeline</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_media">Media</string>
+    <string name="nav_new_entry">New entry</string>
+    <string name="action_close">Close</string>
+    <string name="placeholder_timeline_title">Your timeline is on its way</string>
+    <string name="placeholder_timeline_description">Entries will appear here, newest first.</string>
+    <string name="placeholder_calendar_title">The calendar is on its way</string>
+    <string name="placeholder_calendar_description">Browse your entries day by day, coming soon.</string>
+    <string name="placeholder_media_title">Your media is on its way</string>
+    <string name="placeholder_media_description">Photos, videos and recordings will gather here, coming soon.</string>
+    <string name="placeholder_composer_title">The writing space is on its way</string>
+    <string name="placeholder_composer_description">You will write your entries here, coming soon.</string>
 </resources>

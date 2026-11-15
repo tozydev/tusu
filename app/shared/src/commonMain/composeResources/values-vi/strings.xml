@@ -97,4 +97,19 @@
     <string name="error_app_lock_cancelled">Đã hủy mở khóa.</string>
     <string name="error_app_lock_failed">Chưa xác thực được. Hãy thử lại.</string>
     <string name="error_settings_storage_failed">Không lưu được cài đặt. Hãy thử lại.</string>
+
+    <string name="nav_main_description">Điều hướng chính</string>
+    <string name="nav_timeline">Timeline</string>
+    <string name="nav_calendar">Lịch</string>
+    <string name="nav_media">Media</string>
+    <string name="nav_new_entry">Viết entry mới</string>
+    <string name="action_close">Đóng</string>
+    <string name="placeholder_timeline_title">Timeline sắp ra mắt</string>
+    <string name="placeholder_timeline_description">Các entry sẽ hiện ở đây, mới nhất trước.</string>
+    <string name="placeholder_calendar_title">Lịch sắp ra mắt</string>
+    <string name="placeholder_calendar_description">Xem lại entry theo từng ngày, sắp có.</string>
+    <string name="placeholder_media_title">Thư viện media sắp ra mắt</string>
+    <string name="placeholder_media_description">Ảnh, video và bản ghi âm sẽ được gom lại ở đây, sắp có.</string>
+    <string name="placeholder_composer_title">Khung viết sắp ra mắt</string>
+    <string name="placeholder_composer_description">Bạn sẽ viết entry ở đây, sắp có.</string>
 </resources>
