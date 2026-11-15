@@ -12,6 +12,7 @@ import vn.id.tozydev.tusu.domain.repository.SettingsRepository
 import vn.id.tozydev.tusu.domain.usecase.AttachMediaUseCase
 import vn.id.tozydev.tusu.platform.ImageCompressor
 import vn.id.tozydev.tusu.platform.MediaJobQueue
+import vn.id.tozydev.tusu.ui.component.AppMessages
 
 /**
  * The accessors keep every platform graph validating the whole data layer, because Metro only
@@ -30,6 +31,7 @@ interface AppGraph : ViewModelGraph {
     val imageCompressor: ImageCompressor
     val mediaJobQueue: MediaJobQueue
     val mediaJobRunner: MediaJobRunner
+    val appMessages: AppMessages
 
     /** Debug builds fill an empty journal with it; release builds never call it. */
     val sampleDataSeeder: SampleDataSeeder

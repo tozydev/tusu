@@ -5,6 +5,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
+import kotlinx.coroutines.withTimeoutOrNull
 import vn.id.tozydev.tusu.ui.format.resolve
 
 /** Queues [UiMessage]s and feeds them to a [MessageHost], one at a time in call order. */
@@ -20,14 +21,28 @@ class MessageHostState {
      */
     suspend fun show(message: UiMessage): Boolean {
         val action = message.action
+        val timeout = message.timeout
         val result =
-            snackbarHostState.showSnackbar(
-                message = message.text.resolve(),
-                actionLabel = action?.label?.resolve(),
-                withDismissAction = message.persistent,
-                duration =
-                    if (message.persistent) SnackbarDuration.Indefinite else SnackbarDuration.Short,
-            )
+            if (timeout == null) {
+                snackbarHostState.showSnackbar(
+                    message = message.text.resolve(),
+                    actionLabel = action?.label?.resolve(),
+                    withDismissAction = message.persistent,
+                    duration =
+                        if (message.persistent) SnackbarDuration.Indefinite
+                        else SnackbarDuration.Short,
+                )
+            } else {
+                // Cancelling showSnackbar on timeout removes the snackbar from the host.
+                withTimeoutOrNull(timeout) {
+                    snackbarHostState.showSnackbar(
+                        message = message.text.resolve(),
+                        actionLabel = action?.label?.resolve(),
+                        withDismissAction = false,
+                        duration = SnackbarDuration.Indefinite,
+                    )
+                } ?: return false
+            }
         if (result != SnackbarResult.ActionPerformed) return false
         action?.onAction?.invoke()
         return true

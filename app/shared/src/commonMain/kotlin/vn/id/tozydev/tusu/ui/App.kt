@@ -14,6 +14,7 @@ import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import vn.id.tozydev.tusu.di.AppGraph
 import vn.id.tozydev.tusu.domain.model.AppSettings
 import vn.id.tozydev.tusu.ui.component.LocalMessageHostState
+import vn.id.tozydev.tusu.ui.component.MessageEffect
 import vn.id.tozydev.tusu.ui.component.MessageHostState
 import vn.id.tozydev.tusu.ui.format.ProvideAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.navigation.AppNavigation
@@ -34,6 +35,7 @@ fun App(appGraph: AppGraph, modifier: Modifier = Modifier) {
                 ) {
                     val messageHostState = remember { MessageHostState() }
                     CompositionLocalProvider(LocalMessageHostState provides messageHostState) {
+                        MessageEffect(appGraph.appMessages.messages, messageHostState)
                         Surface(modifier = modifier.fillMaxSize()) { AppNavigation() }
                     }
                 }
