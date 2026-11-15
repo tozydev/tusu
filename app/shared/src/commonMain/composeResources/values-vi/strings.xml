@@ -68,6 +68,8 @@
     <string name="media_audio">Bản ghi âm</string>
     <string name="media_processing">Đang xử lý</string>
     <string name="media_failed_retry">Xử lý thất bại. Chạm để thử lại.</string>
+    <string name="viewer_empty">Không có ảnh để xem</string>
+    <string name="viewer_page_indicator">%1$d / %2$d</string>
     <string name="error_entry_not_found">Entry này không còn tồn tại.</string>
     <string name="error_entry_unreadable">Không mở được entry này. Entry có thể được lưu bởi phiên bản Tusu mới hơn.</string>
     <string name="error_entry_storage_failed">Không lưu được. Hãy kiểm tra dung lượng trống rồi thử lại.</string>
