@@ -56,6 +56,7 @@
     <string name="date_pattern_full_date_time">{weekday}, {day}/{month}/{year} · {time}</string>
     <string name="action_retry">Thử lại</string>
     <string name="emoji_badge_add">Thêm biểu tượng cảm xúc</string>
+    <string name="emoji_picker_title">Chọn emoji</string>
     <plurals name="label_chip_more_description">
         <item quantity="other">Thêm %1$d nhãn</item>
     </plurals>
