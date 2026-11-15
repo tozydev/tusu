@@ -9,4 +9,49 @@
     <string name="label_default_reflection">Reflection</string>
     <string name="label_default_memory">Memory</string>
     <string name="label_default_gratitude">Gratitude</string>
+
+    <string-array name="date_weekdays">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+    <string-array name="date_months_short">
+        <item>Jan</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Apr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Aug</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dec</item>
+    </string-array>
+    <string-array name="date_months_full">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+    <string name="date_today">Today</string>
+    <string name="date_yesterday">Yesterday</string>
+    <!-- Placeholders: {weekday} {day} {month} {monthShort} {monthName} {year} {time} -->
+    <string name="date_pattern_day_header">{weekday}, {monthShort} {day}</string>
+    <string name="date_pattern_day_header_with_year">{weekday}, {monthShort} {day}, {year}</string>
+    <string name="date_pattern_month_title">{monthName} {year}</string>
+    <string name="date_pattern_full_date_time">{weekday}, {monthShort} {day}, {year} · {time}</string>
 </resources>

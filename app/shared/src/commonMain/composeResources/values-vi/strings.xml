@@ -9,4 +9,49 @@
     <string name="label_default_reflection">Reflection</string>
     <string name="label_default_memory">Kỷ niệm</string>
     <string name="label_default_gratitude">Biết ơn</string>
+
+    <string-array name="date_weekdays">
+        <item>Thứ Hai</item>
+        <item>Thứ Ba</item>
+        <item>Thứ Tư</item>
+        <item>Thứ Năm</item>
+        <item>Thứ Sáu</item>
+        <item>Thứ Bảy</item>
+        <item>Chủ Nhật</item>
+    </string-array>
+    <string-array name="date_months_short">
+        <item>Th1</item>
+        <item>Th2</item>
+        <item>Th3</item>
+        <item>Th4</item>
+        <item>Th5</item>
+        <item>Th6</item>
+        <item>Th7</item>
+        <item>Th8</item>
+        <item>Th9</item>
+        <item>Th10</item>
+        <item>Th11</item>
+        <item>Th12</item>
+    </string-array>
+    <string-array name="date_months_full">
+        <item>Tháng 1</item>
+        <item>Tháng 2</item>
+        <item>Tháng 3</item>
+        <item>Tháng 4</item>
+        <item>Tháng 5</item>
+        <item>Tháng 6</item>
+        <item>Tháng 7</item>
+        <item>Tháng 8</item>
+        <item>Tháng 9</item>
+        <item>Tháng 10</item>
+        <item>Tháng 11</item>
+        <item>Tháng 12</item>
+    </string-array>
+    <string name="date_today">Hôm nay</string>
+    <string name="date_yesterday">Hôm qua</string>
+    <!-- Placeholders: {weekday} {day} {month} {monthShort} {monthName} {year} {time} -->
+    <string name="date_pattern_day_header">{weekday}, {day}/{month}</string>
+    <string name="date_pattern_day_header_with_year">{weekday}, {day}/{month}/{year}</string>
+    <string name="date_pattern_month_title">Tháng {month}, {year}</string>
+    <string name="date_pattern_full_date_time">{weekday}, {day}/{month}/{year} · {time}</string>
 </resources>
