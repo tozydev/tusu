@@ -9,6 +9,7 @@ import com.mohamedrejeb.richeditor.json.toJson
 import com.mohamedrejeb.richeditor.model.RichTextState
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -23,8 +24,13 @@ import kotlinx.io.files.Path
 import okio.FileSystem
 import vn.id.tozydev.tusu.data.db.label.DefaultLabelNames
 import vn.id.tozydev.tusu.data.db.label.DefaultLabelNamesProvider
+import vn.id.tozydev.tusu.di.JvmAppGraph
 import vn.id.tozydev.tusu.di.createJvmAppGraph
+import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.EntryDraft
+import vn.id.tozydev.tusu.domain.model.Media
+import vn.id.tozydev.tusu.domain.model.MediaStatus
+import vn.id.tozydev.tusu.domain.model.MediaType
 
 private val testLabelNames =
     DefaultLabelNames(
@@ -44,10 +50,14 @@ private fun body(text: String): String =
         .setRichTextDocument(RichTextDocument(listOf(RichTextBlock(text = text))))
         .toJson()
 
+/**
+ * Saves each (text, instant) pair in Asia/Ho_Chi_Minh, lets [seedMedia] add media to those entries
+ * (ids in the same order), then runs [block] on the ViewModel.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
-/** Saves each (text, instant) pair in Asia/Ho_Chi_Minh, then runs [block] on the ViewModel. */
 private suspend fun withTimelineViewModel(
     entries: List<Pair<String, String>>,
+    seedMedia: suspend (JvmAppGraph, List<Uuid>) -> Unit = { _, _ -> },
     block: suspend (TimelineViewModel) -> Unit,
 ) {
     // viewModelScope runs on Dispatchers.Main, which a JVM test does not have.
@@ -62,16 +72,19 @@ private suspend fun withTimelineViewModel(
     val store = ViewModelStore()
     try {
         val zone = TimeZone.of("Asia/Ho_Chi_Minh")
-        for ((text, at) in entries) {
+        val ids = entries.map { Uuid.random() }
+        for ((index, entry) in entries.withIndex()) {
+            val (text, at) = entry
             graph.entryRepository.save(
                 EntryDraft(
-                    id = Uuid.random(),
+                    id = ids[index],
                     body = body(text),
                     occurredAt = Instant.parse(at),
                     timeZone = zone,
                 ),
             )
         }
+        seedMedia(graph, ids)
         val viewModel =
             androidx.lifecycle.ViewModelProvider.create(store, graph.metroViewModelFactory)
                 .get(TimelineViewModel::class)
@@ -84,6 +97,25 @@ private suspend fun withTimelineViewModel(
         Dispatchers.resetMain()
     }
 }
+
+/** A READY media item of [entryId] whose file name is [fileName], placed at [position]. */
+private fun media(
+    entryId: Uuid,
+    position: Int,
+    fileName: String,
+    type: MediaType = MediaType.PHOTO,
+) =
+    Media(
+        id = Uuid.random(),
+        entryId = entryId,
+        type = type,
+        localPath = "ab/cd/$fileName",
+        width = 1200,
+        height = 900,
+        position = position,
+        status = MediaStatus.READY,
+        updatedAt = Instant.parse("2026-11-11T03:00:00Z"),
+    )
 
 class TimelineViewModelTest :
     FunSpec(
@@ -112,6 +144,39 @@ class TimelineViewModelTest :
                     val day = LocalDate(2026, 11, 11)
                     viewModel.items.asSnapshot().map { it.describe() } shouldContainExactly
                         listOf("day:$day", "evening", "morning")
+                }
+            }
+
+            test("an entry item carries its photos in position order, without audio") {
+                withTimelineViewModel(
+                    listOf("with media" to "2026-11-11T03:00:00Z"),
+                    seedMedia = { graph, ids ->
+                        val entryId = ids.single()
+                        listOf(
+                                media(entryId, position = 1, fileName = "second.jpg"),
+                                media(
+                                    entryId,
+                                    position = 2,
+                                    fileName = "voice.m4a",
+                                    type = MediaType.AUDIO,
+                                ),
+                                media(entryId, position = 0, fileName = "first.jpg"),
+                            )
+                            .forEach {
+                                graph.mediaRepository
+                                    .add(it)
+                                    .shouldBeInstanceOf<Outcome.Success<Media>>()
+                            }
+                    },
+                ) { viewModel ->
+                    val item =
+                        viewModel.items
+                            .asSnapshot()
+                            .filterIsInstance<TimelineItem.EntryItem>()
+                            .single()
+                    item.photos.map { Path(it.path).name } shouldBe
+                        listOf("first.jpg", "second.jpg")
+                    item.photos.forEach { Path(it.path).isAbsolute shouldBe true }
                 }
             }
         },

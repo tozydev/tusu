@@ -215,7 +215,7 @@ private fun TimelineLoadErrorPreview() {
 private fun previewTimelineItems(): List<TimelineItem> {
     val entries = sampleTimelineEntries()
     val day = TimelineItem.Day(entries.first().localDate)
-    return listOf(day) + entries.map { TimelineItem.EntryItem(it) }
+    return listOf(day) + entries.map { TimelineItem.EntryItem(entry = it, photos = emptyList()) }
 }
 
 private fun previewDayEmojis(): Map<LocalDate, List<String>> =
