@@ -11,6 +11,7 @@ import kotlinx.io.files.SystemFileSystem
 import okio.FileSystem
 import vn.id.tozydev.tusu.data.db.label.DefaultLabelNames
 import vn.id.tozydev.tusu.data.db.label.DefaultLabelNamesProvider
+import vn.id.tozydev.tusu.data.sample.SampleDataSeeder
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.AppSettings
 import vn.id.tozydev.tusu.domain.model.ThemeMode
@@ -56,6 +57,7 @@ class JvmAppGraphTest :
                     SystemFileSystem.exists(Path(appDir, "settings.preferences_pb")) shouldBe true
 
                     graph.attachMedia.shouldBeInstanceOf<AttachMediaUseCase>()
+                    graph.sampleDataSeeder.shouldBeInstanceOf<SampleDataSeeder>()
                     graph.imageCompressor.shouldBeInstanceOf<FakeImageCompressor>()
                     graph.mediaJobQueue.shouldBeInstanceOf<CoroutineMediaJobQueue>()
                 } finally {

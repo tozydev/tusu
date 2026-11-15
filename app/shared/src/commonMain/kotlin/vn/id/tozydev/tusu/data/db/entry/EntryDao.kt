@@ -29,6 +29,9 @@ abstract class EntryDao {
 
     @Query("DELETE FROM entries WHERE id = :id") abstract suspend fun deleteById(id: Uuid)
 
+    /** Counts every row, trashed ones included. */
+    @Query("SELECT COUNT(*) FROM entries") abstract suspend fun countAll(): Int
+
     @Insert abstract suspend fun insertFts(row: EntryFtsEntity)
 
     @Query("DELETE FROM entries_fts WHERE entry_id = :entryId")

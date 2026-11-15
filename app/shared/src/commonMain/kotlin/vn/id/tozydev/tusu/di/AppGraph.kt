@@ -4,6 +4,7 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.io.files.Path
 import vn.id.tozydev.tusu.data.media.MediaJobRunner
+import vn.id.tozydev.tusu.data.sample.SampleDataSeeder
 import vn.id.tozydev.tusu.domain.repository.EntryRepository
 import vn.id.tozydev.tusu.domain.repository.LabelRepository
 import vn.id.tozydev.tusu.domain.repository.MediaRepository
@@ -29,6 +30,9 @@ interface AppGraph : ViewModelGraph {
     val imageCompressor: ImageCompressor
     val mediaJobQueue: MediaJobQueue
     val mediaJobRunner: MediaJobRunner
+
+    /** Debug builds fill an empty journal with it; release builds never call it. */
+    val sampleDataSeeder: SampleDataSeeder
 
     /** The app-wide scope; the platform entry point starts background work on it. */
     val appScope: CoroutineScope
