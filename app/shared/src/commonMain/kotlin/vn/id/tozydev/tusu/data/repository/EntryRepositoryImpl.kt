@@ -68,6 +68,11 @@ class EntryRepositoryImpl(
             rows.map { it.toCalendarDay() }
         }
 
+    override fun observeDayEmojis(): Flow<Map<LocalDate, List<String>>> =
+        database.entryDao().observeDayEmojiRows().map { rows ->
+            rows.groupBy({ it.date }, { it.emoji })
+        }
+
     override fun observeDay(date: LocalDate): Flow<List<Entry>> =
         database.entryDao().observeDay(date).map { rows -> rows.map { it.toDomain() } }
 

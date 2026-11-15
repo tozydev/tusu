@@ -99,6 +99,16 @@ abstract class EntryDao {
     )
     abstract fun observeCalendarRows(from: LocalDate, to: LocalDate): Flow<List<CalendarRow>>
 
+    /** Emojis of live entries, grouped by day in the order the timeline shows them. */
+    @Query(
+        """
+        SELECT local_date AS date, emoji FROM entries
+        WHERE deleted_at IS NULL AND emoji IS NOT NULL
+        ORDER BY local_date DESC, occurred_at ASC, id ASC
+        """,
+    )
+    abstract fun observeDayEmojiRows(): Flow<List<DayEmojiRow>>
+
     @Query(
         """
         SELECT place_name, place_address, latitude, longitude,

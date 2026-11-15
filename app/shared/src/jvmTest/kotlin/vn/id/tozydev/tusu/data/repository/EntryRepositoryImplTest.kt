@@ -246,6 +246,57 @@ class EntryRepositoryImplTest :
                 }
             }
 
+            test("day emojis group by day in chronological order and skip entries without emoji") {
+                withRepo { _, _, repo ->
+                    repo.save(draft(at = at(2026, 11, 14, 20), emoji = "🌙"))
+                    repo.save(draft(at = at(2026, 11, 14, 8), emoji = "☕"))
+                    repo.save(draft(at = at(2026, 11, 14, 12), emoji = null))
+                    repo.save(draft(at = at(2026, 11, 15, 8), emoji = "🌱"))
+                    repo.save(draft(at = at(2026, 11, 16, 8), emoji = null))
+
+                    repo.observeDayEmojis().first() shouldBe
+                        mapOf(
+                            LocalDate(2026, 11, 14) to listOf("☕", "🌙"),
+                            LocalDate(2026, 11, 15) to listOf("🌱"),
+                        )
+                }
+            }
+
+            test("day emojis leave out trashed entries") {
+                withRepo { _, _, repo ->
+                    val trashed = Uuid.random()
+                    repo.save(draft(trashed, at = at(2026, 11, 14, 8), emoji = "☕"))
+                    repo.save(draft(at = at(2026, 11, 14, 20), emoji = "🌙"))
+                    repo.moveToTrash(trashed) shouldBe Outcome.Success(Unit)
+
+                    repo.observeDayEmojis().first() shouldBe
+                        mapOf(LocalDate(2026, 11, 14) to listOf("🌙"))
+                }
+            }
+
+            test("day emojis re-emit after a new save") {
+                withRepo { _, _, repo ->
+                    repo.save(draft(at = at(2026, 11, 14, 8), emoji = "☕"))
+                    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+                    val seen = Channel<Map<LocalDate, List<String>>>(Channel.UNLIMITED)
+                    val job = scope.launch { repo.observeDayEmojis().collect { seen.send(it) } }
+                    try {
+                        withTimeout(5_000) { seen.receive() } shouldBe
+                            mapOf(LocalDate(2026, 11, 14) to listOf("☕"))
+
+                        repo.save(draft(at = at(2026, 11, 14, 20), emoji = "🌙"))
+                        withTimeout(5_000) {
+                            seen.receiveUntil {
+                                it == mapOf(LocalDate(2026, 11, 14) to listOf("☕", "🌙"))
+                            }
+                        }
+                    } finally {
+                        job.cancel()
+                        scope.cancel()
+                    }
+                }
+            }
+
             test("calendar counts entries per day, takes the latest emoji and respects months") {
                 withRepo { _, _, repo ->
                     repo.save(draft(at = at(2026, 11, 14, 8), emoji = "😀"))

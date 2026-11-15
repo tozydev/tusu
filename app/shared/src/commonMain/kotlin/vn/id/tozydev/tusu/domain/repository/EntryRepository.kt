@@ -22,6 +22,12 @@ interface EntryRepository {
 
     fun observeCalendar(month: YearMonth): Flow<List<CalendarDay>>
 
+    /**
+     * Emojis of each day's entries outside the trash, in chronological order. Days without an emoji
+     * are absent.
+     */
+    fun observeDayEmojis(): Flow<Map<LocalDate, List<String>>>
+
     /** Entries of one day outside the trash, in chronological order. */
     fun observeDay(date: LocalDate): Flow<List<Entry>>
 
