@@ -10,6 +10,8 @@ data class EntryDetailUiState(
     val isLoading: Boolean = true,
     /** The entry does not exist or is in the trash; the screen closes itself. */
     val isGone: Boolean = false,
+    /** The zone the app is in now; the date-time dialog starts from it. */
+    val currentTimeZone: TimeZone? = null,
     val emoji: String? = null,
     val occurredAt: Instant? = null,
     val timeZone: TimeZone? = null,
