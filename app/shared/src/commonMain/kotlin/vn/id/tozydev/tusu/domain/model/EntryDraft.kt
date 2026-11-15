@@ -17,3 +17,14 @@ data class EntryDraft(
     val timeZone: TimeZone,
     val location: EntryLocation? = null,
 )
+
+/** The editable fields of this entry, as they are when it is opened for editing. */
+fun Entry.toDraft(): EntryDraft =
+    EntryDraft(
+        id = id,
+        body = body,
+        emoji = emoji,
+        occurredAt = occurredAt,
+        timeZone = timeZone,
+        location = location,
+    )

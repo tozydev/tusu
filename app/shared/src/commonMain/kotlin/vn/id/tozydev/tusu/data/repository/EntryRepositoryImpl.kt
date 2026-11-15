@@ -216,10 +216,14 @@ class EntryRepositoryImpl(
     private fun pagedEntries(
         source: () -> PagingSource<Int, EntryWithRelations>,
     ): Flow<PagingData<Entry>> =
-        Pager(config = PagingConfig(pageSize = PAGE_SIZE), pagingSourceFactory = source).flow.map {
-            page ->
-            page.map { it.toDomain() }
-        }
+        // The timeline inserts day headers between items, which needs every listed item to be
+        // loaded, so placeholders are off.
+        Pager(
+                config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
+                pagingSourceFactory = source,
+            )
+            .flow
+            .map { page -> page.map { it.toDomain() } }
 
     private fun notFound(): Outcome<Unit, EntryError> = Outcome.Failure(EntryError.NotFound)
 }

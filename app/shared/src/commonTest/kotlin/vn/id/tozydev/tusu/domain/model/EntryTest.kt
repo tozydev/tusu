@@ -42,5 +42,34 @@ class EntryTest :
                     )
                     .isDeleted shouldBe true
             }
+
+            test("toDraft keeps the fields the user edits and drops the derived ones") {
+                val occurredAt = Instant.parse("2026-11-11T18:30:00Z")
+                val zone = TimeZone.of("Asia/Ho_Chi_Minh")
+                val location = EntryLocation(name = "Nhà ngoại")
+                val entry =
+                    Entry(
+                        id = Uuid.random(),
+                        body = "{\"v\":1}",
+                        textPlain = "derived",
+                        emoji = "😊",
+                        occurredAt = occurredAt,
+                        timeZone = zone,
+                        location = location,
+                        createdAt = occurredAt,
+                        updatedAt = occurredAt,
+                        deletedAt = Instant.parse("2026-11-12T00:00:00Z"),
+                    )
+
+                entry.toDraft() shouldBe
+                    EntryDraft(
+                        id = entry.id,
+                        body = "{\"v\":1}",
+                        emoji = "😊",
+                        occurredAt = occurredAt,
+                        timeZone = zone,
+                        location = location,
+                    )
+            }
         },
     )
