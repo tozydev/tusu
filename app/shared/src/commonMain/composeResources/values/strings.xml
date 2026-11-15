@@ -112,6 +112,10 @@
     <string name="nav_new_entry">New entry</string>
     <string name="action_close">Close</string>
     <string name="action_back">Back</string>
+    <string name="entry_more_actions">More actions</string>
+    <string name="entry_action_edit">Edit</string>
+    <string name="entry_action_change_time">Change date and time</string>
+    <string name="entry_action_delete">Delete</string>
     <string name="entry_deleted_message">Entry moved to the trash</string>
     <string name="placeholder_calendar_title">The calendar is on its way</string>
     <string name="placeholder_calendar_description">Browse your entries day by day, coming soon.</string>

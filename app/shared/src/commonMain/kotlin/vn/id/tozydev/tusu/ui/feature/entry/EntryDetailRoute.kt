@@ -17,7 +17,6 @@ fun EntryDetailRoute(
     onOpenViewer: (startIndex: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // TODO(TOZY-68): the "more" sheet calls onEdit.
     val viewModel = metroViewModel<EntryDetailViewModel>()
     LaunchedEffect(entryId) { viewModel.bind(entryId) }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -26,6 +25,9 @@ fun EntryDetailRoute(
         state = state,
         onBack = onBack,
         onPhotoClick = onOpenViewer,
+        onEditClick = { onEdit(entryId) },
+        onOccurredAtChange = viewModel::onOccurredAtChange,
+        onDeleteClick = viewModel::onDelete,
         modifier = modifier,
     )
 }

@@ -10,16 +10,31 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import vn.id.tozydev.tusu.generated.resources.Res
+import vn.id.tozydev.tusu.generated.resources.entry_more_actions
+import vn.id.tozydev.tusu.generated.resources.ic_more_vert_24px
+import vn.id.tozydev.tusu.ui.component.DateTimePickerDialog
 import vn.id.tozydev.tusu.ui.component.RichTextContent
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryDetailHeader
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryDetailTopBar
+import vn.id.tozydev.tusu.ui.feature.entry.component.EntryMoreSheet
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoCarousel
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.format.ProvideAppDateTimeFormatter
@@ -27,7 +42,8 @@ import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 /**
  * The entry in full: top bar, photo carousel, date and formatted text. [onPhotoClick] gets the
- * index of the tapped photo in the carousel order.
+ * index of the tapped photo in the carousel order. The "more" sheet and the date-time dialog are
+ * kept open here; [onOccurredAtChange] gets the new local date-time in the current zone.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -35,11 +51,25 @@ fun EntryDetailScreen(
     state: EntryDetailUiState,
     onBack: () -> Unit,
     onPhotoClick: (index: Int) -> Unit,
+    onEditClick: () -> Unit,
+    onOccurredAtChange: (LocalDateTime) -> Unit,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var moreOpen by rememberSaveable { mutableStateOf(false) }
+    var changingTime by rememberSaveable { mutableStateOf(false) }
     Surface(modifier = modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-            EntryDetailTopBar(onBack = onBack)
+            EntryDetailTopBar(onBack = onBack) {
+                if (!state.isLoading && !state.isGone) {
+                    IconButton(onClick = { moreOpen = true }) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_more_vert_24px),
+                            contentDescription = stringResource(Res.string.entry_more_actions),
+                        )
+                    }
+                }
+            }
             when {
                 state.isLoading -> EntryDetailLoading(Modifier.weight(1f))
                 // The route closes the screen once the entry is gone.
@@ -52,6 +82,36 @@ fun EntryDetailScreen(
                     )
             }
         }
+    }
+    if (moreOpen) {
+        // Each row closes the sheet first, so the next step is not shown over it.
+        EntryMoreSheet(
+            onEdit = {
+                moreOpen = false
+                onEditClick()
+            },
+            onChangeTime = {
+                moreOpen = false
+                changingTime = true
+            },
+            onDelete = {
+                moreOpen = false
+                onDeleteClick()
+            },
+            onDismiss = { moreOpen = false },
+        )
+    }
+    val currentTimeZone = state.currentTimeZone
+    val occurredAt = state.occurredAt
+    if (changingTime && currentTimeZone != null && occurredAt != null) {
+        DateTimePickerDialog(
+            initial = occurredAt.toLocalDateTime(currentTimeZone),
+            onConfirm = {
+                changingTime = false
+                onOccurredAtChange(it)
+            },
+            onDismiss = { changingTime = false },
+        )
     }
 }
 
@@ -109,6 +169,9 @@ private fun EntryDetailScreenTextPreview() {
                 state = sampleEntryState(text = "Hôm nay trời đẹp, đi bộ quanh hồ."),
                 onBack = {},
                 onPhotoClick = {},
+                onEditClick = {},
+                onOccurredAtChange = {},
+                onDeleteClick = {},
             )
         }
     }
@@ -128,6 +191,9 @@ private fun EntryDetailScreenFullPreview() {
                     ),
                 onBack = {},
                 onPhotoClick = {},
+                onEditClick = {},
+                onOccurredAtChange = {},
+                onDeleteClick = {},
             )
         }
     }
@@ -142,6 +208,9 @@ private fun EntryDetailScreenOnePhotoPreview() {
                 state = sampleEntryState(photoCount = 1),
                 onBack = {},
                 onPhotoClick = {},
+                onEditClick = {},
+                onOccurredAtChange = {},
+                onDeleteClick = {},
             )
         }
     }
@@ -150,5 +219,14 @@ private fun EntryDetailScreenOnePhotoPreview() {
 @Preview
 @Composable
 private fun EntryDetailScreenLoadingPreview() {
-    AppTheme { EntryDetailScreen(state = EntryDetailUiState(), onBack = {}, onPhotoClick = {}) }
+    AppTheme {
+        EntryDetailScreen(
+            state = EntryDetailUiState(),
+            onBack = {},
+            onPhotoClick = {},
+            onEditClick = {},
+            onOccurredAtChange = {},
+            onDeleteClick = {},
+        )
+    }
 }
