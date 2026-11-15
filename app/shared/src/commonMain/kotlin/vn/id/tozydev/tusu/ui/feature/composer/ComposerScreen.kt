@@ -6,17 +6,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import vn.id.tozydev.tusu.ui.component.EmojiPickerSheet
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerBody
+import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerEmojiRow
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerToolbar
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerTopBar
 import vn.id.tozydev.tusu.ui.feature.composer.component.RichTextFormatBar
@@ -33,10 +38,14 @@ fun ComposerScreen(
     richTextState: RichTextState,
     onClose: () -> Unit,
     onRetrySave: () -> Unit,
+    onEmojiChange: (String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var formatOpen by rememberSaveable { mutableStateOf(false) }
+    var emojiSheetOpen by rememberSaveable { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
     val editable = !state.isLoading && state.loadError == null && !state.isReadOnly
+    ReturnFocusWhenClosed(sheetOpen = emojiSheetOpen, focusRequester = focusRequester)
     Surface(modifier = modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
             ComposerTopBar(
@@ -47,12 +56,16 @@ fun ComposerScreen(
                 onRetrySave = onRetrySave,
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (editable) {
+                ComposerEmojiRow(emoji = state.emoji, onClick = { emojiSheetOpen = true })
+            }
             ComposerBody(
                 isLoading = state.isLoading,
                 loadError = state.loadError,
                 isReadOnly = state.isReadOnly,
                 readOnlyText = state.readOnlyText,
                 richTextState = richTextState,
+                focusRequester = focusRequester,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
             if (editable) {
@@ -62,6 +75,33 @@ fun ComposerScreen(
                     formatBar = { RichTextFormatBar(richTextState) },
                 )
             }
+        }
+    }
+    if (emojiSheetOpen) {
+        EmojiPickerSheet(
+            selected = state.emoji,
+            onSelect = {
+                onEmojiChange(it)
+                emojiSheetOpen = false
+            },
+            onDismiss = { emojiSheetOpen = false },
+        )
+    }
+}
+
+/** Gives the editor focus, and the keyboard with it, once the emoji sheet has closed. */
+@Composable
+private fun ReturnFocusWhenClosed(sheetOpen: Boolean, focusRequester: FocusRequester) {
+    val keyboard = LocalSoftwareKeyboardController.current
+    // Saved so a rotation while the sheet is open still returns focus when it closes.
+    var wasOpen by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(sheetOpen) {
+        if (sheetOpen) {
+            wasOpen = true
+        } else if (wasOpen) {
+            wasOpen = false
+            focusRequester.requestFocus()
+            keyboard?.show()
         }
     }
 }
@@ -81,6 +121,28 @@ private fun ComposerScreenNewEntryPreview() {
             richTextState = richTextState,
             onClose = {},
             onRetrySave = {},
+            onEmojiChange = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ComposerScreenWithEmojiPreview() {
+    AppTheme {
+        val richTextState = remember { RichTextState() }
+        ComposerScreen(
+            state =
+                ComposerUiState(
+                    isLoading = false,
+                    occurredAt = Instant.parse("2026-11-11T03:00:00Z"),
+                    timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
+                    emoji = "🌱",
+                ),
+            richTextState = richTextState,
+            onClose = {},
+            onRetrySave = {},
+            onEmojiChange = {},
         )
     }
 }
@@ -101,6 +163,7 @@ private fun ComposerScreenSavingPreview() {
             richTextState = richTextState,
             onClose = {},
             onRetrySave = {},
+            onEmojiChange = {},
         )
     }
 }
@@ -121,6 +184,7 @@ private fun ComposerScreenFailedPreview() {
             richTextState = richTextState,
             onClose = {},
             onRetrySave = {},
+            onEmojiChange = {},
         )
     }
 }
@@ -142,6 +206,7 @@ private fun ComposerScreenReadOnlyPreview() {
             richTextState = richTextState,
             onClose = {},
             onRetrySave = {},
+            onEmojiChange = {},
         )
     }
 }

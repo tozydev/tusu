@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
@@ -25,6 +26,7 @@ fun ComposerBody(
     isReadOnly: Boolean,
     readOnlyText: String,
     richTextState: RichTextState,
+    focusRequester: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
@@ -33,7 +35,12 @@ fun ComposerBody(
                 EmptyState(title = loadError.asString(), modifier = Modifier.fillMaxSize())
             isLoading -> ComposerLoading(modifier = Modifier.fillMaxSize())
             isReadOnly -> ReadOnlyEntry(text = readOnlyText, modifier = Modifier.fillMaxSize())
-            else -> ComposerEditor(richTextState = richTextState, modifier = Modifier.fillMaxSize())
+            else ->
+                ComposerEditor(
+                    richTextState = richTextState,
+                    focusRequester = focusRequester,
+                    modifier = Modifier.fillMaxSize(),
+                )
         }
     }
 }
@@ -57,6 +64,7 @@ private fun ComposerBodyLoadingPreview() {
             isReadOnly = false,
             readOnlyText = "",
             richTextState = richTextState,
+            focusRequester = remember { FocusRequester() },
         )
     }
 }

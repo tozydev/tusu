@@ -56,10 +56,16 @@ private fun paragraph(text: String) = RichTextDocument(listOf(RichTextBlock(text
 private fun storedBody(text: String): String =
     RichTextState().setRichTextDocument(paragraph(text)).toJson()
 
-private fun existingEntry(id: Uuid, body: String, textPlain: String): Entry =
+private fun existingEntry(
+    id: Uuid,
+    body: String,
+    textPlain: String,
+    emoji: String? = null,
+): Entry =
     Entry(
         id = id,
         body = body,
+        emoji = emoji,
         textPlain = textPlain,
         occurredAt = fixedNow,
         timeZone = zone,
@@ -341,6 +347,91 @@ class ComposerViewModelTest :
 
                     f.entries.saves.last() shouldBe original.toDraft()
                     f.entries.restored shouldBe listOf(id)
+                }
+            }
+
+            test("an emoji alone does not create a new entry; the first text saves it") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onEmojiChange("😊")
+                    advanceTimeBy(2.seconds)
+                    f.entries.saves.shouldBeEmpty()
+                    f.viewModel.uiState.value.emoji shouldBe "😊"
+
+                    f.viewModel.typeText("Hello")
+                    advanceTimeBy(600)
+
+                    f.entries.saves.single().emoji shouldBe "😊"
+                }
+            }
+
+            test("an emoji change on an existing entry is saved 500 ms later") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    f.entries.entries[id] = existingEntry(id, storedBody("Hello"), "Hello")
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+
+                    f.viewModel.onEmojiChange("🌱")
+                    advanceTimeBy(499)
+                    f.entries.saves.shouldBeEmpty()
+
+                    advanceTimeBy(100)
+                    f.entries.saves.single().emoji shouldBe "🌱"
+                }
+            }
+
+            test("choosing null clears the emoji and saves the removal") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    f.entries.entries[id] = existingEntry(id, storedBody("Hello"), "Hello", "😊")
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.emoji shouldBe "😊"
+
+                    f.viewModel.onEmojiChange(null)
+                    advanceTimeBy(600)
+
+                    f.viewModel.uiState.value.emoji shouldBe null
+                    f.entries.saves.single().emoji shouldBe null
+                }
+            }
+
+            test("undo restores the original emoji") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    val original = existingEntry(id, storedBody("Hello"), "Hello", "😊")
+                    f.entries.entries[id] = original
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+
+                    f.viewModel.onEmojiChange("🌱")
+                    advanceTimeBy(600)
+                    f.viewModel.finishSession().join()
+                    runCurrent()
+
+                    requireNotNull(f.posted.single().action).onAction()
+                    advanceUntilIdle()
+
+                    f.entries.saves.last() shouldBe original.toDraft()
+                }
+            }
+
+            test("an entry that only has an emoji is deleted on finish, as before") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.typeText("Hello")
+                    advanceTimeBy(600)
+                    f.viewModel.onEmojiChange("😊")
+                    advanceTimeBy(600)
+                    f.viewModel.typeText("")
+                    advanceTimeBy(600)
+
+                    f.viewModel.finishSession().join()
+                    runCurrent()
+
+                    f.entries.deleted shouldBe listOf(f.entries.saves.first().id)
+                    f.posted.shouldBeEmpty()
                 }
             }
 

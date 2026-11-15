@@ -27,6 +27,7 @@ fun ComposerRoute(entryId: Uuid?, onClose: () -> Unit, modifier: Modifier = Modi
         richTextState = viewModel.richTextState,
         onClose = onClose,
         onRetrySave = viewModel::retrySave,
+        onEmojiChange = viewModel::onEmojiChange,
         modifier = modifier,
     )
 }

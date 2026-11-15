@@ -84,7 +84,7 @@ class ComposerViewModel(
 
     /** False until the body is loaded; a read-only or missing entry never becomes editable. */
     private var editable = false
-    private var lastSubmittedJson: String? = null
+    /** The last draft written, or the baseline the session started from. */
     private var lastDraft: EntryDraft? = null
     private var submitted = false
     private var finishJob: Job? = null
@@ -113,14 +113,16 @@ class ComposerViewModel(
 
     /** Called whenever the rich text changes. Saves only when the content really changed. */
     fun onBodyChanged() {
+        syncDraft()
+    }
+
+    /** Sets or clears the emoji. A persisted entry is auto-saved like text. */
+    fun onEmojiChange(emoji: String?) {
         val target = target ?: return
         if (!editable) return
-        val json = richTextState.toJson()
-        if (json == lastSubmittedJson) return
-        // A new entry is written once it has text; an existing one is always written when edited.
-        val persisted = target.original != null || submitted
-        if (!persisted && richTextState.annotatedString.text.isBlank()) return
-        submit(target, json)
+        target.emoji = emoji
+        _uiState.update { it.copy(emoji = emoji) }
+        syncDraft()
     }
 
     fun onBackground() {
@@ -158,14 +160,16 @@ class ComposerViewModel(
 
     private fun startNewEntry() {
         val now = clock.now()
-        target =
+        val newTarget =
             EntryTarget(
                 id = Uuid.random(),
                 occurredAt = now,
                 timeZone = timeZone,
                 original = null,
+                emoji = null,
             )
-        lastSubmittedJson = richTextState.toJson()
+        target = newTarget
+        lastDraft = draftOf(newTarget)
         editable = true
         _uiState.update { it.copy(isLoading = false, occurredAt = now, timeZone = timeZone) }
     }
@@ -178,13 +182,15 @@ class ComposerViewModel(
             }
             return
         }
-        target =
+        val existing =
             EntryTarget(
                 id = entry.id,
                 occurredAt = entry.occurredAt,
                 timeZone = entry.timeZone,
                 original = entry.toDraft(),
+                emoji = entry.emoji,
             )
+        target = existing
         if (!loadBody(entry.body)) {
             _uiState.update {
                 it.copy(isLoading = false, isReadOnly = true, readOnlyText = entry.textPlain)
@@ -192,13 +198,14 @@ class ComposerViewModel(
             return
         }
         // The loaded state is the baseline, so opening an entry does not count as an edit.
-        lastSubmittedJson = richTextState.toJson()
+        lastDraft = draftOf(existing)
         editable = true
         _uiState.update {
             it.copy(
                 isLoading = false,
                 occurredAt = entry.occurredAt,
                 timeZone = entry.timeZone,
+                emoji = entry.emoji,
             )
         }
     }
@@ -216,17 +223,26 @@ class ComposerViewModel(
         }
     }
 
-    private fun submit(target: EntryTarget, json: String) {
-        val draft =
-            EntryDraft(
-                id = target.id,
-                body = json,
-                emoji = target.original?.emoji,
-                occurredAt = target.occurredAt,
-                timeZone = target.timeZone,
-                location = target.original?.location,
-            )
-        lastSubmittedJson = json
+    /** The draft the session currently describes; location is kept from the original entry. */
+    private fun draftOf(target: EntryTarget): EntryDraft =
+        EntryDraft(
+            id = target.id,
+            body = richTextState.toJson(),
+            emoji = target.emoji,
+            occurredAt = target.occurredAt,
+            timeZone = target.timeZone,
+            location = target.original?.location,
+        )
+
+    /** Submits the current draft when it differs from the last one written or the baseline. */
+    private fun syncDraft() {
+        val target = target ?: return
+        if (!editable) return
+        val draft = draftOf(target)
+        if (draft == lastDraft) return
+        // A new entry is written once it has text; an existing one is always written when edited.
+        val persisted = target.original != null || submitted
+        if (!persisted && richTextState.annotatedString.text.isBlank()) return
         lastDraft = draft
         submitted = true
         autoSaver.submit(draft)
@@ -333,4 +349,6 @@ private class EntryTarget(
     val occurredAt: Instant,
     val timeZone: TimeZone,
     val original: EntryDraft?,
+    /** The emoji of this session; it can differ from [original] after the user changes it. */
+    var emoji: String?,
 )

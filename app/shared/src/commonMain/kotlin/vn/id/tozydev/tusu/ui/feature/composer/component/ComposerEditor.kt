@@ -34,8 +34,11 @@ import vn.id.tozydev.tusu.ui.theme.AppTheme
 /** The rich text editor; it takes focus when shown so the keyboard opens at once. */
 @OptIn(ExperimentalRichTextApi::class)
 @Composable
-fun ComposerEditor(richTextState: RichTextState, modifier: Modifier = Modifier) {
-    val focusRequester = remember { FocusRequester() }
+fun ComposerEditor(
+    richTextState: RichTextState,
+    focusRequester: FocusRequester,
+    modifier: Modifier = Modifier,
+) {
     // Picked once per opening, so the prompt does not change while the user is writing.
     val placeholderIndex = rememberSaveable { Random.nextInt(2) }
     val placeholder =
@@ -88,6 +91,10 @@ fun ComposerEditor(richTextState: RichTextState, modifier: Modifier = Modifier) 
 private fun ComposerEditorPreview() {
     AppTheme {
         val richTextState = remember { RichTextState() }
-        ComposerEditor(richTextState = richTextState, modifier = Modifier.fillMaxWidth())
+        ComposerEditor(
+            richTextState = richTextState,
+            focusRequester = remember { FocusRequester() },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }

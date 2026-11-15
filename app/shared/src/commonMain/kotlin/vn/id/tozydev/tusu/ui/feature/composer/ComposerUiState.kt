@@ -8,6 +8,8 @@ data class ComposerUiState(
     val isLoading: Boolean = true,
     val occurredAt: Instant? = null,
     val timeZone: TimeZone? = null,
+    /** The entry's emoji; null when none is chosen. */
+    val emoji: String? = null,
     val saveIndicator: SaveIndicator = SaveIndicator.Hidden,
     /** Set when the entry to edit cannot be opened at all (e.g. it no longer exists). */
     val loadError: UiText? = null,
