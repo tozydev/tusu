@@ -105,12 +105,15 @@
     <string name="nav_media">Media</string>
     <string name="nav_new_entry">New entry</string>
     <string name="action_close">Close</string>
-    <string name="placeholder_timeline_title">Your timeline is on its way</string>
-    <string name="placeholder_timeline_description">Entries will appear here, newest first.</string>
     <string name="placeholder_calendar_title">The calendar is on its way</string>
     <string name="placeholder_calendar_description">Browse your entries day by day, coming soon.</string>
     <string name="placeholder_media_title">Your media is on its way</string>
     <string name="placeholder_media_description">Photos, videos and recordings will gather here, coming soon.</string>
     <string name="placeholder_composer_title">The writing space is on its way</string>
     <string name="placeholder_composer_description">You will write your entries here, coming soon.</string>
+    <string name="timeline_empty_title">Your journal is empty for now</string>
+    <string name="timeline_empty_description">Entries you write will appear here, newest first.</string>
+    <string name="timeline_load_error_title">Could not load your entries</string>
+    <string name="timeline_load_error_description">Your entries are safe on this device. Try again in a moment.</string>
+    <string name="timeline_append_error">Could not load older entries.</string>
 </resources>
