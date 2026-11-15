@@ -40,5 +40,6 @@ class TusuApplication : Application(), MetroApplication, Configuration.Provider 
                 logger.warn { "Could not queue unfinished photo compression: $it" }
             }
         }
+        DebugTools.onAppCreated(this, appGraph)
     }
 }

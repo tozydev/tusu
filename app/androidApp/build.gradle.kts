@@ -57,12 +57,20 @@ android {
             if (releaseSigning?.storeFile?.exists() == true) {
                 signingConfig = releaseSigning
             }
-            packaging { resources { excludes += "/test-data/**" } }
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_25
         targetCompatibility = JavaVersion.VERSION_25
+    }
+}
+
+androidComponents {
+    // The sample photos are for the debug-only SampleDataSeeder. A `packaging` block inside the
+    // `release` build type would still configure the whole app, so the exclusion is set on the
+    // release variant itself.
+    onVariants(selector().withBuildType("release")) { variant ->
+        variant.packaging.resources.excludes.add("/test-data/**")
     }
 }
 
