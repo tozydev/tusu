@@ -130,6 +130,7 @@
     <string name="composer_empty_trashed">Entry trống đã vào Thùng rác</string>
     <string name="action_undo">Hoàn tác</string>
     <string name="composer_emoji_description">Chọn emoji</string>
+    <string name="composer_change_time">Đổi ngày giờ</string>
     <string name="composer_format_toggle">Aa</string>
     <string name="composer_format_description">Định dạng chữ</string>
     <string name="format_bold">Đậm</string>

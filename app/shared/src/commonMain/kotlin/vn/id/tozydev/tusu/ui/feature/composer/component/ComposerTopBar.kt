@@ -1,12 +1,16 @@
 package vn.id.tozydev.tusu.ui.feature.composer.component
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,11 +23,14 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.action_close
+import vn.id.tozydev.tusu.generated.resources.composer_change_time
 import vn.id.tozydev.tusu.generated.resources.ic_close_24px
+import vn.id.tozydev.tusu.generated.resources.ic_schedule_24px
 import vn.id.tozydev.tusu.ui.feature.composer.SaveIndicator
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
+/** The bar above the editor; tapping the date-time text calls [onTimeClick] when [timeEnabled]. */
 @Composable
 fun ComposerTopBar(
     occurredAt: Instant?,
@@ -31,6 +38,8 @@ fun ComposerTopBar(
     saveIndicator: SaveIndicator,
     onClose: () -> Unit,
     onRetrySave: () -> Unit,
+    onTimeClick: () -> Unit,
+    timeEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalAppDateTimeFormatter.current
@@ -50,15 +59,37 @@ fun ComposerTopBar(
                 contentDescription = stringResource(Res.string.action_close),
             )
         }
-        // TODO(TOZY-63): tap to change the date and time.
-        Text(
+        ComposerTimeButton(
             text = dateTime,
+            enabled = timeEnabled,
+            onClick = onTimeClick,
+            modifier = Modifier.weight(1f),
+        )
+        SaveIndicatorIcon(indicator = saveIndicator, onRetry = onRetrySave)
+    }
+}
+
+@Composable
+private fun ComposerTimeButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val description = stringResource(Res.string.composer_change_time)
+    TextButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+        Icon(
+            painter = painterResource(Res.drawable.ic_schedule_24px),
+            contentDescription = description,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = text,
             style = MaterialTheme.typography.titleSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
         )
-        SaveIndicatorIcon(indicator = saveIndicator, onRetry = onRetrySave)
     }
 }
 
@@ -73,6 +104,26 @@ private fun ComposerTopBarPreview() {
                 saveIndicator = SaveIndicator.Saved,
                 onClose = {},
                 onRetrySave = {},
+                onTimeClick = {},
+                timeEnabled = true,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ComposerTopBarReadOnlyPreview() {
+    AppTheme {
+        Surface {
+            ComposerTopBar(
+                occurredAt = Instant.parse("2026-11-11T03:00:00Z"),
+                timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
+                saveIndicator = SaveIndicator.Hidden,
+                onClose = {},
+                onRetrySave = {},
+                onTimeClick = {},
+                timeEnabled = false,
             )
         }
     }

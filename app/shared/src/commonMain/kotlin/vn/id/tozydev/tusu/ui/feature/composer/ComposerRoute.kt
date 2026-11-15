@@ -28,6 +28,7 @@ fun ComposerRoute(entryId: Uuid?, onClose: () -> Unit, modifier: Modifier = Modi
         onClose = onClose,
         onRetrySave = viewModel::retrySave,
         onEmojiChange = viewModel::onEmojiChange,
+        onOccurredAtChange = viewModel::onOccurredAtChange,
         modifier = modifier,
     )
 }

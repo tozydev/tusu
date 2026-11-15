@@ -32,7 +32,9 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import vn.id.tozydev.tusu.domain.error.EntryError
 import vn.id.tozydev.tusu.domain.model.Entry
 import vn.id.tozydev.tusu.domain.model.toDraft
@@ -45,6 +47,7 @@ import vn.id.tozydev.tusu.ui.format.UiText
 import vn.id.tozydev.tusu.ui.format.toUiText
 
 private val zone = TimeZone.of("Asia/Ho_Chi_Minh")
+private val paris = TimeZone.of("Europe/Paris")
 private val fixedNow: Instant = Instant.parse("2026-11-11T03:00:00Z")
 private val fixedClock =
     object : Clock {
@@ -465,6 +468,62 @@ class ComposerViewModelTest :
                     f.entries.saves.shouldBeEmpty()
                     f.entries.trashed.shouldBeEmpty()
                     f.posted.shouldBeEmpty()
+                }
+            }
+            test("changing the time of a new entry keeps it in memory until the first text") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onOccurredAtChange(LocalDateTime(2026, 11, 10, 8, 0))
+                    advanceTimeBy(2.seconds)
+                    f.entries.saves.shouldBeEmpty()
+
+                    f.viewModel.typeText("Hello")
+                    advanceTimeBy(600)
+
+                    val saved = f.entries.saves.single()
+                    saved.occurredAt shouldBe LocalDateTime(2026, 11, 10, 8, 0).toInstant(zone)
+                    saved.timeZone shouldBe zone
+                }
+            }
+
+            test("changing the time of an existing entry saves it in the current zone") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    f.entries.entries[id] =
+                        existingEntry(id, storedBody("Hello"), "Hello").copy(timeZone = paris)
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.timeZone shouldBe paris
+                    f.viewModel.uiState.value.currentTimeZone shouldBe zone
+
+                    f.viewModel.onOccurredAtChange(LocalDateTime(2026, 11, 11, 10, 0))
+                    advanceTimeBy(600)
+
+                    val saved = f.entries.saves.single()
+                    saved.occurredAt shouldBe LocalDateTime(2026, 11, 11, 10, 0).toInstant(zone)
+                    saved.timeZone shouldBe zone
+                    f.viewModel.uiState.value.timeZone shouldBe zone
+                }
+            }
+
+            test("undo restores the original time and zone of an existing entry") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    val original =
+                        existingEntry(id, storedBody("Hello"), "Hello").copy(timeZone = paris)
+                    f.entries.entries[id] = original
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+
+                    f.viewModel.onOccurredAtChange(LocalDateTime(2026, 11, 11, 10, 0))
+                    advanceTimeBy(600)
+                    f.viewModel.finishSession().join()
+                    runCurrent()
+
+                    requireNotNull(f.posted.single().action).onAction()
+                    advanceUntilIdle()
+
+                    f.entries.saves.last() shouldBe original.toDraft()
                 }
             }
         },

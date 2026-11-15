@@ -29,7 +29,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import vn.id.tozydev.tusu.domain.error.EntryError
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.EntryDraft
@@ -108,6 +110,7 @@ class ComposerViewModel(
     fun bind(entryId: Uuid?) {
         if (bound) return
         bound = true
+        _uiState.update { it.copy(currentTimeZone = timeZone) }
         if (entryId == null) startNewEntry() else viewModelScope.launch { openEntry(entryId) }
     }
 
@@ -122,6 +125,20 @@ class ComposerViewModel(
         if (!editable) return
         target.emoji = emoji
         _uiState.update { it.copy(emoji = emoji) }
+        syncDraft()
+    }
+
+    /**
+     * Moves the entry to [local], read in the current zone, and makes that zone the entry's own. A
+     * persisted entry is auto-saved like text.
+     */
+    fun onOccurredAtChange(local: LocalDateTime) {
+        val target = target ?: return
+        if (!editable) return
+        val occurredAt = local.toInstant(timeZone)
+        target.occurredAt = occurredAt
+        target.timeZone = timeZone
+        _uiState.update { it.copy(occurredAt = occurredAt, timeZone = timeZone) }
         syncDraft()
     }
 
@@ -346,8 +363,8 @@ class ComposerViewModel(
 /** The entry this session writes; [original] is null for a new entry. */
 private class EntryTarget(
     val id: Uuid,
-    val occurredAt: Instant,
-    val timeZone: TimeZone,
+    var occurredAt: Instant,
+    var timeZone: TimeZone,
     val original: EntryDraft?,
     /** The emoji of this session; it can differ from [original] after the user changes it. */
     var emoji: String?,

@@ -18,7 +18,10 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import vn.id.tozydev.tusu.ui.component.DateTimePickerDialog
 import vn.id.tozydev.tusu.ui.component.EmojiPickerSheet
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerBody
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerEmojiRow
@@ -39,10 +42,12 @@ fun ComposerScreen(
     onClose: () -> Unit,
     onRetrySave: () -> Unit,
     onEmojiChange: (String?) -> Unit,
+    onOccurredAtChange: (LocalDateTime) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var formatOpen by rememberSaveable { mutableStateOf(false) }
     var emojiSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var timeDialogOpen by rememberSaveable { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val editable = !state.isLoading && state.loadError == null && !state.isReadOnly
     ReturnFocusWhenClosed(sheetOpen = emojiSheetOpen, focusRequester = focusRequester)
@@ -54,6 +59,8 @@ fun ComposerScreen(
                 saveIndicator = state.saveIndicator,
                 onClose = onClose,
                 onRetrySave = onRetrySave,
+                onTimeClick = { timeDialogOpen = true },
+                timeEnabled = editable,
                 modifier = Modifier.fillMaxWidth(),
             )
             if (editable) {
@@ -87,6 +94,19 @@ fun ComposerScreen(
             onDismiss = { emojiSheetOpen = false },
         )
     }
+    val occurredAt = state.occurredAt
+    val currentTimeZone = state.currentTimeZone
+    if (timeDialogOpen && occurredAt != null && currentTimeZone != null) {
+        // The picker works in the current zone, the same zone the ViewModel converts back with.
+        DateTimePickerDialog(
+            initial = occurredAt.toLocalDateTime(currentTimeZone),
+            onConfirm = {
+                onOccurredAtChange(it)
+                timeDialogOpen = false
+            },
+            onDismiss = { timeDialogOpen = false },
+        )
+    }
 }
 
 /** Gives the editor focus, and the keyboard with it, once the emoji sheet has closed. */
@@ -117,11 +137,13 @@ private fun ComposerScreenNewEntryPreview() {
                     isLoading = false,
                     occurredAt = Instant.parse("2026-11-11T03:00:00Z"),
                     timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
+                    currentTimeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
                 ),
             richTextState = richTextState,
             onClose = {},
             onRetrySave = {},
             onEmojiChange = {},
+            onOccurredAtChange = {},
         )
     }
 }
@@ -143,6 +165,7 @@ private fun ComposerScreenWithEmojiPreview() {
             onClose = {},
             onRetrySave = {},
             onEmojiChange = {},
+            onOccurredAtChange = {},
         )
     }
 }
@@ -164,6 +187,7 @@ private fun ComposerScreenSavingPreview() {
             onClose = {},
             onRetrySave = {},
             onEmojiChange = {},
+            onOccurredAtChange = {},
         )
     }
 }
@@ -185,6 +209,7 @@ private fun ComposerScreenFailedPreview() {
             onClose = {},
             onRetrySave = {},
             onEmojiChange = {},
+            onOccurredAtChange = {},
         )
     }
 }
@@ -207,6 +232,7 @@ private fun ComposerScreenReadOnlyPreview() {
             onClose = {},
             onRetrySave = {},
             onEmojiChange = {},
+            onOccurredAtChange = {},
         )
     }
 }

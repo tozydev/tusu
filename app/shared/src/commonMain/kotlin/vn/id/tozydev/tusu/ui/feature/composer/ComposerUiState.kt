@@ -8,6 +8,8 @@ data class ComposerUiState(
     val isLoading: Boolean = true,
     val occurredAt: Instant? = null,
     val timeZone: TimeZone? = null,
+    /** The zone the user is in now; the date-time picker reads and writes times in it. */
+    val currentTimeZone: TimeZone? = null,
     /** The entry's emoji; null when none is chosen. */
     val emoji: String? = null,
     val saveIndicator: SaveIndicator = SaveIndicator.Hidden,
