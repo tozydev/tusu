@@ -131,4 +131,5 @@
     <string name="timeline_append_error">Không tải được các entry cũ hơn.</string>
     <string name="timeline_empty_action">Viết entry đầu tiên</string>
     <string name="timeline_day_more_emojis">+%1$d</string>
+    <string name="timeline_more_photos">+%1$d</string>
 </resources>

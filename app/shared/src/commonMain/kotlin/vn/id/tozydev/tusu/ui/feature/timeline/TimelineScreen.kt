@@ -22,6 +22,7 @@ import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlin.time.Clock
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -41,6 +42,7 @@ import vn.id.tozydev.tusu.ui.component.UiMessage
 import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineAppendFooter
 import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineDayHeader
 import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineEntryRow
+import vn.id.tozydev.tusu.ui.feature.timeline.component.samplePhotos
 import vn.id.tozydev.tusu.ui.feature.timeline.component.sampleTimelineEntries
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.format.UiText
@@ -52,6 +54,7 @@ fun TimelineScreen(
     dayEmojis: Map<LocalDate, List<String>>,
     contentPadding: PaddingValues,
     onNewEntryClick: () -> Unit,
+    onEntryClick: (Uuid) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
@@ -68,7 +71,12 @@ fun TimelineScreen(
             items.itemCount == 0 ->
                 TimelineEmpty(onNewEntryClick = onNewEntryClick, contentPadding = contentPadding)
             else ->
-                TimelineList(items = items, dayEmojis = dayEmojis, contentPadding = contentPadding)
+                TimelineList(
+                    items = items,
+                    dayEmojis = dayEmojis,
+                    contentPadding = contentPadding,
+                    onEntryClick = onEntryClick,
+                )
         }
     }
 }
@@ -91,6 +99,7 @@ private fun TimelineList(
     items: LazyPagingItems<TimelineItem>,
     dayEmojis: Map<LocalDate, List<String>>,
     contentPadding: PaddingValues,
+    onEntryClick: (Uuid) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val clock = remember { Clock.System }
@@ -113,7 +122,11 @@ private fun TimelineList(
                 is TimelineItem.EntryItem ->
                     item(key = row.entry.id.toString(), contentType = "entry") {
                         items[index]
-                        TimelineEntryRow(entry = row.entry)
+                        TimelineEntryRow(
+                            entry = row.entry,
+                            photos = row.photos,
+                            onClick = { onEntryClick(row.entry.id) },
+                        )
                     }
                 null -> Unit // Placeholders are disabled in the repository, so this is rare.
             }
@@ -178,6 +191,7 @@ private fun TimelineScreenPreview() {
                 dayEmojis = previewDayEmojis(),
                 contentPadding = PaddingValues(bottom = 104.dp),
                 onNewEntryClick = {},
+                onEntryClick = {},
             )
         }
     }
@@ -194,6 +208,7 @@ private fun TimelineScreenEmptyPreview() {
                 dayEmojis = emptyMap(),
                 contentPadding = PaddingValues(bottom = 104.dp),
                 onNewEntryClick = {},
+                onEntryClick = {},
             )
         }
     }
@@ -215,7 +230,12 @@ private fun TimelineLoadErrorPreview() {
 private fun previewTimelineItems(): List<TimelineItem> {
     val entries = sampleTimelineEntries()
     val day = TimelineItem.Day(entries.first().localDate)
-    return listOf(day) + entries.map { TimelineItem.EntryItem(entry = it, photos = emptyList()) }
+    return listOf(day) +
+        entries.mapIndexed { index, entry ->
+            // The middle entry shows photos so the preview covers the grid as well.
+            val photos = if (index == 1) samplePhotos(3) else emptyList()
+            TimelineItem.EntryItem(entry = entry, photos = photos)
+        }
 }
 
 private fun previewDayEmojis(): Map<LocalDate, List<String>> =
