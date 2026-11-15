@@ -1,7 +1,6 @@
 package vn.id.tozydev.tusu.ui.feature.composer
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.json.MalformedRichTextJsonException
 import com.mohamedrejeb.richeditor.json.UnsupportedRichTextJsonVersionException
@@ -74,7 +73,8 @@ class ComposerViewModel(
     val uiState: StateFlow<ComposerUiState> = _uiState.asStateFlow()
 
     // Not viewModelScope: clearing the screen cancels that scope, and the last keystrokes must
-    // still be written after it.
+    // still be written after it. Session coroutines never run on Dispatchers.Main, so they stay
+    // testable without a Main dispatcher.
     private val sessionScope =
         CoroutineScope(appScope.coroutineContext + SupervisorJob(appScope.coroutineContext[Job]))
 
@@ -92,7 +92,7 @@ class ComposerViewModel(
     private var finishJob: Job? = null
 
     init {
-        viewModelScope.launch {
+        sessionScope.launch {
             autoSaver.state.collectLatest { state ->
                 setSaveIndicator(state.toIndicator())
                 if (state == SaveState.Saved) {
@@ -111,7 +111,7 @@ class ComposerViewModel(
         if (bound) return
         bound = true
         _uiState.update { it.copy(currentTimeZone = timeZone) }
-        if (entryId == null) startNewEntry() else viewModelScope.launch { openEntry(entryId) }
+        if (entryId == null) startNewEntry() else sessionScope.launch { openEntry(entryId) }
     }
 
     /** Called whenever the rich text changes. Saves only when the content really changed. */

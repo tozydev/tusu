@@ -22,7 +22,10 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -86,7 +89,7 @@ private fun UiText.shouldBeSavedMessage() {
     shouldBeInstanceOf<UiText.Resource>().resource shouldBe Res.string.composer_saved_message
 }
 
-private class ComposerFixture(scope: TestScope) {
+private class ComposerFixture(scope: TestScope, appScope: CoroutineScope) {
     val entries = FakeEntryRepository()
     val media = FakeMediaRepository()
     val messages = AppMessages()
@@ -98,7 +101,7 @@ private class ComposerFixture(scope: TestScope) {
             appMessages = messages,
             clock = fixedClock,
             timeZone = zone,
-            appScope = scope.backgroundScope,
+            appScope = appScope,
         )
 
     init {
@@ -109,9 +112,13 @@ private class ComposerFixture(scope: TestScope) {
 /** Runs [block] with the main dispatcher set to the test scheduler, and restores it afterwards. */
 private fun composerTest(block: suspend TestScope.(ComposerFixture) -> Unit) = runTest {
     Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+    // A foreground scope, not backgroundScope: advanceUntilIdle does not run background work, and
+    // the composer starts its photo work on appScope. It is cancelled before Main is reset.
+    val appScope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
     try {
-        block(ComposerFixture(this))
+        block(ComposerFixture(this, appScope))
     } finally {
+        appScope.cancel()
         Dispatchers.resetMain()
     }
 }
