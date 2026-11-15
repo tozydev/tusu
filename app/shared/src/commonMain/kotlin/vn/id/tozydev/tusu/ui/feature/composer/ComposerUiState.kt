@@ -2,6 +2,7 @@ package vn.id.tozydev.tusu.ui.feature.composer
 
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import vn.id.tozydev.tusu.ui.component.MediaUi
 import vn.id.tozydev.tusu.ui.format.UiText
 
 data class ComposerUiState(
@@ -18,4 +19,6 @@ data class ComposerUiState(
     /** The stored body cannot be edited by this app version; [readOnlyText] is shown instead. */
     val isReadOnly: Boolean = false,
     val readOnlyText: String = "",
+    /** Live photos of the entry in album order; empty until the entry is known. */
+    val photos: List<MediaUi> = emptyList(),
 )

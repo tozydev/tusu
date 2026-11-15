@@ -27,25 +27,36 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import vn.id.tozydev.tusu.domain.error.EntryError
+import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.EntryDraft
+import vn.id.tozydev.tusu.domain.model.MediaStatus
+import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.domain.model.toDraft
 import vn.id.tozydev.tusu.domain.repository.EntryRepository
+import vn.id.tozydev.tusu.domain.repository.MediaFileStore
 import vn.id.tozydev.tusu.domain.repository.MediaRepository
+import vn.id.tozydev.tusu.domain.usecase.AttachMediaUseCase
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.action_undo
 import vn.id.tozydev.tusu.generated.resources.composer_empty_trashed
 import vn.id.tozydev.tusu.generated.resources.composer_saved_message
+import vn.id.tozydev.tusu.platform.MediaJobQueue
 import vn.id.tozydev.tusu.ui.component.AppMessages
 import vn.id.tozydev.tusu.ui.component.UiMessage
 import vn.id.tozydev.tusu.ui.component.UiMessageAction
+import vn.id.tozydev.tusu.ui.component.toUi
 import vn.id.tozydev.tusu.ui.format.UiText
 import vn.id.tozydev.tusu.ui.format.toUiText
+import vn.id.tozydev.tusu.ui.platform.PickedPhoto
 import vn.id.tozydev.tusu.util.AutoSaver
 import vn.id.tozydev.tusu.util.SaveState
 
@@ -61,6 +72,9 @@ import vn.id.tozydev.tusu.util.SaveState
 class ComposerViewModel(
     private val entryRepository: EntryRepository,
     private val mediaRepository: MediaRepository,
+    private val attachMedia: AttachMediaUseCase,
+    private val mediaFiles: MediaFileStore,
+    private val mediaJobQueue: MediaJobQueue,
     private val appMessages: AppMessages,
     private val clock: Clock,
     private val timeZone: TimeZone,
@@ -73,8 +87,7 @@ class ComposerViewModel(
     val uiState: StateFlow<ComposerUiState> = _uiState.asStateFlow()
 
     // Not viewModelScope: clearing the screen cancels that scope, and the last keystrokes must
-    // still be written after it. Session coroutines never run on Dispatchers.Main, so they stay
-    // testable without a Main dispatcher.
+    // still be written after it. Every session coroutine runs here, never on Dispatchers.Main.
     private val sessionScope =
         CoroutineScope(appScope.coroutineContext + SupervisorJob(appScope.coroutineContext[Job]))
 
@@ -90,6 +103,13 @@ class ComposerViewModel(
     private var lastDraft: EntryDraft? = null
     private var submitted = false
     private var finishJob: Job? = null
+
+    /** Photo work of this session. Closing joins it before it decides what the session kept. */
+    private val mediaJobs = mutableListOf<Job>()
+    /** Written by the photo jobs on [appScope], which can run on several threads at once. */
+    private val mediaLock = Mutex()
+    private val addedMedia = mutableSetOf<Uuid>()
+    private val removedMedia = mutableSetOf<Uuid>()
 
     init {
         sessionScope.launch {
@@ -142,6 +162,53 @@ class ComposerViewModel(
         syncDraft()
     }
 
+    /**
+     * Stores the photos in the order given, on [appScope]: the session may close while files are
+     * still being copied. A new entry is written first, because a photo needs its entry row.
+     */
+    fun onPhotosPicked(photos: List<PickedPhoto>) {
+        val target = target ?: return
+        if (photos.isEmpty() || !editable) return
+        val isNewEntry = target.original == null && !submitted
+        if (isNewEntry) writeDraftNow(target)
+        submitted = true
+        trackMediaWork {
+            if (isNewEntry && !awaitEntryWritten()) return@trackMediaWork
+            for (photo in photos) attachPhoto(target.id, photo)
+        }
+    }
+
+    /** Soft-deletes a photo; Undo of this session brings it back. */
+    fun onRemovePhoto(mediaId: Uuid) {
+        if (!editable) return
+        submitted = true
+        trackMediaWork {
+            when (val outcome = mediaRepository.remove(mediaId)) {
+                is Outcome.Success ->
+                    mediaLock.withLock {
+                        // A photo added and removed in the same session is not kept, so there is
+                        // nothing for Undo to restore.
+                        if (!addedMedia.remove(mediaId)) removedMedia += mediaId
+                    }
+                is Outcome.Failure -> appMessages.post(UiMessage(outcome.error.toUiText()))
+            }
+        }
+    }
+
+    /** Queues compression again for a photo whose compression failed. */
+    fun onRetryPhoto(mediaId: Uuid) {
+        if (!editable) return
+        if (_uiState.value.photos.none { it.id == mediaId && it.status == MediaStatus.FAILED }) {
+            return
+        }
+        trackMediaWork {
+            when (val outcome = mediaRepository.setStatus(mediaId, MediaStatus.PROCESSING)) {
+                is Outcome.Success -> mediaJobQueue.enqueueCompression(mediaId)
+                is Outcome.Failure -> appMessages.post(UiMessage(outcome.error.toUiText()))
+            }
+        }
+    }
+
     fun onBackground() {
         autoSaver.flush()
     }
@@ -189,6 +256,7 @@ class ComposerViewModel(
         lastDraft = draftOf(newTarget)
         editable = true
         _uiState.update { it.copy(isLoading = false, occurredAt = now, timeZone = timeZone) }
+        observePhotos(newTarget.id)
     }
 
     private suspend fun openEntry(entryId: Uuid) {
@@ -224,6 +292,52 @@ class ComposerViewModel(
                 timeZone = entry.timeZone,
                 emoji = entry.emoji,
             )
+        }
+        observePhotos(existing.id)
+    }
+
+    /** Keeps [ComposerUiState.photos] in step with the album of the entry, in position order. */
+    private fun observePhotos(entryId: Uuid) {
+        sessionScope.launch {
+            mediaRepository.observeEntryMedia(entryId).collect { items ->
+                val photos =
+                    items
+                        .filter { it.type == MediaType.PHOTO && it.deletedAt == null }
+                        .sortedBy { it.position }
+                        .map { it.toUi(mediaFiles) }
+                _uiState.update { it.copy(photos = photos) }
+            }
+        }
+    }
+
+    /** Starts [block] on [appScope] and remembers it, so closing the composer can wait for it. */
+    private fun trackMediaWork(block: suspend () -> Unit) {
+        mediaJobs += appScope.launch { block() }
+    }
+
+    /** Submits the draft of a new entry even when its text is blank, since media needs the row. */
+    private fun writeDraftNow(target: EntryTarget) {
+        val draft = draftOf(target)
+        lastDraft = draft
+        autoSaver.submit(draft)
+    }
+
+    /** Waits until the entry is written; false, with the error posted, when the write failed. */
+    private suspend fun awaitEntryWritten(): Boolean {
+        autoSaver.flush()
+        autoSaver.awaitIdle()
+        val state = autoSaver.state.value
+        if (state is SaveState.Failed) {
+            appMessages.post(UiMessage(state.error.toUiText()))
+            return false
+        }
+        return true
+    }
+
+    private suspend fun attachPhoto(entryId: Uuid, photo: PickedPhoto) {
+        when (val outcome = attachMedia(entryId, photo.open(), MediaType.PHOTO, photo.extension)) {
+            is Outcome.Success -> mediaLock.withLock { addedMedia += outcome.value.id }
+            is Outcome.Failure -> appMessages.post(UiMessage(outcome.error.toUiText()))
         }
     }
 
@@ -266,6 +380,8 @@ class ComposerViewModel(
     }
 
     private suspend fun closeSession(textIsBlank: Boolean) {
+        // Photo work ends first, so the photos it adds or removes count as this session's changes.
+        mediaJobs.toList().joinAll()
         autoSaver.awaitIdle()
         val target = target ?: return
         // Nothing typed or changed means nothing to save, delete or report.
@@ -275,40 +391,41 @@ class ComposerViewModel(
             val draft = lastDraft ?: return
             if (!succeeded(entryRepository.save(draft))) return
         }
+        val changes = mediaLock.withLock { MediaChanges(addedMedia.toSet(), removedMedia.toSet()) }
         val hasLiveMedia =
             mediaRepository.observeEntryMedia(target.id).first().any { it.deletedAt == null }
         val original = target.original
         when {
-            !textIsBlank || hasLiveMedia -> postSaved(target.id, original)
+            !textIsBlank || hasLiveMedia -> postSaved(target.id, original, changes)
             original == null -> succeeded(entryRepository.deletePermanently(target.id))
             else -> {
                 if (succeeded(entryRepository.moveToTrash(target.id))) {
-                    postEmptyTrashed(target.id, original)
+                    postEmptyTrashed(target.id, original, changes)
                 }
             }
         }
     }
 
-    private fun postSaved(id: Uuid, original: EntryDraft?) {
+    private fun postSaved(id: Uuid, original: EntryDraft?, changes: MediaChanges) {
         appMessages.post(
             UiMessage(
                 text = UiText.of(Res.string.composer_saved_message),
                 action =
                     UiMessageAction(label = UiText.of(Res.string.action_undo)) {
-                        appScope.launch { undoSession(id, original) }
+                        appScope.launch { undoSession(id, original, changes) }
                     },
                 timeout = UNDO_DURATION,
             ),
         )
     }
 
-    private fun postEmptyTrashed(id: Uuid, original: EntryDraft) {
+    private fun postEmptyTrashed(id: Uuid, original: EntryDraft, changes: MediaChanges) {
         appMessages.post(
             UiMessage(
                 text = UiText.of(Res.string.composer_empty_trashed),
                 action =
                     UiMessageAction(label = UiText.of(Res.string.action_undo)) {
-                        appScope.launch { restoreEmptied(id, original) }
+                        appScope.launch { restoreEmptied(id, original, changes) }
                     },
                 timeout = UNDO_DURATION,
             ),
@@ -316,20 +433,39 @@ class ComposerViewModel(
     }
 
     /**
-     * New entry: moved to the trash. Existing entry: the content it had when the composer opened.
+     * New entry: moved to the trash. Existing entry: the content and photos it had when the
+     * composer opened.
      */
-    private suspend fun undoSession(id: Uuid, original: EntryDraft?) {
+    private suspend fun undoSession(id: Uuid, original: EntryDraft?, changes: MediaChanges) {
         if (original == null) {
             succeeded(entryRepository.moveToTrash(id))
         } else {
             succeeded(entryRepository.save(original))
+            revertMedia(changes)
         }
     }
 
-    private suspend fun restoreEmptied(id: Uuid, original: EntryDraft) {
+    private suspend fun restoreEmptied(id: Uuid, original: EntryDraft, changes: MediaChanges) {
         succeeded(entryRepository.save(original))
         succeeded(entryRepository.restoreFromTrash(id))
+        revertMedia(changes)
     }
+
+    /** Removes the photos this session added and brings back the ones it removed. */
+    private suspend fun revertMedia(changes: MediaChanges) {
+        changes.added.forEach { mediaSucceeded(mediaRepository.remove(it)) }
+        changes.removed.forEach { mediaSucceeded(mediaRepository.restore(it)) }
+    }
+
+    /** Posts the error of a failed photo [outcome] so the user sees it; returns true on success. */
+    private fun mediaSucceeded(outcome: Outcome<Unit, MediaError>): Boolean =
+        when (outcome) {
+            is Outcome.Success -> true
+            is Outcome.Failure -> {
+                appMessages.post(UiMessage(outcome.error.toUiText()))
+                false
+            }
+        }
 
     /** Posts the error of a failed [outcome] so the user sees it; returns true on success. */
     private fun succeeded(outcome: Outcome<Unit, EntryError>): Boolean =
@@ -359,6 +495,9 @@ class ComposerViewModel(
         val UNDO_DURATION = 5.seconds
     }
 }
+
+/** The photos one session added and removed, as they were when the session ended. */
+private class MediaChanges(val added: Set<Uuid>, val removed: Set<Uuid>)
 
 /** The entry this session writes; [original] is null for a new entry. */
 private class EntryTarget(

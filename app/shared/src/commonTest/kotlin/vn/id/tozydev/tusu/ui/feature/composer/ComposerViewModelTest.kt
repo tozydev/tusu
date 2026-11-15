@@ -22,6 +22,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,9 +39,15 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import kotlinx.io.Buffer
 import vn.id.tozydev.tusu.domain.error.EntryError
+import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.model.Entry
+import vn.id.tozydev.tusu.domain.model.Media
+import vn.id.tozydev.tusu.domain.model.MediaStatus
+import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.domain.model.toDraft
+import vn.id.tozydev.tusu.domain.usecase.AttachMediaUseCase
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.composer_empty_trashed
 import vn.id.tozydev.tusu.generated.resources.composer_saved_message
@@ -48,6 +55,7 @@ import vn.id.tozydev.tusu.ui.component.AppMessages
 import vn.id.tozydev.tusu.ui.component.UiMessage
 import vn.id.tozydev.tusu.ui.format.UiText
 import vn.id.tozydev.tusu.ui.format.toUiText
+import vn.id.tozydev.tusu.ui.platform.PickedPhoto
 
 private val zone = TimeZone.of("Asia/Ho_Chi_Minh")
 private val paris = TimeZone.of("Europe/Paris")
@@ -89,15 +97,40 @@ private fun UiText.shouldBeSavedMessage() {
     shouldBeInstanceOf<UiText.Resource>().resource shouldBe Res.string.composer_saved_message
 }
 
+private fun photo(content: String): PickedPhoto =
+    PickedPhoto(extension = "jpg") { Buffer().also { it.write(content.encodeToByteArray()) } }
+
+private fun photoMedia(
+    id: Uuid,
+    entryId: Uuid,
+    position: Int,
+    status: MediaStatus = MediaStatus.READY,
+): Media =
+    Media(
+        id = id,
+        entryId = entryId,
+        type = MediaType.PHOTO,
+        localPath = "$id.jpg",
+        position = position,
+        status = status,
+        updatedAt = fixedNow,
+    )
+
 private class ComposerFixture(scope: TestScope, appScope: CoroutineScope) {
     val entries = FakeEntryRepository()
     val media = FakeMediaRepository()
+    val files = FakeMediaFileStore()
+    val jobs = FakeMediaJobQueue()
     val messages = AppMessages()
     val posted = mutableListOf<UiMessage>()
     val viewModel =
         ComposerViewModel(
             entryRepository = entries,
             mediaRepository = media,
+            attachMedia =
+                AttachMediaUseCase(files = files, media = media, clock = fixedClock, jobs = jobs),
+            mediaFiles = files,
+            mediaJobQueue = jobs,
             appMessages = messages,
             clock = fixedClock,
             timeZone = zone,
@@ -531,6 +564,159 @@ class ComposerViewModelTest :
                     advanceUntilIdle()
 
                     f.entries.saves.last() shouldBe original.toDraft()
+                }
+            }
+
+            test("a photo picked on an untouched new entry saves the entry, then adds the photo") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onPhotosPicked(listOf(photo("first")))
+                    advanceUntilIdle()
+
+                    val entry = f.entries.saves.single()
+                    val item = f.media.media.single()
+                    item.entryId shouldBe entry.id
+                    item.status shouldBe MediaStatus.PROCESSING
+                    f.jobs.enqueued shouldBe listOf(item.id)
+                    f.viewModel.uiState.value.photos.single().id shouldBe item.id
+                }
+            }
+
+            test("photos picked together keep the order they were picked in") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onPhotosPicked(listOf(photo("first"), photo("second")))
+                    advanceUntilIdle()
+
+                    f.media.media
+                        .sortedBy { it.position }
+                        .map { f.files.contentOf(it.localPath) } shouldBe listOf("first", "second")
+                }
+            }
+
+            test("a photo that cannot be stored posts an error and adds nothing") {
+                composerTest { f ->
+                    f.files.failWrites = true
+                    f.viewModel.bind(null)
+                    f.viewModel.onPhotosPicked(listOf(photo("first")))
+                    advanceUntilIdle()
+
+                    f.media.media.shouldBeEmpty()
+                    f.jobs.enqueued.shouldBeEmpty()
+                    f.posted.single().text shouldBe MediaError.StorageFailed.toUiText()
+                }
+            }
+
+            test("removing a photo takes it out of the strip") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onPhotosPicked(listOf(photo("first"), photo("second")))
+                    advanceUntilIdle()
+                    val (first, second) = f.viewModel.uiState.value.photos.map { it.id }
+
+                    f.viewModel.onRemovePhoto(first)
+                    runCurrent()
+                    advanceUntilIdle()
+
+                    f.viewModel.uiState.value.photos.map { it.id } shouldBe listOf(second)
+                }
+            }
+
+            test("retrying a failed photo sets it to PROCESSING and queues compression again") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onPhotosPicked(listOf(photo("first")))
+                    advanceUntilIdle()
+                    val id = f.media.media.single().id
+                    f.media.media = f.media.media.map { it.copy(status = MediaStatus.FAILED) }
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.photos.single().status shouldBe MediaStatus.FAILED
+                    f.jobs.enqueued.clear()
+
+                    f.viewModel.onRetryPhoto(id)
+                    advanceUntilIdle()
+
+                    f.media.media.single().status shouldBe MediaStatus.PROCESSING
+                    f.jobs.enqueued shouldBe listOf(id)
+                }
+            }
+
+            test("a new entry with only a photo is kept on finish and reported as saved") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onPhotosPicked(listOf(photo("first")))
+                    advanceUntilIdle()
+
+                    f.viewModel.finishSession().join()
+                    runCurrent()
+
+                    f.entries.trashed.shouldBeEmpty()
+                    f.entries.deleted.shouldBeEmpty()
+                    f.posted.single().text.shouldBeSavedMessage()
+                }
+            }
+
+            test("undo removes the photos added in the session from an existing entry") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    f.entries.entries[id] = existingEntry(id, storedBody("Hello"), "Hello")
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+
+                    f.viewModel.onPhotosPicked(listOf(photo("first")))
+                    advanceUntilIdle()
+                    f.viewModel.finishSession().join()
+                    runCurrent()
+
+                    requireNotNull(f.posted.single().action).onAction()
+                    advanceUntilIdle()
+
+                    f.media.media.single().deletedAt.shouldNotBeNull()
+                }
+            }
+
+            test("undo restores the photos removed in the session to an existing entry") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    val photoId = Uuid.random()
+                    f.entries.entries[id] = existingEntry(id, storedBody("Hello"), "Hello")
+                    f.media.media = listOf(photoMedia(photoId, id, position = 0))
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+
+                    f.viewModel.onRemovePhoto(photoId)
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.photos.shouldBeEmpty()
+                    f.viewModel.finishSession().join()
+                    runCurrent()
+
+                    requireNotNull(f.posted.single().action).onAction()
+                    advanceUntilIdle()
+
+                    f.media.media.single().deletedAt shouldBe null
+                }
+            }
+
+            test("closing the composer waits for a photo that is still being stored") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    f.entries.entries[id] = existingEntry(id, storedBody("Hello"), "Hello")
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+                    f.files.writeGate = CompletableDeferred()
+
+                    f.viewModel.onPhotosPicked(listOf(photo("first")))
+                    advanceTimeBy(100)
+                    val finish = f.viewModel.finishSession()
+                    advanceTimeBy(1000)
+                    finish.isCompleted shouldBe false
+
+                    f.files.writeGate?.complete(Unit)
+                    advanceUntilIdle()
+
+                    finish.isCompleted shouldBe true
+                    f.media.media.single().entryId shouldBe id
+                    f.posted.single().text.shouldBeSavedMessage()
                 }
             }
         },
