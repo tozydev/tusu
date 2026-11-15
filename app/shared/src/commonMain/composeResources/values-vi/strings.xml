@@ -120,4 +120,5 @@
     <string name="timeline_load_error_title">Không tải được các entry</string>
     <string name="timeline_load_error_description">Các entry vẫn an toàn trên máy của bạn. Hãy thử lại sau giây lát.</string>
     <string name="timeline_append_error">Không tải được các entry cũ hơn.</string>
+    <string name="timeline_day_more_emojis">+%1$d</string>
 </resources>

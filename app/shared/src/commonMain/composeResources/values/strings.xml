@@ -121,4 +121,5 @@
     <string name="timeline_load_error_title">Could not load your entries</string>
     <string name="timeline_load_error_description">Your entries are safe on this device. Try again in a moment.</string>
     <string name="timeline_append_error">Could not load older entries.</string>
+    <string name="timeline_day_more_emojis">+%1$d</string>
 </resources>

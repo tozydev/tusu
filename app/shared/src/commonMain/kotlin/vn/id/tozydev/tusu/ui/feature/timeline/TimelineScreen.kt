@@ -10,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,10 +19,11 @@ import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
-import vn.id.tozydev.tusu.domain.model.Entry
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.action_retry
 import vn.id.tozydev.tusu.generated.resources.timeline_empty_description
@@ -31,49 +33,69 @@ import vn.id.tozydev.tusu.generated.resources.timeline_load_error_title
 import vn.id.tozydev.tusu.ui.component.EmojiBadge
 import vn.id.tozydev.tusu.ui.component.EmptyState
 import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineAppendFooter
+import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineDayHeader
 import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineEntryRow
 import vn.id.tozydev.tusu.ui.feature.timeline.component.sampleTimelineEntries
+import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 @Composable
 fun TimelineScreen(
-    entries: LazyPagingItems<Entry>,
+    items: LazyPagingItems<TimelineItem>,
+    dayEmojis: Map<LocalDate, List<String>>,
     contentPadding: PaddingValues,
+    onNewEntryClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
-        val refresh = entries.loadState.refresh
+        val refresh = items.loadState.refresh
         when {
             refresh is LoadState.Error ->
-                TimelineLoadError(onRetry = entries::retry, contentPadding = contentPadding)
-            refresh is LoadState.Loading && entries.itemCount == 0 ->
+                TimelineLoadError(onRetry = items::retry, contentPadding = contentPadding)
+            refresh is LoadState.Loading && items.itemCount == 0 ->
                 TimelineLoading(contentPadding = contentPadding)
-            entries.itemCount == 0 -> TimelineEmpty(contentPadding = contentPadding)
-            else -> TimelineList(entries = entries, contentPadding = contentPadding)
+            items.itemCount == 0 ->
+                TimelineEmpty(onNewEntryClick = onNewEntryClick, contentPadding = contentPadding)
+            else ->
+                TimelineList(items = items, dayEmojis = dayEmojis, contentPadding = contentPadding)
         }
     }
 }
 
 @Composable
 private fun TimelineList(
-    entries: LazyPagingItems<Entry>,
+    items: LazyPagingItems<TimelineItem>,
+    dayEmojis: Map<LocalDate, List<String>>,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
-    // TODO(TOZY-64): group by day with sticky headers instead of this flat list.
+    val clock = remember { Clock.System }
+    val timeZone = remember { TimeZone.currentSystemDefault() }
+    val formatter = LocalAppDateTimeFormatter.current
     LazyColumn(
         modifier = modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = contentPadding,
     ) {
-        items(
-            count = entries.itemCount,
-            key = entries.itemKey { it.id.toString() },
-            contentType = { "entry" },
-        ) { index ->
-            entries[index]?.let { entry -> TimelineEntryRow(entry = entry) }
+        // A plain index loop instead of items(): stickyHeader is only available per item, and
+        // peek() reads a row without loading it, so each row is registered with items[index].
+        for (index in 0 until items.itemCount) {
+            when (val row = items.peek(index)) {
+                is TimelineItem.Day ->
+                    stickyHeader(key = "day-${row.date}", contentType = "day") {
+                        items[index]
+                        val title = context(clock, timeZone) { formatter.dayHeader(row.date) }
+                        TimelineDayHeader(title = title, emojis = dayEmojis[row.date].orEmpty())
+                    }
+                is TimelineItem.EntryItem ->
+                    item(key = row.entry.id.toString(), contentType = "entry") {
+                        items[index]
+                        TimelineEntryRow(entry = row.entry)
+                    }
+                null -> Unit // Placeholders are disabled in the repository, so this is rare.
+            }
         }
         item(key = "append-footer", contentType = "footer") {
-            TimelineAppendFooter(state = entries.loadState.append, onRetry = entries::retry)
+            TimelineAppendFooter(state = items.loadState.append, onRetry = items::retry)
         }
     }
 }
@@ -90,7 +112,11 @@ private fun TimelineLoading(contentPadding: PaddingValues, modifier: Modifier = 
 }
 
 @Composable
-private fun TimelineEmpty(contentPadding: PaddingValues, modifier: Modifier = Modifier) {
+private fun TimelineEmpty(
+    onNewEntryClick: () -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
     EmptyState(
         title = stringResource(Res.string.timeline_empty_title),
         description = stringResource(Res.string.timeline_empty_description),
@@ -119,8 +145,13 @@ private fun TimelineLoadError(
 @Composable
 private fun TimelineScreenPreview() {
     AppTheme {
-        val entries = flowOf(PagingData.from(sampleTimelineEntries())).collectAsLazyPagingItems()
-        TimelineScreen(entries = entries, contentPadding = PaddingValues(bottom = 104.dp))
+        val items = flowOf(PagingData.from(previewTimelineItems())).collectAsLazyPagingItems()
+        TimelineScreen(
+            items = items,
+            dayEmojis = previewDayEmojis(),
+            contentPadding = PaddingValues(bottom = 104.dp),
+            onNewEntryClick = {},
+        )
     }
 }
 
@@ -128,7 +159,24 @@ private fun TimelineScreenPreview() {
 @Composable
 private fun TimelineScreenEmptyPreview() {
     AppTheme {
-        val entries = flowOf(PagingData.empty<Entry>()).collectAsLazyPagingItems()
-        TimelineScreen(entries = entries, contentPadding = PaddingValues(bottom = 104.dp))
+        val items = flowOf(PagingData.empty<TimelineItem>()).collectAsLazyPagingItems()
+        TimelineScreen(
+            items = items,
+            dayEmojis = emptyMap(),
+            contentPadding = PaddingValues(bottom = 104.dp),
+            onNewEntryClick = {},
+        )
     }
 }
+
+/** One day header followed by the sample entries, which all fall on the same day. */
+private fun previewTimelineItems(): List<TimelineItem> {
+    val entries = sampleTimelineEntries()
+    val day = TimelineItem.Day(entries.first().localDate)
+    return listOf(day) + entries.map { TimelineItem.EntryItem(it) }
+}
+
+private fun previewDayEmojis(): Map<LocalDate, List<String>> =
+    sampleTimelineEntries()
+        .groupBy { it.localDate }
+        .mapValues { (_, entries) -> entries.mapNotNull { it.emoji } }

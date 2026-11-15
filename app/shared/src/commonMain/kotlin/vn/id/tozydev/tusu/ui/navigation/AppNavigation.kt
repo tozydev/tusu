@@ -53,7 +53,9 @@ private fun AppNavDisplay(
     val entries =
         remember(backStack, contentPadding) {
             entryProvider<NavKey> {
-                entry<AppRoute.Timeline> { TimelineRoute(contentPadding) }
+                entry<AppRoute.Timeline> {
+                    TimelineRoute(contentPadding, onNewEntryClick = { backStack.openComposer() })
+                }
                 entry<AppRoute.Calendar> { CalendarRoute(contentPadding) }
                 entry<AppRoute.Media> { MediaRoute(contentPadding) }
                 entry<AppRoute.Composer>(metadata = ComposerMetadata) { route ->
