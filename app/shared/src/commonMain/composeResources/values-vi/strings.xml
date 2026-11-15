@@ -57,6 +57,9 @@
     <string name="action_retry">Thử lại</string>
     <string name="emoji_badge_add">Thêm biểu tượng cảm xúc</string>
     <string name="emoji_picker_title">Chọn emoji</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Huỷ</string>
+    <string name="date_time_picker_time_title">Chọn giờ</string>
     <plurals name="label_chip_more_description">
         <item quantity="other">Thêm %1$d nhãn</item>
     </plurals>
