@@ -54,4 +54,15 @@
     <string name="date_pattern_day_header_with_year">{weekday}, {monthShort} {day}, {year}</string>
     <string name="date_pattern_month_title">{monthName} {year}</string>
     <string name="date_pattern_full_date_time">{weekday}, {monthShort} {day}, {year} · {time}</string>
+    <string name="action_retry">Retry</string>
+    <string name="emoji_badge_add">Add emoji</string>
+    <plurals name="label_chip_more_description">
+        <item quantity="one">%1$d more label</item>
+        <item quantity="other">%1$d more labels</item>
+    </plurals>
+    <string name="media_photo">Photo</string>
+    <string name="media_video">Video</string>
+    <string name="media_audio">Voice recording</string>
+    <string name="media_processing">Processing</string>
+    <string name="media_failed_retry">Processing failed. Tap to retry.</string>
 </resources>

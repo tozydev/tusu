@@ -54,4 +54,14 @@
     <string name="date_pattern_day_header_with_year">{weekday}, {day}/{month}/{year}</string>
     <string name="date_pattern_month_title">Tháng {month}, {year}</string>
     <string name="date_pattern_full_date_time">{weekday}, {day}/{month}/{year} · {time}</string>
+    <string name="action_retry">Thử lại</string>
+    <string name="emoji_badge_add">Thêm biểu tượng cảm xúc</string>
+    <plurals name="label_chip_more_description">
+        <item quantity="other">Thêm %1$d nhãn</item>
+    </plurals>
+    <string name="media_photo">Ảnh</string>
+    <string name="media_video">Video</string>
+    <string name="media_audio">Bản ghi âm</string>
+    <string name="media_processing">Đang xử lý</string>
+    <string name="media_failed_retry">Xử lý thất bại. Chạm để thử lại.</string>
 </resources>
