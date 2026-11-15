@@ -27,6 +27,7 @@ fun ComposerBody(
     readOnlyText: String,
     richTextState: RichTextState,
     focusRequester: FocusRequester,
+    header: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
@@ -39,6 +40,7 @@ fun ComposerBody(
                 ComposerEditor(
                     richTextState = richTextState,
                     focusRequester = focusRequester,
+                    header = header,
                     modifier = Modifier.fillMaxSize(),
                 )
         }
@@ -65,6 +67,7 @@ private fun ComposerBodyLoadingPreview() {
             readOnlyText = "",
             richTextState = richTextState,
             focusRequester = remember { FocusRequester() },
+            header = {},
         )
     }
 }

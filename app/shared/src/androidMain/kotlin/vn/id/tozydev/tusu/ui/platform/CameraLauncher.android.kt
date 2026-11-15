@@ -8,12 +8,19 @@ import io.github.vinceglb.filekit.dialogs.compose.PhotoResultLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberCameraPickerLauncher
 
 @Composable
-actual fun rememberCameraLauncher(onResult: (PickedPhoto?) -> Unit): CameraLauncher? {
+actual fun rememberCameraLauncher(
+    onResult: (PickedPhoto?) -> Unit,
+    onError: () -> Unit,
+): CameraLauncher? {
     val context = LocalContext.current
     // Devices without any camera get no button; the camera app is only opened through an intent,
     // so the CAMERA permission is not needed.
     val hasCamera = remember(context) { context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) }
-    val camera = rememberCameraPickerLauncher(onResult = { file -> onResult(file?.toPickedPhoto()) })
+    val camera =
+        rememberCameraPickerLauncher(
+            onError = { onError() },
+            onResult = { file -> onResult(file?.toPickedPhoto()) },
+        )
     val launcher = remember(camera) { camera.asCameraLauncher() }
     return if (hasCamera) launcher else null
 }

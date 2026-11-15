@@ -11,6 +11,10 @@ interface CameraLauncher {
 
 /**
  * Null on platforms without a camera, where the camera button must be hidden. [onResult] gets null
- * when the user cancels.
+ * when the user cancels; [onError] is called when the camera cannot take or hand over the photo.
  */
-@Composable expect fun rememberCameraLauncher(onResult: (PickedPhoto?) -> Unit): CameraLauncher?
+@Composable
+expect fun rememberCameraLauncher(
+    onResult: (PickedPhoto?) -> Unit,
+    onError: () -> Unit = {},
+): CameraLauncher?

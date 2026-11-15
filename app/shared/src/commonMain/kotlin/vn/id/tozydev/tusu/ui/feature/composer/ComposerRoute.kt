@@ -9,6 +9,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlin.uuid.Uuid
 import vn.id.tozydev.tusu.ui.component.OnBackgroundEffect
+import vn.id.tozydev.tusu.ui.platform.rememberCameraLauncher
+import vn.id.tozydev.tusu.ui.platform.rememberPhotoPickerLauncher
 
 /** Writes a new entry, or edits [entryId]; [onClose] leaves the composer. */
 @Composable
@@ -22,13 +24,31 @@ fun ComposerRoute(entryId: Uuid?, onClose: () -> Unit, modifier: Modifier = Modi
     OnBackgroundEffect(viewModel::onBackground)
     // Leaving the route clears the ViewModel, which finishes the session.
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val photoPicker =
+        rememberPhotoPickerLauncher(
+            onResult = viewModel::onPhotosPicked,
+            onError = viewModel::onPickerFailed,
+        )
+    // Null on platforms without a camera; the screen then hides the camera button.
+    val camera =
+        rememberCameraLauncher(
+            onResult = { photo -> photo?.let { viewModel.onPhotosPicked(listOf(it)) } },
+            onError = viewModel::onPickerFailed,
+        )
     ComposerScreen(
         state = state,
         richTextState = viewModel.richTextState,
-        onClose = onClose,
-        onRetrySave = viewModel::retrySave,
-        onEmojiChange = viewModel::onEmojiChange,
-        onOccurredAtChange = viewModel::onOccurredAtChange,
+        actions =
+            ComposerActions(
+                onClose = onClose,
+                onRetrySave = viewModel::retrySave,
+                onEmojiChange = viewModel::onEmojiChange,
+                onOccurredAtChange = viewModel::onOccurredAtChange,
+                onPickPhotos = photoPicker::launch,
+                onTakePhoto = camera?.let { launcher -> launcher::launch },
+                onRemovePhoto = viewModel::onRemovePhoto,
+                onRetryPhoto = viewModel::onRetryPhoto,
+            ),
         modifier = modifier,
     )
 }

@@ -37,6 +37,7 @@ import vn.id.tozydev.tusu.ui.theme.AppTheme
 fun ComposerEditor(
     richTextState: RichTextState,
     focusRequester: FocusRequester,
+    header: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Picked once per opening, so the prompt does not change while the user is writing.
@@ -57,6 +58,7 @@ fun ComposerEditor(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
         ) {
+            header()
             // At least a viewport tall, so taps on the empty space below the text reach the editor.
             BasicRichTextEditor(
                 state = richTextState,
@@ -94,6 +96,7 @@ private fun ComposerEditorPreview() {
         ComposerEditor(
             richTextState = richTextState,
             focusRequester = remember { FocusRequester() },
+            header = {},
             modifier = Modifier.fillMaxWidth(),
         )
     }

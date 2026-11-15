@@ -18,13 +18,17 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.time.Instant
-import kotlinx.datetime.LocalDateTime
+import kotlin.uuid.Uuid
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import vn.id.tozydev.tusu.domain.model.MediaStatus
+import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.ui.component.DateTimePickerDialog
 import vn.id.tozydev.tusu.ui.component.EmojiPickerSheet
+import vn.id.tozydev.tusu.ui.component.MediaUi
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerBody
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerEmojiRow
+import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerPhotoStrip
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerToolbar
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerTopBar
 import vn.id.tozydev.tusu.ui.feature.composer.component.RichTextFormatBar
@@ -39,10 +43,7 @@ import vn.id.tozydev.tusu.ui.theme.AppTheme
 fun ComposerScreen(
     state: ComposerUiState,
     richTextState: RichTextState,
-    onClose: () -> Unit,
-    onRetrySave: () -> Unit,
-    onEmojiChange: (String?) -> Unit,
-    onOccurredAtChange: (LocalDateTime) -> Unit,
+    actions: ComposerActions,
     modifier: Modifier = Modifier,
 ) {
     var formatOpen by rememberSaveable { mutableStateOf(false) }
@@ -57,8 +58,8 @@ fun ComposerScreen(
                 occurredAt = state.occurredAt,
                 timeZone = state.timeZone,
                 saveIndicator = state.saveIndicator,
-                onClose = onClose,
-                onRetrySave = onRetrySave,
+                onClose = actions.onClose,
+                onRetrySave = actions.onRetrySave,
                 onTimeClick = { timeDialogOpen = true },
                 timeEnabled = editable,
                 modifier = Modifier.fillMaxWidth(),
@@ -73,12 +74,15 @@ fun ComposerScreen(
                 readOnlyText = state.readOnlyText,
                 richTextState = richTextState,
                 focusRequester = focusRequester,
+                header = { PhotoStrip(state.photos, actions) },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
             if (editable) {
                 ComposerToolbar(
                     formatOpen = formatOpen,
                     onFormatToggle = { formatOpen = !formatOpen },
+                    onPickPhotosClick = actions.onPickPhotos,
+                    onTakePhotoClick = actions.onTakePhoto,
                     formatBar = { RichTextFormatBar(richTextState) },
                 )
             }
@@ -88,7 +92,7 @@ fun ComposerScreen(
         EmojiPickerSheet(
             selected = state.emoji,
             onSelect = {
-                onEmojiChange(it)
+                actions.onEmojiChange(it)
                 emojiSheetOpen = false
             },
             onDismiss = { emojiSheetOpen = false },
@@ -101,12 +105,23 @@ fun ComposerScreen(
         DateTimePickerDialog(
             initial = occurredAt.toLocalDateTime(currentTimeZone),
             onConfirm = {
-                onOccurredAtChange(it)
+                actions.onOccurredAtChange(it)
                 timeDialogOpen = false
             },
             onDismiss = { timeDialogOpen = false },
         )
     }
+}
+
+/** The photo strip above the text; empty when there are no photos, so nothing is shown. */
+@Composable
+private fun PhotoStrip(photos: List<MediaUi>, actions: ComposerActions) {
+    if (photos.isEmpty()) return
+    ComposerPhotoStrip(
+        photos = photos,
+        onRemove = actions.onRemovePhoto,
+        onRetry = actions.onRetryPhoto,
+    )
 }
 
 /** Gives the editor focus, and the keyboard with it, once the emoji sheet has closed. */
@@ -126,24 +141,23 @@ private fun ReturnFocusWhenClosed(sheetOpen: Boolean, focusRequester: FocusReque
     }
 }
 
+private val previewInstant = Instant.parse("2026-11-11T03:00:00Z")
+private val previewZone = TimeZone.of("Asia/Ho_Chi_Minh")
+
 @Preview
 @Composable
 private fun ComposerScreenNewEntryPreview() {
     AppTheme {
-        val richTextState = remember { RichTextState() }
         ComposerScreen(
             state =
                 ComposerUiState(
                     isLoading = false,
-                    occurredAt = Instant.parse("2026-11-11T03:00:00Z"),
-                    timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
-                    currentTimeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
+                    occurredAt = previewInstant,
+                    timeZone = previewZone,
+                    currentTimeZone = previewZone,
                 ),
-            richTextState = richTextState,
-            onClose = {},
-            onRetrySave = {},
-            onEmojiChange = {},
-            onOccurredAtChange = {},
+            richTextState = remember { RichTextState() },
+            actions = ComposerActions.NoOp,
         )
     }
 }
@@ -152,20 +166,39 @@ private fun ComposerScreenNewEntryPreview() {
 @Composable
 private fun ComposerScreenWithEmojiPreview() {
     AppTheme {
-        val richTextState = remember { RichTextState() }
         ComposerScreen(
             state =
                 ComposerUiState(
                     isLoading = false,
-                    occurredAt = Instant.parse("2026-11-11T03:00:00Z"),
-                    timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
+                    occurredAt = previewInstant,
+                    timeZone = previewZone,
                     emoji = "🌱",
                 ),
-            richTextState = richTextState,
-            onClose = {},
-            onRetrySave = {},
-            onEmojiChange = {},
-            onOccurredAtChange = {},
+            richTextState = remember { RichTextState() },
+            actions = ComposerActions.NoOp,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ComposerScreenWithPhotosPreview() {
+    AppTheme {
+        ComposerScreen(
+            state =
+                ComposerUiState(
+                    isLoading = false,
+                    occurredAt = previewInstant,
+                    timeZone = previewZone,
+                    photos =
+                        listOf(
+                            previewPhoto(MediaStatus.READY),
+                            previewPhoto(MediaStatus.PROCESSING),
+                            previewPhoto(MediaStatus.FAILED),
+                        ),
+                ),
+            richTextState = remember { RichTextState() },
+            actions = ComposerActions.NoOp,
         )
     }
 }
@@ -174,20 +207,16 @@ private fun ComposerScreenWithEmojiPreview() {
 @Composable
 private fun ComposerScreenSavingPreview() {
     AppTheme {
-        val richTextState = remember { RichTextState() }
         ComposerScreen(
             state =
                 ComposerUiState(
                     isLoading = false,
-                    occurredAt = Instant.parse("2026-11-11T03:00:00Z"),
-                    timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
+                    occurredAt = previewInstant,
+                    timeZone = previewZone,
                     saveIndicator = SaveIndicator.Saving,
                 ),
-            richTextState = richTextState,
-            onClose = {},
-            onRetrySave = {},
-            onEmojiChange = {},
-            onOccurredAtChange = {},
+            richTextState = remember { RichTextState() },
+            actions = ComposerActions.NoOp,
         )
     }
 }
@@ -196,20 +225,16 @@ private fun ComposerScreenSavingPreview() {
 @Composable
 private fun ComposerScreenFailedPreview() {
     AppTheme {
-        val richTextState = remember { RichTextState() }
         ComposerScreen(
             state =
                 ComposerUiState(
                     isLoading = false,
-                    occurredAt = Instant.parse("2026-11-11T03:00:00Z"),
-                    timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
+                    occurredAt = previewInstant,
+                    timeZone = previewZone,
                     saveIndicator = SaveIndicator.Failed(UiText.of("Save failed")),
                 ),
-            richTextState = richTextState,
-            onClose = {},
-            onRetrySave = {},
-            onEmojiChange = {},
-            onOccurredAtChange = {},
+            richTextState = remember { RichTextState() },
+            actions = ComposerActions.NoOp,
         )
     }
 }
@@ -218,21 +243,27 @@ private fun ComposerScreenFailedPreview() {
 @Composable
 private fun ComposerScreenReadOnlyPreview() {
     AppTheme {
-        val richTextState = remember { RichTextState() }
         ComposerScreen(
             state =
                 ComposerUiState(
                     isLoading = false,
-                    occurredAt = Instant.parse("2026-11-11T03:00:00Z"),
-                    timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
+                    occurredAt = previewInstant,
+                    timeZone = previewZone,
                     isReadOnly = true,
                     readOnlyText = "A note written by a newer version of Tusu.",
                 ),
-            richTextState = richTextState,
-            onClose = {},
-            onRetrySave = {},
-            onEmojiChange = {},
-            onOccurredAtChange = {},
+            richTextState = remember { RichTextState() },
+            actions = ComposerActions.NoOp,
         )
     }
 }
+
+private fun previewPhoto(status: MediaStatus): MediaUi =
+    MediaUi(
+        id = Uuid.random(),
+        path = "",
+        type = MediaType.PHOTO,
+        status = status,
+        width = null,
+        height = null,
+    )

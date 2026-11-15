@@ -15,13 +15,20 @@ interface PhotoPickerLauncher {
     fun launch()
 }
 
-/** [onResult] gets the chosen photos; an empty list when the user cancels. */
+/**
+ * [onResult] gets the chosen photos; an empty list when the user cancels. [onError] is called when
+ * the picker cannot open or hand over the photos.
+ */
 @Composable
-fun rememberPhotoPickerLauncher(onResult: (List<PickedPhoto>) -> Unit): PhotoPickerLauncher {
+fun rememberPhotoPickerLauncher(
+    onResult: (List<PickedPhoto>) -> Unit,
+    onError: () -> Unit = {},
+): PhotoPickerLauncher {
     val picker =
         rememberFilePickerLauncher(
             type = FileKitType.Image,
             mode = FileKitMode.Multiple(),
+            onError = { onError() },
             onResult = { files: List<PlatformFile>? ->
                 onResult(files.orEmpty().map { it.toPickedPhoto() })
             },

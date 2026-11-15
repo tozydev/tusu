@@ -209,6 +209,11 @@ class ComposerViewModel(
         }
     }
 
+    /** The system picker or camera could not hand over a photo. */
+    fun onPickerFailed() {
+        appMessages.post(UiMessage(MediaError.FileUnreadable.toUiText()))
+    }
+
     fun onBackground() {
         autoSaver.flush()
     }
