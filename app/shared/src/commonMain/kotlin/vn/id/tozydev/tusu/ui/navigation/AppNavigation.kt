@@ -18,8 +18,10 @@ import androidx.navigation3.ui.NavDisplay
 import vn.id.tozydev.tusu.ui.component.LocalMessageHostState
 import vn.id.tozydev.tusu.ui.feature.calendar.CalendarRoute
 import vn.id.tozydev.tusu.ui.feature.composer.ComposerRoute
+import vn.id.tozydev.tusu.ui.feature.entry.EntryDetailRoute
 import vn.id.tozydev.tusu.ui.feature.media.MediaRoute
 import vn.id.tozydev.tusu.ui.feature.timeline.TimelineRoute
+import vn.id.tozydev.tusu.ui.feature.viewer.ViewerRoute
 
 /** The navigation host and app frame. Needs [LocalMessageHostState] to be provided. */
 @Composable
@@ -56,6 +58,21 @@ private fun AppNavDisplay(
                 entry<AppRoute.Media> { MediaRoute(contentPadding) }
                 entry<AppRoute.Composer>(metadata = ComposerMetadata) { route ->
                     ComposerRoute(entryId = route.entryId, onClose = { backStack.navigateBack() })
+                }
+                entry<AppRoute.EntryDetail> { route ->
+                    EntryDetailRoute(
+                        entryId = route.entryId,
+                        onBack = { backStack.navigateBack() },
+                        onEdit = { backStack.openComposer(it) },
+                        onOpenViewer = { index -> backStack.openViewer(route.entryId, index) },
+                    )
+                }
+                entry<AppRoute.Viewer> { route ->
+                    ViewerRoute(
+                        entryId = route.entryId,
+                        startIndex = route.startIndex,
+                        onClose = { backStack.navigateBack() },
+                    )
                 }
             }
         }

@@ -110,5 +110,116 @@ class BackStackNavigationTest :
                 stackOf(AppRoute.Timeline, AppRoute.Media).currentTab shouldBe AppRoute.Media
                 stackOf(AppRoute.Timeline, AppRoute.Composer()).currentTab shouldBe null
             }
+
+            test("an entry opens over a tab") {
+                val id = Uuid.random()
+                val stack = stackOf(AppRoute.Timeline, AppRoute.Calendar)
+
+                stack.openEntry(id) shouldBe true
+
+                stack shouldBe
+                    listOf(AppRoute.Timeline, AppRoute.Calendar, AppRoute.EntryDetail(id))
+            }
+
+            test("an entry is not opened from another entry, the composer or the viewer") {
+                val id = Uuid.random()
+                val other = Uuid.random()
+                val onEntry = stackOf(AppRoute.Timeline, AppRoute.EntryDetail(id))
+                val onComposer = stackOf(AppRoute.Timeline, AppRoute.Composer())
+                val onViewer =
+                    stackOf(AppRoute.Timeline, AppRoute.EntryDetail(id), AppRoute.Viewer(id))
+
+                onEntry.openEntry(other) shouldBe false
+                onComposer.openEntry(other) shouldBe false
+                onViewer.openEntry(other) shouldBe false
+
+                onEntry shouldBe listOf(AppRoute.Timeline, AppRoute.EntryDetail(id))
+                onComposer shouldBe listOf(AppRoute.Timeline, AppRoute.Composer())
+                onViewer shouldBe
+                    listOf(AppRoute.Timeline, AppRoute.EntryDetail(id), AppRoute.Viewer(id))
+            }
+
+            test("the composer can edit from the entry detail and back returns to the entry") {
+                val id = Uuid.random()
+                val stack = stackOf(AppRoute.Timeline, AppRoute.EntryDetail(id))
+
+                stack.openComposer(id) shouldBe true
+                stack.currentRoute shouldBe AppRoute.Composer(id)
+
+                stack.navigateBack() shouldBe true
+                stack.currentRoute shouldBe AppRoute.EntryDetail(id)
+            }
+
+            test("the composer is refused over the viewer") {
+                val id = Uuid.random()
+                val stack =
+                    stackOf(AppRoute.Timeline, AppRoute.EntryDetail(id), AppRoute.Viewer(id))
+
+                stack.openComposer(id) shouldBe false
+
+                stack shouldBe
+                    listOf(AppRoute.Timeline, AppRoute.EntryDetail(id), AppRoute.Viewer(id))
+            }
+
+            test("the viewer opens over a tab at the given index") {
+                val id = Uuid.random()
+                val stack = stackOf(AppRoute.Timeline)
+
+                stack.openViewer(id, startIndex = 2) shouldBe true
+
+                stack shouldBe listOf(AppRoute.Timeline, AppRoute.Viewer(id, startIndex = 2))
+            }
+
+            test("the viewer opens over the entry detail") {
+                val id = Uuid.random()
+                val stack = stackOf(AppRoute.Timeline, AppRoute.EntryDetail(id))
+
+                stack.openViewer(id) shouldBe true
+
+                stack shouldBe
+                    listOf(AppRoute.Timeline, AppRoute.EntryDetail(id), AppRoute.Viewer(id))
+            }
+
+            test("the viewer is refused over the viewer or the composer") {
+                val id = Uuid.random()
+                val onViewer = stackOf(AppRoute.Timeline, AppRoute.Viewer(id))
+                val onComposer = stackOf(AppRoute.Timeline, AppRoute.Composer())
+
+                onViewer.openViewer(id) shouldBe false
+                onComposer.openViewer(id) shouldBe false
+
+                onViewer shouldBe listOf(AppRoute.Timeline, AppRoute.Viewer(id))
+                onComposer shouldBe listOf(AppRoute.Timeline, AppRoute.Composer())
+            }
+
+            test("back from the viewer returns to the entry detail") {
+                val id = Uuid.random()
+                val stack = stackOf(AppRoute.Timeline, AppRoute.EntryDetail(id))
+                stack.openViewer(id, startIndex = 1)
+
+                stack.navigateBack() shouldBe true
+
+                stack.currentRoute shouldBe AppRoute.EntryDetail(id)
+                stack shouldBe listOf(AppRoute.Timeline, AppRoute.EntryDetail(id))
+            }
+
+            test("back from the entry detail returns to the tab") {
+                val id = Uuid.random()
+                val stack = stackOf(AppRoute.Timeline, AppRoute.Media)
+                stack.openEntry(id)
+
+                stack.navigateBack() shouldBe true
+
+                stack.currentRoute shouldBe AppRoute.Media
+                stack shouldBe listOf(AppRoute.Timeline, AppRoute.Media)
+            }
+
+            test("the navigation bar is hidden on the entry detail and the viewer") {
+                val id = Uuid.random()
+
+                stackOf(AppRoute.Timeline, AppRoute.EntryDetail(id)).showsNavigationBar shouldBe
+                    false
+                stackOf(AppRoute.Timeline, AppRoute.Viewer(id)).showsNavigationBar shouldBe false
+            }
         },
     )

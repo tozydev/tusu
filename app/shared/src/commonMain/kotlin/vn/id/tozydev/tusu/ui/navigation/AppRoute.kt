@@ -18,4 +18,10 @@ sealed interface AppRoute : NavKey {
 
     /** Writes a new entry, or edits the one with [entryId]. */
     @Serializable data class Composer(val entryId: Uuid? = null) : AppRoute
+
+    /** Shows one entry in full. */
+    @Serializable data class EntryDetail(val entryId: Uuid) : AppRoute
+
+    /** Full-screen photos of one entry, opened at [startIndex]. */
+    @Serializable data class Viewer(val entryId: Uuid, val startIndex: Int = 0) : AppRoute
 }

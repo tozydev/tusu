@@ -14,6 +14,8 @@ val AppRouteSavedStateConfiguration = SavedStateConfiguration {
             subclass(AppRoute.Calendar::class)
             subclass(AppRoute.Media::class)
             subclass(AppRoute.Composer::class)
+            subclass(AppRoute.EntryDetail::class)
+            subclass(AppRoute.Viewer::class)
         }
     }
 }

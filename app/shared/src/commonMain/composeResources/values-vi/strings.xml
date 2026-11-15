@@ -104,6 +104,7 @@
     <string name="nav_media">Media</string>
     <string name="nav_new_entry">Viết entry mới</string>
     <string name="action_close">Đóng</string>
+    <string name="action_back">Quay lại</string>
     <string name="placeholder_calendar_title">Lịch sắp ra mắt</string>
     <string name="placeholder_calendar_description">Xem lại entry theo từng ngày, sắp có.</string>
     <string name="placeholder_media_title">Thư viện media sắp ra mắt</string>
