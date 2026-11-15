@@ -115,8 +115,12 @@
     <string name="placeholder_calendar_description">Xem lại entry theo từng ngày, sắp có.</string>
     <string name="placeholder_media_title">Thư viện media sắp ra mắt</string>
     <string name="placeholder_media_description">Ảnh, video và bản ghi âm sẽ được gom lại ở đây, sắp có.</string>
-    <string name="placeholder_composer_title">Khung viết sắp ra mắt</string>
-    <string name="placeholder_composer_description">Bạn sẽ viết entry ở đây, sắp có.</string>
+    <string name="composer_placeholder_feeling">Lúc này bạn thấy thế nào?</string>
+    <string name="composer_placeholder_learned">Hôm nay học được gì?</string>
+    <string name="composer_read_only_notice">Không sửa được entry này ở phiên bản Tusu hiện tại.</string>
+    <string name="composer_save_saving">Đang lưu</string>
+    <string name="composer_save_saved">Đã lưu</string>
+    <string name="composer_save_retry">Lưu không thành công. Chạm để thử lại.</string>
     <string name="composer_saved_message">Đã lưu entry</string>
     <string name="composer_empty_trashed">Entry trống đã vào Thùng rác</string>
     <string name="action_undo">Hoàn tác</string>
