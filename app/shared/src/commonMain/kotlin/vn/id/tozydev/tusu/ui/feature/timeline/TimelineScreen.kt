@@ -10,6 +10,8 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,17 +28,22 @@ import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.action_retry
+import vn.id.tozydev.tusu.generated.resources.timeline_empty_action
 import vn.id.tozydev.tusu.generated.resources.timeline_empty_description
 import vn.id.tozydev.tusu.generated.resources.timeline_empty_title
 import vn.id.tozydev.tusu.generated.resources.timeline_load_error_description
 import vn.id.tozydev.tusu.generated.resources.timeline_load_error_title
 import vn.id.tozydev.tusu.ui.component.EmojiBadge
 import vn.id.tozydev.tusu.ui.component.EmptyState
+import vn.id.tozydev.tusu.ui.component.LocalMessageHostState
+import vn.id.tozydev.tusu.ui.component.MessageHostState
+import vn.id.tozydev.tusu.ui.component.UiMessage
 import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineAppendFooter
 import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineDayHeader
 import vn.id.tozydev.tusu.ui.feature.timeline.component.TimelineEntryRow
 import vn.id.tozydev.tusu.ui.feature.timeline.component.sampleTimelineEntries
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
+import vn.id.tozydev.tusu.ui.format.UiText
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 @Composable
@@ -49,8 +56,12 @@ fun TimelineScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize()) {
         val refresh = items.loadState.refresh
+        // A refresh error with entries already on screen keeps the list; it is reported as a
+        // message.
+        val refreshErrorWithItems = (refresh as? LoadState.Error)?.takeIf { items.itemCount > 0 }
+        RefreshErrorMessage(error = refreshErrorWithItems, onRetry = items::retry)
         when {
-            refresh is LoadState.Error ->
+            refresh is LoadState.Error && items.itemCount == 0 ->
                 TimelineLoadError(onRetry = items::retry, contentPadding = contentPadding)
             refresh is LoadState.Loading && items.itemCount == 0 ->
                 TimelineLoading(contentPadding = contentPadding)
@@ -58,6 +69,19 @@ fun TimelineScreen(
                 TimelineEmpty(onNewEntryClick = onNewEntryClick, contentPadding = contentPadding)
             else ->
                 TimelineList(items = items, dayEmojis = dayEmojis, contentPadding = contentPadding)
+        }
+    }
+}
+
+/** Posts one retryable message per [error]; a new error object posts again. */
+@Composable
+private fun RefreshErrorMessage(error: LoadState.Error?, onRetry: () -> Unit) {
+    val messageHost = LocalMessageHostState.current
+    LaunchedEffect(error) {
+        if (error != null) {
+            messageHost.show(
+                UiMessage.retryable(UiText.of(Res.string.timeline_load_error_title), onRetry),
+            )
         }
     }
 }
@@ -121,6 +145,8 @@ private fun TimelineEmpty(
         title = stringResource(Res.string.timeline_empty_title),
         description = stringResource(Res.string.timeline_empty_description),
         illustration = { EmojiBadge(emoji = "📔", size = 72.dp) },
+        actionLabel = stringResource(Res.string.timeline_empty_action),
+        onActionClick = onNewEntryClick,
         modifier = modifier.fillMaxSize().statusBarsPadding().padding(contentPadding),
     )
 }
@@ -145,13 +171,15 @@ private fun TimelineLoadError(
 @Composable
 private fun TimelineScreenPreview() {
     AppTheme {
-        val items = flowOf(PagingData.from(previewTimelineItems())).collectAsLazyPagingItems()
-        TimelineScreen(
-            items = items,
-            dayEmojis = previewDayEmojis(),
-            contentPadding = PaddingValues(bottom = 104.dp),
-            onNewEntryClick = {},
-        )
+        CompositionLocalProvider(LocalMessageHostState provides remember { MessageHostState() }) {
+            val items = flowOf(PagingData.from(previewTimelineItems())).collectAsLazyPagingItems()
+            TimelineScreen(
+                items = items,
+                dayEmojis = previewDayEmojis(),
+                contentPadding = PaddingValues(bottom = 104.dp),
+                onNewEntryClick = {},
+            )
+        }
     }
 }
 
@@ -159,14 +187,28 @@ private fun TimelineScreenPreview() {
 @Composable
 private fun TimelineScreenEmptyPreview() {
     AppTheme {
-        val items = flowOf(PagingData.empty<TimelineItem>()).collectAsLazyPagingItems()
-        TimelineScreen(
-            items = items,
-            dayEmojis = emptyMap(),
-            contentPadding = PaddingValues(bottom = 104.dp),
-            onNewEntryClick = {},
-        )
+        CompositionLocalProvider(LocalMessageHostState provides remember { MessageHostState() }) {
+            val items = flowOf(PagingData.empty<TimelineItem>()).collectAsLazyPagingItems()
+            TimelineScreen(
+                items = items,
+                dayEmojis = emptyMap(),
+                contentPadding = PaddingValues(bottom = 104.dp),
+                onNewEntryClick = {},
+            )
+        }
     }
+}
+
+@Preview
+@Composable
+private fun TimelineEmptyPreview() {
+    AppTheme { TimelineEmpty(onNewEntryClick = {}, contentPadding = PaddingValues()) }
+}
+
+@Preview
+@Composable
+private fun TimelineLoadErrorPreview() {
+    AppTheme { TimelineLoadError(onRetry = {}, contentPadding = PaddingValues()) }
 }
 
 /** One day header followed by the sample entries, which all fall on the same day. */
