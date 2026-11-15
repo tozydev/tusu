@@ -117,6 +117,9 @@
     <string name="placeholder_media_description">Ảnh, video và bản ghi âm sẽ được gom lại ở đây, sắp có.</string>
     <string name="placeholder_composer_title">Khung viết sắp ra mắt</string>
     <string name="placeholder_composer_description">Bạn sẽ viết entry ở đây, sắp có.</string>
+    <string name="composer_saved_message">Đã lưu entry</string>
+    <string name="composer_empty_trashed">Entry trống đã vào Thùng rác</string>
+    <string name="action_undo">Hoàn tác</string>
     <string name="timeline_empty_title">Nhật ký đang trống</string>
     <string name="timeline_empty_description">Các entry bạn viết sẽ hiện ở đây, mới nhất trước.</string>
     <string name="timeline_load_error_title">Không tải được các entry</string>
