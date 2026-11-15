@@ -1,8 +1,11 @@
 package vn.id.tozydev.tusu.ui.feature.composer.component
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -42,30 +45,41 @@ fun ComposerEditor(richTextState: RichTextState, modifier: Modifier = Modifier) 
         )
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
-    Column(
-        modifier = modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
-    ) {
-        BasicRichTextEditor(
-            state = richTextState,
-            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-            textStyle =
-                MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            decorationBox = { innerTextField ->
-                Box {
-                    if (richTextState.annotatedString.text.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+    BoxWithConstraints(modifier = modifier) {
+        // Read here: the nested ColumnScope hides this scope's maxHeight.
+        val viewportHeight = maxHeight
+        Column(
+            modifier =
+                Modifier.fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+        ) {
+            // At least a viewport tall, so taps on the empty space below the text reach the editor.
+            BasicRichTextEditor(
+                state = richTextState,
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .heightIn(min = viewportHeight)
+                        .focusRequester(focusRequester),
+                textStyle =
+                    MaterialTheme.typography.bodyLarge.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                    ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { innerTextField ->
+                    Box {
+                        if (richTextState.annotatedString.text.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        innerTextField()
                     }
-                    innerTextField()
-                }
-            },
-        )
+                },
+            )
+        }
     }
 }
 

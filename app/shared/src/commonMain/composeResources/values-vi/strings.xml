@@ -124,6 +124,13 @@
     <string name="composer_saved_message">Đã lưu entry</string>
     <string name="composer_empty_trashed">Entry trống đã vào Thùng rác</string>
     <string name="action_undo">Hoàn tác</string>
+    <string name="composer_format_toggle">Aa</string>
+    <string name="composer_format_description">Định dạng chữ</string>
+    <string name="format_bold">Đậm</string>
+    <string name="format_italic">Nghiêng</string>
+    <string name="format_strikethrough">Gạch ngang</string>
+    <string name="format_bullet_list">Danh sách chấm</string>
+    <string name="format_numbered_list">Danh sách số</string>
     <string name="timeline_empty_title">Nhật ký đang trống</string>
     <string name="timeline_empty_description">Các entry bạn viết sẽ hiện ở đây, mới nhất trước.</string>
     <string name="timeline_load_error_title">Không tải được các entry</string>

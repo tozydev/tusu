@@ -58,6 +58,8 @@ class FakeEntryRepository : EntryRepository {
 
     override fun observeCalendar(month: YearMonth): Flow<List<CalendarDay>> = error("not used")
 
+    override fun observeDayEmojis(): Flow<Map<LocalDate, List<String>>> = error("not used")
+
     override fun observeDay(date: LocalDate): Flow<List<Entry>> = error("not used")
 
     override fun search(filter: EntryFilter): Flow<PagingData<Entry>> = error("not used")

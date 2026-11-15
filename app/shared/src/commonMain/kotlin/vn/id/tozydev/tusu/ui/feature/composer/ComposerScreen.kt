@@ -6,14 +6,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerBody
+import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerToolbar
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerTopBar
+import vn.id.tozydev.tusu.ui.feature.composer.component.RichTextFormatBar
 import vn.id.tozydev.tusu.ui.format.UiText
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
@@ -29,6 +35,8 @@ fun ComposerScreen(
     onRetrySave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var formatOpen by rememberSaveable { mutableStateOf(false) }
+    val editable = !state.isLoading && state.loadError == null && !state.isReadOnly
     Surface(modifier = modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
             ComposerTopBar(
@@ -47,6 +55,13 @@ fun ComposerScreen(
                 richTextState = richTextState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
+            if (editable) {
+                ComposerToolbar(
+                    formatOpen = formatOpen,
+                    onFormatToggle = { formatOpen = !formatOpen },
+                    formatBar = { RichTextFormatBar(richTextState) },
+                )
+            }
         }
     }
 }

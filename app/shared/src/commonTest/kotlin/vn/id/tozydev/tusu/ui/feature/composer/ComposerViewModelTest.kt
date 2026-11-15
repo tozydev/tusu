@@ -2,6 +2,9 @@
 
 package vn.id.tozydev.tusu.ui.feature.composer
 
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.mohamedrejeb.richeditor.document.RichTextBlock
 import com.mohamedrejeb.richeditor.document.RichTextDocument
@@ -13,6 +16,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -129,6 +133,26 @@ class ComposerViewModelTest :
                     val saved = f.entries.saves.single()
                     saved.body shouldBe f.viewModel.richTextState.toJson()
                     RichTextState().setJson(saved.body).annotatedString.text shouldBe "Hello"
+                }
+            }
+
+            test("applying bold to saved text saves again with a different body") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.typeText("Hello")
+                    advanceTimeBy(600)
+                    val first = f.entries.saves.single()
+
+                    f.viewModel.richTextState.selection = TextRange(0, 5)
+                    f.viewModel.richTextState.toggleSpanStyle(
+                        SpanStyle(fontWeight = FontWeight.Bold),
+                    )
+                    f.viewModel.onBodyChanged()
+                    advanceTimeBy(600)
+
+                    val second = f.entries.saves.last()
+                    second.body shouldNotBe first.body
+                    RichTextState().setJson(second.body).annotatedString.text shouldBe "Hello"
                 }
             }
 
