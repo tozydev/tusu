@@ -1,5 +1,7 @@
 package vn.id.tozydev.tusu.ui.feature.entry
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,14 +15,20 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
@@ -36,6 +44,7 @@ import vn.id.tozydev.tusu.ui.feature.entry.component.EntryDetailHeader
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryDetailTopBar
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryMoreSheet
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoCarousel
+import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoStrip
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.format.ProvideAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.theme.AppTheme
@@ -58,9 +67,20 @@ fun EntryDetailScreen(
 ) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
     var changingTime by rememberSaveable { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    val collapseAt = with(LocalDensity.current) { CollapseOffset.roundToPx() }
+    // Past the carousel the top bar takes over the emoji and date, and the photos shrink to tiles.
+    val collapsed by remember { derivedStateOf { scrollState.value > collapseAt } }
+    val dateTime = entryDateTime(state)
     Surface(modifier = modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-            EntryDetailTopBar(onBack = onBack) {
+            EntryDetailTopBar(
+                onBack = onBack,
+                title =
+                    if (collapsed && dateTime != null) {
+                        { CollapsedTitle(emoji = state.emoji, dateTime = dateTime) }
+                    } else null,
+            ) {
                 if (!state.isLoading && !state.isGone) {
                     IconButton(onClick = { moreOpen = true }) {
                         Icon(
@@ -74,12 +94,18 @@ fun EntryDetailScreen(
                 state.isLoading -> EntryDetailLoading(Modifier.weight(1f))
                 // The route closes the screen once the entry is gone.
                 state.isGone -> Unit
-                else ->
+                else -> {
+                    AnimatedVisibility(visible = collapsed && state.photos.isNotEmpty()) {
+                        EntryPhotoStrip(photos = state.photos, onPhotoClick = onPhotoClick)
+                    }
                     EntryDetailContent(
                         state = state,
+                        dateTime = dateTime,
+                        scrollState = scrollState,
                         onPhotoClick = onPhotoClick,
                         modifier = Modifier.weight(1f),
                     )
+                }
             }
         }
     }
@@ -139,21 +165,13 @@ private fun EntryDetailLoading(modifier: Modifier = Modifier) {
 @Composable
 private fun EntryDetailContent(
     state: EntryDetailUiState,
+    dateTime: String?,
+    scrollState: ScrollState,
     onPhotoClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = LocalAppDateTimeFormatter.current
-    val occurredAt = state.occurredAt
-    val timeZone = state.timeZone
-    // The entry keeps the zone it was written in, so its day does not shift while travelling.
-    val dateTime =
-        if (occurredAt != null && timeZone != null) {
-            context(timeZone) { formatter.fullDateTime(occurredAt) }
-        } else {
-            null
-        }
     Column(
-        modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        modifier = modifier.fillMaxWidth().verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (state.photos.isNotEmpty()) {
@@ -242,4 +260,26 @@ private fun EntryDetailScreenLoadingPreview() {
             onDeleteClick = {},
         )
     }
+}
+
+private val CollapseOffset = 240.dp
+
+/** The entry's date and time in the zone it was written in, so its day does not shift. */
+@Composable
+private fun entryDateTime(state: EntryDetailUiState): String? {
+    val formatter = LocalAppDateTimeFormatter.current
+    val occurredAt = state.occurredAt ?: return null
+    val timeZone = state.timeZone ?: return null
+    return context(timeZone) { formatter.fullDateTime(occurredAt) }
+}
+
+@Composable
+private fun CollapsedTitle(emoji: String?, dateTime: String, modifier: Modifier = Modifier) {
+    Text(
+        text = if (emoji != null) "$emoji  $dateTime" else dateTime,
+        style = MaterialTheme.typography.titleSmall,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
 }

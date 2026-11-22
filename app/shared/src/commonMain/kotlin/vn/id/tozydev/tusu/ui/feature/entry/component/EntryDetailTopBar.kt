@@ -19,11 +19,15 @@ import vn.id.tozydev.tusu.generated.resources.action_back
 import vn.id.tozydev.tusu.generated.resources.ic_arrow_back_24px
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
-/** Back button on the left; [actions] are placed on the right. */
+/**
+ * Back button on the left, an optional [title] (shown once the content is scrolled), [actions] on
+ * the right.
+ */
 @Composable
 fun EntryDetailTopBar(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    title: (@Composable RowScope.() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
@@ -36,7 +40,11 @@ fun EntryDetailTopBar(
                 contentDescription = stringResource(Res.string.action_back),
             )
         }
-        Spacer(Modifier.weight(1f))
+        if (title != null) {
+            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) { title() }
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
         actions()
     }
 }
