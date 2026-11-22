@@ -39,7 +39,7 @@ import vn.id.tozydev.tusu.generated.resources.timeline_empty_title
 import vn.id.tozydev.tusu.generated.resources.timeline_load_error_description
 import vn.id.tozydev.tusu.generated.resources.timeline_load_error_title
 import vn.id.tozydev.tusu.ui.component.EmojiBadge
-import vn.id.tozydev.tusu.ui.component.EmojiPickerSheet
+import vn.id.tozydev.tusu.ui.component.EmojiPickerRoute
 import vn.id.tozydev.tusu.ui.component.EmptyState
 import vn.id.tozydev.tusu.ui.component.LocalMessageHostState
 import vn.id.tozydev.tusu.ui.component.MessageHostState
@@ -89,7 +89,7 @@ fun TimelineScreen(
         }
     }
     emojiTarget?.let { target ->
-        EmojiPickerSheet(
+        EmojiPickerRoute(
             selected = target.emoji,
             onSelect = { emoji ->
                 emojiTarget = null

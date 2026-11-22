@@ -57,6 +57,15 @@
     <string name="action_retry">Thử lại</string>
     <string name="emoji_badge_add">Thêm biểu tượng cảm xúc</string>
     <string name="emoji_picker_title">Chọn emoji</string>
+    <string name="emoji_group_recent">Gần đây</string>
+    <string name="emoji_group_feelings">Cảm xúc</string>
+    <string name="emoji_group_activities">Hoạt động</string>
+    <string name="emoji_group_nature">Thiên nhiên</string>
+    <string name="emoji_group_symbols">Biểu tượng</string>
+    <string name="emoji_search_hint">Tìm emoji</string>
+    <string name="emoji_search_empty">Không tìm thấy emoji nào</string>
+    <string name="emoji_remove">Bỏ emoji</string>
+    <string name="action_done">Xong</string>
     <string name="action_ok">OK</string>
     <string name="action_cancel">Huỷ</string>
     <string name="date_time_picker_time_title">Chọn giờ</string>

@@ -57,6 +57,15 @@
     <string name="action_retry">Retry</string>
     <string name="emoji_badge_add">Add emoji</string>
     <string name="emoji_picker_title">Choose an emoji</string>
+    <string name="emoji_group_recent">Recent</string>
+    <string name="emoji_group_feelings">Feelings</string>
+    <string name="emoji_group_activities">Activities</string>
+    <string name="emoji_group_nature">Nature</string>
+    <string name="emoji_group_symbols">Symbols</string>
+    <string name="emoji_search_hint">Search emoji</string>
+    <string name="emoji_search_empty">No matching emoji</string>
+    <string name="emoji_remove">Remove emoji</string>
+    <string name="action_done">Done</string>
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
     <string name="date_time_picker_time_title">Select time</string>

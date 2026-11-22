@@ -68,6 +68,8 @@ class SettingsRepositoryImplTest :
                         isReminderEnabled = true,
                         isOnboardingCompleted = true,
                         language = AppLanguage.ENGLISH,
+                        // A ZWJ sequence must survive as one emoji.
+                        recentEmojis = listOf("👨‍👩‍👧", "🌙", "☀️"),
                     )
 
                 repository.update { expected } shouldBe Outcome.Success(Unit)

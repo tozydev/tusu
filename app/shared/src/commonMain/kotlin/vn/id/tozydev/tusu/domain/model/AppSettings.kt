@@ -11,4 +11,6 @@ data class AppSettings(
     val isAppLockEnabled: Boolean = false,
     val isReminderEnabled: Boolean = false,
     val isOnboardingCompleted: Boolean = false,
+    /** Emojis picked lately, most recent first; see [withRecentEmoji]. */
+    val recentEmojis: List<String> = emptyList(),
 )

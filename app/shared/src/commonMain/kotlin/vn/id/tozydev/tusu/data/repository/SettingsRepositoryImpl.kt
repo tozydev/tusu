@@ -37,6 +37,10 @@ private val KEEP_ORIGINAL_MEDIA = booleanPreferencesKey("keep_original_media")
 private val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
 private val REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
 private val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+private val RECENT_EMOJIS = stringPreferencesKey("recent_emojis")
+
+// Emojis never contain a line break, so one string keeps the order a string set would lose.
+private const val RECENT_EMOJI_SEPARATOR = "\n"
 
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
@@ -86,6 +90,9 @@ private fun Preferences.toAppSettings(): AppSettings {
         isAppLockEnabled = this[APP_LOCK_ENABLED] ?: defaults.isAppLockEnabled,
         isReminderEnabled = this[REMINDER_ENABLED] ?: defaults.isReminderEnabled,
         isOnboardingCompleted = this[ONBOARDING_COMPLETED] ?: defaults.isOnboardingCompleted,
+        recentEmojis =
+            this[RECENT_EMOJIS]?.split(RECENT_EMOJI_SEPARATOR)?.filter { it.isNotEmpty() }
+                ?: defaults.recentEmojis,
     )
 }
 
@@ -102,6 +109,7 @@ private fun MutablePreferences.writeAppSettings(settings: AppSettings) {
     this[APP_LOCK_ENABLED] = settings.isAppLockEnabled
     this[REMINDER_ENABLED] = settings.isReminderEnabled
     this[ONBOARDING_COMPLETED] = settings.isOnboardingCompleted
+    this[RECENT_EMOJIS] = settings.recentEmojis.joinToString(RECENT_EMOJI_SEPARATOR)
 }
 
 // A null value is stored as an absent key, so "not set" and "never written" read the same.

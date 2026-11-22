@@ -24,7 +24,7 @@ import kotlinx.datetime.toLocalDateTime
 import vn.id.tozydev.tusu.domain.model.MediaStatus
 import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.ui.component.DateTimePickerDialog
-import vn.id.tozydev.tusu.ui.component.EmojiPickerSheet
+import vn.id.tozydev.tusu.ui.component.EmojiPickerRoute
 import vn.id.tozydev.tusu.ui.component.MediaUi
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerBody
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerEmojiRow
@@ -89,7 +89,7 @@ fun ComposerScreen(
         }
     }
     if (emojiSheetOpen) {
-        EmojiPickerSheet(
+        EmojiPickerRoute(
             selected = state.emoji,
             onSelect = {
                 actions.onEmojiChange(it)
