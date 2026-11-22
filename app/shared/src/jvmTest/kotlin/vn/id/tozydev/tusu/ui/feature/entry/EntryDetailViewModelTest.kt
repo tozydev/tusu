@@ -31,6 +31,7 @@ import vn.id.tozydev.tusu.data.db.label.DefaultLabelNames
 import vn.id.tozydev.tusu.data.db.label.DefaultLabelNamesProvider
 import vn.id.tozydev.tusu.di.createJvmAppGraph
 import vn.id.tozydev.tusu.domain.model.EntryDraft
+import vn.id.tozydev.tusu.domain.model.EntryLocation
 import vn.id.tozydev.tusu.domain.model.Media
 import vn.id.tozydev.tusu.domain.model.MediaStatus
 import vn.id.tozydev.tusu.domain.model.MediaType
@@ -76,6 +77,8 @@ class EntryDetailViewModelTest :
                             id = entryId,
                             body = detailBody("hello detail"),
                             emoji = "🌱",
+                            location =
+                                EntryLocation(name = "Hồ Gươm", address = "Hoàn Kiếm, Hà Nội"),
                             occurredAt = occurredAt,
                             timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
                         ),
@@ -110,6 +113,8 @@ class EntryDetailViewModelTest :
                     val stored = graph.entryRepository.observeEntry(entryId).first()
                     state.createdAt shouldBe stored?.createdAt
                     state.updatedAt shouldBe stored?.updatedAt
+                    state.location?.name shouldBe "Hồ Gươm"
+                    state.location?.address shouldBe "Hoàn Kiếm, Hà Nội"
                     val mediaDir = Path(tempDir.toString(), "media")
                     state.photos.map { it.path } shouldContainExactly
                         listOf(

@@ -11,9 +11,11 @@ import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -21,9 +23,11 @@ import kotlinx.datetime.toInstant
 import vn.id.tozydev.tusu.domain.error.EntryError
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.Entry
+import vn.id.tozydev.tusu.domain.model.LabelGroup
 import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.domain.model.toDraft
 import vn.id.tozydev.tusu.domain.repository.EntryRepository
+import vn.id.tozydev.tusu.domain.repository.LabelRepository
 import vn.id.tozydev.tusu.domain.repository.MediaFileStore
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.action_undo
@@ -41,12 +45,19 @@ import vn.id.tozydev.tusu.ui.format.toUiText
 class EntryDetailViewModel(
     private val entryRepository: EntryRepository,
     private val files: MediaFileStore,
+    labelRepository: LabelRepository,
     private val appMessages: AppMessages,
     private val timeZone: TimeZone,
     private val appScope: CoroutineScope,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EntryDetailUiState(currentTimeZone = timeZone))
     val uiState: StateFlow<EntryDetailUiState> = _uiState.asStateFlow()
+
+    /** Label groups give the chips their order and colour. */
+    val labelGroups: StateFlow<List<LabelGroup>> =
+        labelRepository
+            .observeGroups()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private var boundEntryId: Uuid? = null
     private var observation: Job? = null
@@ -138,6 +149,8 @@ private fun Entry?.toUiState(files: MediaFileStore, currentTimeZone: TimeZone): 
         timeZone = timeZone,
         createdAt = createdAt,
         updatedAt = updatedAt,
+        labels = labels,
+        location = location,
         body = body,
         textPlain = textPlain,
         photos =

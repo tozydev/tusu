@@ -5,6 +5,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,13 +36,17 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import vn.id.tozydev.tusu.domain.model.LabelGroup
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.entry_more_actions
 import vn.id.tozydev.tusu.generated.resources.ic_more_vert_24px
 import vn.id.tozydev.tusu.ui.component.DateTimePickerDialog
+import vn.id.tozydev.tusu.ui.component.LabelChip
 import vn.id.tozydev.tusu.ui.component.RichTextContent
+import vn.id.tozydev.tusu.ui.component.labelChipsOf
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryDetailHeader
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryDetailTopBar
+import vn.id.tozydev.tusu.ui.feature.entry.component.EntryLocationCard
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryMoreSheet
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoCarousel
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoStrip
@@ -64,6 +69,7 @@ fun EntryDetailScreen(
     onOccurredAtChange: (LocalDateTime) -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
+    labelGroups: List<LabelGroup> = emptyList(),
 ) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
     var changingTime by rememberSaveable { mutableStateOf(false) }
@@ -102,6 +108,7 @@ fun EntryDetailScreen(
                         state = state,
                         dateTime = dateTime,
                         scrollState = scrollState,
+                        labelGroups = labelGroups,
                         onPhotoClick = onPhotoClick,
                         modifier = Modifier.weight(1f),
                     )
@@ -167,6 +174,7 @@ private fun EntryDetailContent(
     state: EntryDetailUiState,
     dateTime: String?,
     scrollState: ScrollState,
+    labelGroups: List<LabelGroup>,
     onPhotoClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -180,12 +188,34 @@ private fun EntryDetailContent(
         if (dateTime != null) {
             EntryDetailHeader(dateTime = dateTime, emoji = state.emoji)
         }
+        if (state.labels.isNotEmpty()) {
+            val otherColor = MaterialTheme.colorScheme.outline
+            val chips =
+                remember(state.labels, labelGroups, otherColor) {
+                    labelChipsOf(state.labels, labelGroups, otherColor)
+                }
+            FlowRow(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                chips.forEach { LabelChip(it) }
+            }
+        }
         // Empty text is hidden completely; textPlain is derived from the body on save.
         if (state.textPlain.isNotBlank()) {
             RichTextContent(
                 body = state.body,
                 fallbackText = state.textPlain,
                 modifier = Modifier.padding(horizontal = 20.dp),
+            )
+        }
+        state.location?.let { location ->
+            EntryLocationCard(
+                name = location.name,
+                address = location.address,
+                mapSnapshotPath = location.mapSnapshotPath,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
             )
         }
     }

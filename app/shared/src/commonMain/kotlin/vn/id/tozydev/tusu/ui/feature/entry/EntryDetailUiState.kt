@@ -3,6 +3,8 @@ package vn.id.tozydev.tusu.ui.feature.entry
 import androidx.compose.runtime.Immutable
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import vn.id.tozydev.tusu.domain.model.EntryLocation
+import vn.id.tozydev.tusu.domain.model.Label
 import vn.id.tozydev.tusu.ui.component.MediaUi
 
 @Immutable
@@ -20,4 +22,6 @@ data class EntryDetailUiState(
     val body: String = "",
     val textPlain: String = "",
     val photos: List<MediaUi> = emptyList(),
+    val labels: List<Label> = emptyList(),
+    val location: EntryLocation? = null,
 )

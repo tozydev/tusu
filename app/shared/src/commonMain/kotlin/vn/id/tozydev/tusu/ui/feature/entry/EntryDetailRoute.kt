@@ -28,6 +28,7 @@ fun EntryDetailRoute(
         onEditClick = { onEdit(entryId) },
         onOccurredAtChange = viewModel::onOccurredAtChange,
         onDeleteClick = viewModel::onDelete,
+        labelGroups = viewModel.labelGroups.collectAsStateWithLifecycle().value,
         modifier = modifier,
     )
 }
