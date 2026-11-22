@@ -15,6 +15,8 @@ data class EntryDetailUiState(
     val emoji: String? = null,
     val occurredAt: Instant? = null,
     val timeZone: TimeZone? = null,
+    val createdAt: Instant? = null,
+    val updatedAt: Instant? = null,
     val body: String = "",
     val textPlain: String = "",
     val photos: List<MediaUi> = emptyList(),

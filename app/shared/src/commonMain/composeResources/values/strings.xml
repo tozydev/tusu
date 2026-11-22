@@ -116,6 +116,8 @@
     <string name="entry_action_edit">Edit</string>
     <string name="entry_action_change_time">Change date and time</string>
     <string name="entry_action_delete">Delete</string>
+    <string name="entry_created_at">Created %1$s</string>
+    <string name="entry_updated_at">Last edited %1$s</string>
     <string name="entry_deleted_message">Entry moved to the trash</string>
     <string name="placeholder_calendar_title">The calendar is on its way</string>
     <string name="placeholder_calendar_description">Browse your entries day by day, coming soon.</string>

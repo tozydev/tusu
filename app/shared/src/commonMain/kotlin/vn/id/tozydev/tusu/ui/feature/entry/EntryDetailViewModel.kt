@@ -136,6 +136,8 @@ private fun Entry?.toUiState(files: MediaFileStore, currentTimeZone: TimeZone): 
         emoji = emoji,
         occurredAt = occurredAt,
         timeZone = timeZone,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
         body = body,
         textPlain = textPlain,
         photos =

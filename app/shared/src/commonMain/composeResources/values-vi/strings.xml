@@ -115,6 +115,8 @@
     <string name="entry_action_edit">Sửa</string>
     <string name="entry_action_change_time">Đổi ngày giờ</string>
     <string name="entry_action_delete">Xoá</string>
+    <string name="entry_created_at">Tạo lúc %1$s</string>
+    <string name="entry_updated_at">Sửa lần cuối %1$s</string>
     <string name="entry_deleted_message">Đã chuyển entry vào Thùng rác</string>
     <string name="placeholder_calendar_title">Lịch sắp ra mắt</string>
     <string name="placeholder_calendar_description">Xem lại entry theo từng ngày, sắp có.</string>

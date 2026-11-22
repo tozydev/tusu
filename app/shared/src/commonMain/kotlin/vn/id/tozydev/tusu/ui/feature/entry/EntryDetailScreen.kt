@@ -84,8 +84,21 @@ fun EntryDetailScreen(
         }
     }
     if (moreOpen) {
+        val formatter = LocalAppDateTimeFormatter.current
+        val zone = state.currentTimeZone
+        val createdAt = state.createdAt
+        val updatedAt = state.updatedAt
         // Each row closes the sheet first, so the next step is not shown over it.
         EntryMoreSheet(
+            createdAt =
+                if (zone != null && createdAt != null) {
+                    context(zone) { formatter.fullDateTime(createdAt) }
+                } else null,
+            // An entry that was never edited only shows when it was created.
+            updatedAt =
+                if (zone != null && updatedAt != null && updatedAt != createdAt) {
+                    context(zone) { formatter.fullDateTime(updatedAt) }
+                } else null,
             onEdit = {
                 moreOpen = false
                 onEditClick()

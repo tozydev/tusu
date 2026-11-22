@@ -107,6 +107,9 @@ class EntryDetailViewModelTest :
                     state.occurredAt shouldBe occurredAt
                     state.timeZone shouldBe TimeZone.of("Asia/Ho_Chi_Minh")
                     state.textPlain shouldBe "hello detail"
+                    val stored = graph.entryRepository.observeEntry(entryId).first()
+                    state.createdAt shouldBe stored?.createdAt
+                    state.updatedAt shouldBe stored?.updatedAt
                     val mediaDir = Path(tempDir.toString(), "media")
                     state.photos.map { it.path } shouldContainExactly
                         listOf(
