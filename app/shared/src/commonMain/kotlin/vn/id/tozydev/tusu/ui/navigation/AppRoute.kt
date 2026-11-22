@@ -24,6 +24,9 @@ sealed interface AppRoute : NavKey {
     /** Shows one entry in full. */
     @Serializable data class EntryDetail(val entryId: Uuid) : AppRoute
 
+    /** Label groups and labels; opened from the label sheet until Settings exists. */
+    @Serializable data object Labels : AppRoute
+
     /** Full-screen photos of one entry, opened at [startIndex]. */
     @Serializable data class Viewer(val entryId: Uuid, val startIndex: Int = 0) : AppRoute
 }

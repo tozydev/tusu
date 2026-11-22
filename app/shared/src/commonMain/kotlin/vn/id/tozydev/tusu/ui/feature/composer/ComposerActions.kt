@@ -21,6 +21,8 @@ class ComposerActions(
     val onLabelToggle: (Uuid) -> Unit = {},
     /** Creates a label in the group (null for "Khác") and attaches it. */
     val onCreateLabel: (name: String, groupId: Uuid?) -> Unit = { _, _ -> },
+    /** Opens the label screen; the entry to it lives here until Settings exists. */
+    val onManageLabels: () -> Unit = {},
 ) {
     companion object {
         /** Does nothing; for previews. */

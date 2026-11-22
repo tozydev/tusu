@@ -49,6 +49,13 @@ fun MutableList<NavKey>.openViewer(entryId: Uuid, startIndex: Int = 0): Boolean 
     return true
 }
 
+/** Opens the label screen over the composer or a tab; returns false from any other route. */
+fun MutableList<NavKey>.openLabels(): Boolean {
+    if (currentRoute !is AppRoute.Composer && currentTab == null) return false
+    add(AppRoute.Labels)
+    return true
+}
+
 private fun List<NavKey>.canOpenOverContent(): Boolean =
     currentTab != null || currentRoute is AppRoute.EntryDetail
 

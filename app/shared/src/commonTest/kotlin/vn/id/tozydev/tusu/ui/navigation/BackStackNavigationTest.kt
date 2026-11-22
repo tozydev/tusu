@@ -221,5 +221,16 @@ class BackStackNavigationTest :
                     false
                 stackOf(AppRoute.Timeline, AppRoute.Viewer(id)).showsNavigationBar shouldBe false
             }
+
+            test("the label screen opens over the composer, once, and back returns to it") {
+                val stack = stackOf(AppRoute.Timeline, AppRoute.Composer())
+
+                stack.openLabels() shouldBe true
+                stack.openLabels() shouldBe false
+
+                stack shouldBe listOf(AppRoute.Timeline, AppRoute.Composer(), AppRoute.Labels)
+                stack.navigateBack()
+                stack shouldBe listOf(AppRoute.Timeline, AppRoute.Composer())
+            }
         },
     )

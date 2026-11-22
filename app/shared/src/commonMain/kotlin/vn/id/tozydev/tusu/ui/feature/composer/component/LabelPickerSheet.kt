@@ -47,6 +47,7 @@ import vn.id.tozydev.tusu.generated.resources.label_group_other
 import vn.id.tozydev.tusu.generated.resources.label_new
 import vn.id.tozydev.tusu.generated.resources.label_new_name
 import vn.id.tozydev.tusu.generated.resources.label_picker_title
+import vn.id.tozydev.tusu.generated.resources.labels_manage
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 /** One part of the sheet: a group, or "Khác" when [group] is null. */
@@ -65,10 +66,11 @@ fun LabelPickerSheet(
     onToggle: (Uuid) -> Unit,
     onCreate: (name: String, groupId: Uuid?) -> Unit,
     onDismiss: () -> Unit,
+    onManage: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
-        LabelPickerContent(groups, labels, selectedIds, onToggle, onCreate)
+        LabelPickerContent(groups, labels, selectedIds, onToggle, onCreate, onManage)
     }
 }
 
@@ -79,6 +81,7 @@ private fun LabelPickerContent(
     selectedIds: Set<Uuid>,
     onToggle: (Uuid) -> Unit,
     onCreate: (name: String, groupId: Uuid?) -> Unit,
+    onManage: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Saved as a string: null means no dialog, "" means a new label in "Khác".
@@ -94,10 +97,14 @@ private fun LabelPickerContent(
                 .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(
-            text = stringResource(Res.string.label_picker_title),
-            style = MaterialTheme.typography.titleLarge,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(Res.string.label_picker_title),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onManage) { Text(stringResource(Res.string.labels_manage)) }
+        }
         sections.forEach { section ->
             LabelSectionView(
                 section = section,
@@ -230,6 +237,7 @@ private fun LabelPickerContentPreview() {
                 selectedIds = setOf(memory.id),
                 onToggle = {},
                 onCreate = { _, _ -> },
+                onManage = {},
             )
         }
     }

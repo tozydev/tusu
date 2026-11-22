@@ -19,6 +19,7 @@ import vn.id.tozydev.tusu.ui.component.LocalMessageHostState
 import vn.id.tozydev.tusu.ui.feature.calendar.CalendarRoute
 import vn.id.tozydev.tusu.ui.feature.composer.ComposerRoute
 import vn.id.tozydev.tusu.ui.feature.entry.EntryDetailRoute
+import vn.id.tozydev.tusu.ui.feature.labels.LabelsRoute
 import vn.id.tozydev.tusu.ui.feature.media.MediaRoute
 import vn.id.tozydev.tusu.ui.feature.timeline.TimelineRoute
 import vn.id.tozydev.tusu.ui.feature.viewer.ViewerRoute
@@ -68,10 +69,12 @@ private fun AppNavDisplay(
                     )
                 }
                 entry<AppRoute.Media> { MediaRoute(contentPadding) }
+                entry<AppRoute.Labels> { LabelsRoute(onBack = { backStack.navigateBack() }) }
                 entry<AppRoute.Composer>(metadata = ComposerMetadata) { route ->
                     ComposerRoute(
                         entryId = route.entryId,
                         date = route.date,
+                        onManageLabels = { backStack.openLabels() },
                         onClose = { backStack.navigateBack() },
                     )
                 }

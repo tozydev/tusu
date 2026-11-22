@@ -20,6 +20,7 @@ fun ComposerRoute(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     date: LocalDate? = null,
+    onManageLabels: () -> Unit = {},
 ) {
     val viewModel = metroViewModel<ComposerViewModel>()
     LaunchedEffect(entryId) { viewModel.bind(entryId, date) }
@@ -56,6 +57,7 @@ fun ComposerRoute(
                 onRetryPhoto = viewModel::onRetryPhoto,
                 onLabelToggle = viewModel::onLabelToggle,
                 onCreateLabel = viewModel::onCreateLabel,
+                onManageLabels = onManageLabels,
             ),
         modifier = modifier,
     )

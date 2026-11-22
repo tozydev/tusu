@@ -16,6 +16,7 @@ val AppRouteSavedStateConfiguration = SavedStateConfiguration {
             subclass(AppRoute.Composer::class)
             subclass(AppRoute.EntryDetail::class)
             subclass(AppRoute.Viewer::class)
+            subclass(AppRoute.Labels::class)
         }
     }
 }

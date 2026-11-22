@@ -116,6 +116,10 @@ fun ComposerScreen(
             selectedIds = state.selectedLabelIds,
             onToggle = actions.onLabelToggle,
             onCreate = actions.onCreateLabel,
+            onManage = {
+                labelSheetOpen = false
+                actions.onManageLabels()
+            },
             onDismiss = { labelSheetOpen = false },
         )
     }
