@@ -68,6 +68,11 @@ class LabelRepositoryImpl(private val database: TusuDatabase, private val clock:
         entity.toDomain()
     }
 
+    override suspend fun countEntriesWithSeveralLabels(groupId: Uuid): Outcome<Int, LabelError> =
+        write {
+            dao.countEntriesWithSeveralLabels(groupId)
+        }
+
     override suspend fun updateGroup(group: LabelGroup): Outcome<Unit, LabelError> = write {
         val stored = liveGroup(group.id)
         val cleanName = cleanName(group.name)

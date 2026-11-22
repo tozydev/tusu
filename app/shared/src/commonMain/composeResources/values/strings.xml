@@ -91,6 +91,10 @@
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
     <string name="date_time_picker_time_title">Select time</string>
+    <plurals name="label_group_single_notice">
+        <item quantity="one">%1$d entry still has several labels from this group; it stays as it is.</item>
+        <item quantity="other">%1$d entries still have several labels from this group; they stay as they are.</item>
+    </plurals>
     <plurals name="label_chip_more_description">
         <item quantity="one">%1$d more label</item>
         <item quantity="other">%1$d more labels</item>

@@ -18,8 +18,11 @@ import vn.id.tozydev.tusu.domain.model.Label
 import vn.id.tozydev.tusu.domain.model.LabelGroup
 import vn.id.tozydev.tusu.domain.model.LabelSelection
 import vn.id.tozydev.tusu.domain.repository.LabelRepository
+import vn.id.tozydev.tusu.generated.resources.Res
+import vn.id.tozydev.tusu.generated.resources.label_group_single_notice
 import vn.id.tozydev.tusu.ui.component.AppMessages
 import vn.id.tozydev.tusu.ui.component.UiMessage
+import vn.id.tozydev.tusu.ui.format.UiText
 import vn.id.tozydev.tusu.ui.format.toUiText
 
 /** The label screen: every group and label, and their edits. Failures are posted as messages. */
@@ -49,8 +52,37 @@ class LabelsViewModel(
         labelRepository.createGroup(name.trim(), color, selection)
     }
 
-    fun onUpdateGroup(group: LabelGroup) = write {
-        labelRepository.updateGroup(group.copy(name = group.name.trim()))
+    /**
+     * Saves the group. Turning a multiple-choice group into single choice leaves existing entries
+     * as they are, so the user is told how many still hold several of its labels.
+     */
+    fun onUpdateGroup(group: LabelGroup) {
+        val before = uiState.value.groups.firstOrNull { it.id == group.id }
+        val becomesSingle =
+            before?.selection == LabelSelection.MULTI && group.selection == LabelSelection.SINGLE
+        viewModelScope.launch {
+            val outcome = labelRepository.updateGroup(group.copy(name = group.name.trim()))
+            if (outcome is Outcome.Failure) {
+                appMessages.post(UiMessage(outcome.error.toUiText()))
+                return@launch
+            }
+            if (!becomesSingle) return@launch
+            when (val count = labelRepository.countEntriesWithSeveralLabels(group.id)) {
+                is Outcome.Failure -> appMessages.post(UiMessage(count.error.toUiText()))
+                is Outcome.Success ->
+                    if (count.value > 0) {
+                        appMessages.post(
+                            UiMessage(
+                                UiText.plural(
+                                    Res.plurals.label_group_single_notice,
+                                    count.value,
+                                    count.value,
+                                ),
+                            ),
+                        )
+                    }
+            }
+        }
     }
 
     /** The repository moves the group's labels to "Khác", so no entry loses a label. */

@@ -10,6 +10,15 @@ import kotlinx.coroutines.flow.Flow
 abstract class LabelDao {
     @Upsert abstract suspend fun upsertGroup(group: LabelGroupEntity)
 
+    /** Live entries holding two or more live labels of [groupId]. */
+    @Query(
+        "SELECT COUNT(*) FROM (SELECT el.entry_id FROM entry_labels el " +
+            "JOIN labels l ON l.id = el.label_id JOIN entries e ON e.id = el.entry_id " +
+            "WHERE l.group_id = :groupId AND l.deleted_at IS NULL AND el.deleted_at IS NULL " +
+            "AND e.deleted_at IS NULL GROUP BY el.entry_id HAVING COUNT(*) > 1)",
+    )
+    abstract suspend fun countEntriesWithSeveralLabels(groupId: Uuid): Int
+
     @Query("SELECT * FROM label_groups WHERE id = :id")
     abstract suspend fun getGroupById(id: Uuid): LabelGroupEntity?
 

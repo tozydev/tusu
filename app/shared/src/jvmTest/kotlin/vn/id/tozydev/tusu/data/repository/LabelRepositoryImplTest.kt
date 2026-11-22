@@ -102,6 +102,30 @@ private suspend fun Fixture.labelsIn(groupId: Uuid?): List<String> =
 class LabelRepositoryImplTest :
     FunSpec(
         {
+            context("countEntriesWithSeveralLabels") {
+                test("counts live entries that hold two or more live labels of the group") {
+                    withFixture { f ->
+                        val group = f.group("Loại")
+                        val other = f.group("Người")
+                        val a = f.label("A", group.id)
+                        val b = f.label("B", group.id)
+                        val c = f.label("C", other.id)
+                        val several = Uuid.random()
+                        val one = Uuid.random()
+                        val mixed = Uuid.random()
+                        listOf(several, one, mixed).forEach { f.insertEntry(it) }
+                        f.attach(several, a.id)
+                        f.attach(several, b.id)
+                        f.attach(one, a.id)
+                        f.attach(mixed, a.id)
+                        f.attach(mixed, c.id)
+
+                        f.repo.countEntriesWithSeveralLabels(group.id).value() shouldBe 1
+                        f.repo.countEntriesWithSeveralLabels(other.id).value() shouldBe 0
+                    }
+                }
+            }
+
             context("createGroup") {
                 test(
                     "appends after the existing groups and starts non-default and composer-visible",

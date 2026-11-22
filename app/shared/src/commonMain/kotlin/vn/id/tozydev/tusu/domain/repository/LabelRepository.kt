@@ -29,6 +29,12 @@ interface LabelRepository {
 
     suspend fun reorderGroups(orderedIds: List<Uuid>): Outcome<Unit, LabelError>
 
+    /**
+     * How many entries hold more than one label of [groupId]; shown before the group becomes
+     * single-choice, which leaves those entries as they are.
+     */
+    suspend fun countEntriesWithSeveralLabels(groupId: Uuid): Outcome<Int, LabelError>
+
     /** Null [groupId] creates the label in "Khác". */
     suspend fun createLabel(name: String, groupId: Uuid?): Outcome<Label, LabelError>
 

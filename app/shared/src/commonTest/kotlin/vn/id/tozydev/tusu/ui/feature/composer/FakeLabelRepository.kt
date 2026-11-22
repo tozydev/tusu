@@ -54,6 +54,9 @@ class FakeLabelRepository : LabelRepository {
         selection: LabelSelection,
     ): Outcome<LabelGroup, LabelError> = error("not used")
 
+    override suspend fun countEntriesWithSeveralLabels(groupId: Uuid): Outcome<Int, LabelError> =
+        error("not used")
+
     override suspend fun updateGroup(group: LabelGroup): Outcome<Unit, LabelError> =
         error("not used")
 
