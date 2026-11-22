@@ -21,9 +21,11 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.model.Entry
+import vn.id.tozydev.tusu.domain.model.LabelGroup
 import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.domain.model.toDraft
 import vn.id.tozydev.tusu.domain.repository.EntryRepository
+import vn.id.tozydev.tusu.domain.repository.LabelRepository
 import vn.id.tozydev.tusu.domain.repository.MediaFileStore
 import vn.id.tozydev.tusu.ui.component.AppMessages
 import vn.id.tozydev.tusu.ui.component.UiMessage
@@ -35,6 +37,7 @@ import vn.id.tozydev.tusu.ui.format.toUiText
 @Inject
 class TimelineViewModel(
     private val entryRepository: EntryRepository,
+    labelRepository: LabelRepository,
     private val files: MediaFileStore,
     private val appMessages: AppMessages,
 ) : ViewModel() {
@@ -58,6 +61,16 @@ class TimelineViewModel(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
                 emptyMap(),
+            )
+
+    /** Label groups give the chips of each entry their order and colour. */
+    val labelGroups: StateFlow<List<LabelGroup>> =
+        labelRepository
+            .observeGroups()
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+                emptyList(),
             )
 
     /**

@@ -20,6 +20,7 @@ fun TimelineRoute(
     TimelineScreen(
         items = viewModel.items.collectAsLazyPagingItems(),
         dayEmojis = viewModel.dayEmojis.collectAsStateWithLifecycle().value,
+        labelGroups = viewModel.labelGroups.collectAsStateWithLifecycle().value,
         contentPadding = contentPadding,
         onNewEntryClick = onNewEntryClick,
         onEntryClick = onEntryClick,

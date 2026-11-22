@@ -31,6 +31,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.domain.model.Entry
+import vn.id.tozydev.tusu.domain.model.LabelGroup
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.action_retry
 import vn.id.tozydev.tusu.generated.resources.timeline_empty_action
@@ -57,6 +58,7 @@ import vn.id.tozydev.tusu.ui.theme.AppTheme
 fun TimelineScreen(
     items: LazyPagingItems<TimelineItem>,
     dayEmojis: Map<LocalDate, List<String>>,
+    labelGroups: List<LabelGroup>,
     contentPadding: PaddingValues,
     onNewEntryClick: () -> Unit,
     onEntryClick: (Uuid) -> Unit,
@@ -82,6 +84,7 @@ fun TimelineScreen(
                 TimelineList(
                     items = items,
                     dayEmojis = dayEmojis,
+                    labelGroups = labelGroups,
                     contentPadding = contentPadding,
                     onEntryClick = onEntryClick,
                     onEntryLongClick = { emojiTarget = it },
@@ -117,6 +120,7 @@ private fun RefreshErrorMessage(error: LoadState.Error?, onRetry: () -> Unit) {
 private fun TimelineList(
     items: LazyPagingItems<TimelineItem>,
     dayEmojis: Map<LocalDate, List<String>>,
+    labelGroups: List<LabelGroup>,
     contentPadding: PaddingValues,
     onEntryClick: (Uuid) -> Unit,
     onEntryLongClick: (Entry) -> Unit,
@@ -147,6 +151,7 @@ private fun TimelineList(
                             photos = row.photos,
                             onClick = { onEntryClick(row.entry.id) },
                             onLongClick = { onEntryLongClick(row.entry) },
+                            labelGroups = labelGroups,
                         )
                     }
                 null -> Unit // Placeholders are disabled in the repository, so this is rare.
@@ -210,6 +215,7 @@ private fun TimelineScreenPreview() {
             TimelineScreen(
                 items = items,
                 dayEmojis = previewDayEmojis(),
+                labelGroups = emptyList(),
                 contentPadding = PaddingValues(bottom = 104.dp),
                 onNewEntryClick = {},
                 onEntryClick = {},
@@ -228,6 +234,7 @@ private fun TimelineScreenEmptyPreview() {
             TimelineScreen(
                 items = items,
                 dayEmojis = emptyMap(),
+                labelGroups = emptyList(),
                 contentPadding = PaddingValues(bottom = 104.dp),
                 onNewEntryClick = {},
                 onEntryClick = {},
