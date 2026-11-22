@@ -118,8 +118,19 @@
     <string name="entry_created_at">Tạo lúc %1$s</string>
     <string name="entry_updated_at">Sửa lần cuối %1$s</string>
     <string name="entry_deleted_message">Đã chuyển entry vào Thùng rác</string>
-    <string name="placeholder_calendar_title">Lịch sắp ra mắt</string>
-    <string name="placeholder_calendar_description">Xem lại entry theo từng ngày, sắp có.</string>
+    <string name="calendar_previous_month">Tháng trước</string>
+    <string name="calendar_next_month">Tháng sau</string>
+    <string name="calendar_day_empty">Ngày này chưa có gì</string>
+    <string name="calendar_new_entry_for_day">Viết cho ngày này</string>
+    <string-array name="calendar_weekdays_narrow">
+        <item>T2</item>
+        <item>T3</item>
+        <item>T4</item>
+        <item>T5</item>
+        <item>T6</item>
+        <item>T7</item>
+        <item>CN</item>
+    </string-array>
     <string name="placeholder_media_title">Thư viện media sắp ra mắt</string>
     <string name="placeholder_media_description">Ảnh, video và bản ghi âm sẽ được gom lại ở đây, sắp có.</string>
     <string name="composer_placeholder_feeling">Lúc này bạn thấy thế nào?</string>

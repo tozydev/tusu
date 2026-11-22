@@ -119,8 +119,19 @@
     <string name="entry_created_at">Created %1$s</string>
     <string name="entry_updated_at">Last edited %1$s</string>
     <string name="entry_deleted_message">Entry moved to the trash</string>
-    <string name="placeholder_calendar_title">The calendar is on its way</string>
-    <string name="placeholder_calendar_description">Browse your entries day by day, coming soon.</string>
+    <string name="calendar_previous_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="calendar_day_empty">Nothing written on this day</string>
+    <string name="calendar_new_entry_for_day">Write for this day</string>
+    <string-array name="calendar_weekdays_narrow">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
     <string name="placeholder_media_title">Your media is on its way</string>
     <string name="placeholder_media_description">Photos, videos and recordings will gather here, coming soon.</string>
     <string name="composer_placeholder_feeling">How are you feeling right now?</string>

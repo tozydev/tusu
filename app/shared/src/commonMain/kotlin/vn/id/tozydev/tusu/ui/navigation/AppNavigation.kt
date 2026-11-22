@@ -60,10 +60,20 @@ private fun AppNavDisplay(
                         onEntryClick = { backStack.openEntry(it) },
                     )
                 }
-                entry<AppRoute.Calendar> { CalendarRoute(contentPadding) }
+                entry<AppRoute.Calendar> {
+                    CalendarRoute(
+                        contentPadding,
+                        onNewEntryForDay = { backStack.openComposer(date = it) },
+                        onEntryClick = { backStack.openEntry(it) },
+                    )
+                }
                 entry<AppRoute.Media> { MediaRoute(contentPadding) }
                 entry<AppRoute.Composer>(metadata = ComposerMetadata) { route ->
-                    ComposerRoute(entryId = route.entryId, onClose = { backStack.navigateBack() })
+                    ComposerRoute(
+                        entryId = route.entryId,
+                        date = route.date,
+                        onClose = { backStack.navigateBack() },
+                    )
                 }
                 entry<AppRoute.EntryDetail> { route ->
                     EntryDetailRoute(
