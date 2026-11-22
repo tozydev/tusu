@@ -11,13 +11,16 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.io.files.Path
@@ -58,7 +61,7 @@ private fun body(text: String): String =
 private suspend fun withTimelineViewModel(
     entries: List<Pair<String, String>>,
     seedMedia: suspend (JvmAppGraph, List<Uuid>) -> Unit = { _, _ -> },
-    block: suspend (TimelineViewModel) -> Unit,
+    block: suspend (TimelineViewModel, JvmAppGraph, List<Uuid>) -> Unit,
 ) {
     // viewModelScope runs on Dispatchers.Main, which a JVM test does not have.
     Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -89,7 +92,7 @@ private suspend fun withTimelineViewModel(
             androidx.lifecycle.ViewModelProvider.create(store, graph.metroViewModelFactory)
                 .get(TimelineViewModel::class)
         viewModel.shouldBeInstanceOf<TimelineViewModel>()
-        block(viewModel)
+        block(viewModel, graph, ids)
     } finally {
         store.clear()
         graph.database.close()
@@ -126,7 +129,7 @@ class TimelineViewModelTest :
                         "older" to "2026-11-10T03:00:00Z",
                         "newer" to "2026-11-11T03:00:00Z",
                     ),
-                ) { viewModel ->
+                ) { viewModel, _, _ ->
                     val d1 = LocalDate(2026, 11, 10)
                     val d2 = LocalDate(2026, 11, 11)
                     viewModel.items.asSnapshot().map { it.describe() } shouldContainExactly
@@ -140,7 +143,7 @@ class TimelineViewModelTest :
                         "morning" to "2026-11-11T01:00:00Z",
                         "evening" to "2026-11-11T12:00:00Z",
                     ),
-                ) { viewModel ->
+                ) { viewModel, _, _ ->
                     val day = LocalDate(2026, 11, 11)
                     viewModel.items.asSnapshot().map { it.describe() } shouldContainExactly
                         listOf("day:$day", "evening", "morning")
@@ -168,7 +171,7 @@ class TimelineViewModelTest :
                                     .shouldBeInstanceOf<Outcome.Success<Media>>()
                             }
                     },
-                ) { viewModel ->
+                ) { viewModel, _, _ ->
                     val item =
                         viewModel.items
                             .asSnapshot()
@@ -177,6 +180,29 @@ class TimelineViewModelTest :
                     item.photos.map { Path(it.path).name } shouldBe
                         listOf("first.jpg", "second.jpg")
                     item.photos.forEach { Path(it.path).isAbsolute shouldBe true }
+                }
+            }
+
+            test("changing the emoji from the feed saves it and keeps the rest of the entry") {
+                withTimelineViewModel(listOf("quick emoji" to "2026-11-11T03:00:00Z")) {
+                    viewModel,
+                    graph,
+                    ids ->
+                    val entryId = ids.single()
+                    val before = graph.entryRepository.observeEntry(entryId).first()
+
+                    viewModel.onEmojiChange(entryId, "🎉")
+                    val changed =
+                        withTimeout(5.seconds) {
+                            graph.entryRepository.observeEntry(entryId).first { it?.emoji == "🎉" }
+                        }
+                    changed?.textPlain shouldBe "quick emoji"
+                    changed?.occurredAt shouldBe before?.occurredAt
+
+                    viewModel.onEmojiChange(entryId, null)
+                    withTimeout(5.seconds) {
+                        graph.entryRepository.observeEntry(entryId).first { it?.emoji == null }
+                    }
                 }
             }
         },

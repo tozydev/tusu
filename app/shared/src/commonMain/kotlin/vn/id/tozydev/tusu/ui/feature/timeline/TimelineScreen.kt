@@ -12,7 +12,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,6 +30,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
+import vn.id.tozydev.tusu.domain.model.Entry
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.action_retry
 import vn.id.tozydev.tusu.generated.resources.timeline_empty_action
@@ -35,6 +39,7 @@ import vn.id.tozydev.tusu.generated.resources.timeline_empty_title
 import vn.id.tozydev.tusu.generated.resources.timeline_load_error_description
 import vn.id.tozydev.tusu.generated.resources.timeline_load_error_title
 import vn.id.tozydev.tusu.ui.component.EmojiBadge
+import vn.id.tozydev.tusu.ui.component.EmojiPickerSheet
 import vn.id.tozydev.tusu.ui.component.EmptyState
 import vn.id.tozydev.tusu.ui.component.LocalMessageHostState
 import vn.id.tozydev.tusu.ui.component.MessageHostState
@@ -55,8 +60,11 @@ fun TimelineScreen(
     contentPadding: PaddingValues,
     onNewEntryClick: () -> Unit,
     onEntryClick: (Uuid) -> Unit,
+    onEmojiChange: (entryId: Uuid, emoji: String?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // The entry whose emoji is being changed from a long press, with its current emoji.
+    var emojiTarget by remember { mutableStateOf<Entry?>(null) }
     Surface(modifier = modifier.fillMaxSize()) {
         val refresh = items.loadState.refresh
         // A refresh error with entries already on screen keeps the list; it is reported as a
@@ -76,8 +84,19 @@ fun TimelineScreen(
                     dayEmojis = dayEmojis,
                     contentPadding = contentPadding,
                     onEntryClick = onEntryClick,
+                    onEntryLongClick = { emojiTarget = it },
                 )
         }
+    }
+    emojiTarget?.let { target ->
+        EmojiPickerSheet(
+            selected = target.emoji,
+            onSelect = { emoji ->
+                emojiTarget = null
+                onEmojiChange(target.id, emoji)
+            },
+            onDismiss = { emojiTarget = null },
+        )
     }
 }
 
@@ -100,6 +119,7 @@ private fun TimelineList(
     dayEmojis: Map<LocalDate, List<String>>,
     contentPadding: PaddingValues,
     onEntryClick: (Uuid) -> Unit,
+    onEntryLongClick: (Entry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val clock = remember { Clock.System }
@@ -126,6 +146,7 @@ private fun TimelineList(
                             entry = row.entry,
                             photos = row.photos,
                             onClick = { onEntryClick(row.entry.id) },
+                            onLongClick = { onEntryLongClick(row.entry) },
                         )
                     }
                 null -> Unit // Placeholders are disabled in the repository, so this is rare.
@@ -192,6 +213,7 @@ private fun TimelineScreenPreview() {
                 contentPadding = PaddingValues(bottom = 104.dp),
                 onNewEntryClick = {},
                 onEntryClick = {},
+                onEmojiChange = { _, _ -> },
             )
         }
     }
@@ -209,6 +231,7 @@ private fun TimelineScreenEmptyPreview() {
                 contentPadding = PaddingValues(bottom = 104.dp),
                 onNewEntryClick = {},
                 onEntryClick = {},
+                onEmojiChange = { _, _ -> },
             )
         }
     }

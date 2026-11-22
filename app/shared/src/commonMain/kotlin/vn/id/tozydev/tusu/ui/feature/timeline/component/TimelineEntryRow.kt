@@ -1,6 +1,6 @@
 package vn.id.tozydev.tusu.ui.feature.timeline.component
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -12,9 +12,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.domain.model.Entry
+import vn.id.tozydev.tusu.generated.resources.Res
+import vn.id.tozydev.tusu.generated.resources.timeline_change_emoji
 import vn.id.tozydev.tusu.ui.component.EmojiBadge
 import vn.id.tozydev.tusu.ui.component.MediaUi
 import vn.id.tozydev.tusu.ui.component.RichTextContent
@@ -25,7 +30,8 @@ private const val MaxTextLines = 6
 
 /**
  * One entry of the feed, laid out like a diary page: the time on a rail, then the emoji, the text
- * and the photos. The whole row opens the entry.
+ * and the photos. The whole row opens the entry; a long press calls [onLongClick], which the feed
+ * uses to change the emoji.
  */
 @Composable
 fun TimelineEntryRow(
@@ -33,8 +39,11 @@ fun TimelineEntryRow(
     photos: List<MediaUi>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
 ) {
     val formatter = LocalAppDateTimeFormatter.current
+    val haptics = LocalHapticFeedback.current
+    val longClickLabel = stringResource(Res.string.timeline_change_emoji)
     // Each entry keeps the zone it was written in, so travelling does not shift its time.
     val time =
         remember(entry.occurredAt, entry.timeZone) {
@@ -45,7 +54,17 @@ fun TimelineEntryRow(
             modifier
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
-                .clickable(onClick = onClick)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClickLabel = onLongClick?.let { longClickLabel },
+                    onLongClick =
+                        onLongClick?.let {
+                            {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                it()
+                            }
+                        },
+                )
                 .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

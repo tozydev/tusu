@@ -23,6 +23,7 @@ fun TimelineRoute(
         contentPadding = contentPadding,
         onNewEntryClick = onNewEntryClick,
         onEntryClick = onEntryClick,
+        onEmojiChange = viewModel::onEmojiChange,
         modifier = modifier,
     )
 }
