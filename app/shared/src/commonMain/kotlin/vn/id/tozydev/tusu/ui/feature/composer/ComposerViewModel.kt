@@ -54,6 +54,7 @@ import vn.id.tozydev.tusu.generated.resources.action_undo
 import vn.id.tozydev.tusu.generated.resources.composer_empty_trashed
 import vn.id.tozydev.tusu.generated.resources.composer_saved_message
 import vn.id.tozydev.tusu.platform.MediaJobQueue
+import vn.id.tozydev.tusu.text.matchLabelHashtags
 import vn.id.tozydev.tusu.ui.component.AppMessages
 import vn.id.tozydev.tusu.ui.component.UiMessage
 import vn.id.tozydev.tusu.ui.component.UiMessageAction
@@ -108,6 +109,9 @@ class ComposerViewModel(
     private var lastDraft: EntryDraft? = null
     private var submitted = false
     private var finishJob: Job? = null
+
+    /** Labels a #hashtag has already attached in this session. */
+    private val hashtagLabelIds = mutableSetOf<Uuid>()
 
     /** Photo work of this session. Closing joins it before it decides what the session kept. */
     private val mediaJobs = mutableListOf<Job>()
@@ -199,11 +203,11 @@ class ComposerViewModel(
     }
 
     private fun writeLabels(target: EntryTarget, labelIds: Set<Uuid>) {
-        val isNewEntry = target.original == null && !submitted
-        if (isNewEntry) writeDraftNow(target)
+        if (target.original == null && !submitted) writeDraftNow(target)
         submitted = true
         trackMediaWork {
-            if (isNewEntry && !awaitEntryWritten()) return@trackMediaWork
+            // A new entry's row may still be waiting in the debounce; labels need it written.
+            if (target.original == null && !awaitEntryWritten()) return@trackMediaWork
             val outcome = entryRepository.setLabels(target.id, labelIds)
             if (outcome is Outcome.Failure) appMessages.post(UiMessage(outcome.error.toUiText()))
         }
@@ -462,6 +466,29 @@ class ComposerViewModel(
         lastDraft = draft
         submitted = true
         autoSaver.submit(draft)
+        applyHashtags(target)
+    }
+
+    /**
+     * Attaches the labels that the text mentions as `#name`, in any group. Each label is attached
+     * by a hashtag only once per session, so removing its chip is not undone by the next keystroke.
+     */
+    private fun applyHashtags(target: EntryTarget) {
+        val state = _uiState.value
+        val live = state.labels.filter { it.deletedAt == null }
+        if (live.isEmpty()) return
+        val names = matchLabelHashtags(richTextState.annotatedString.text, live.map { it.name })
+        val fresh = live.filter { it.name in names && it.id !in hashtagLabelIds }
+        if (fresh.isEmpty()) return
+        var next = target.labelIds
+        for (label in fresh) {
+            hashtagLabelIds += label.id
+            if (label.id !in next) next = toggledLabels(next, label, state.labelGroups, live)
+        }
+        if (next == target.labelIds) return
+        target.labelIds = next
+        _uiState.update { it.copy(selectedLabelIds = next) }
+        writeLabels(target, next)
     }
 
     private suspend fun closeSession(textIsBlank: Boolean) {

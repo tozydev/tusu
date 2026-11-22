@@ -766,5 +766,24 @@ class ComposerViewModelTest :
                     f.entries.labelSets[f.entries.saves.first().id] shouldBe setOf(created.id)
                 }
             }
+
+            test("a #hashtag attaches the matching label once, and a removed one stays removed") {
+                composerTest { f ->
+                    val group = f.labels.addGroup()
+                    val picnic = f.labels.addLabel(group, name = "Dã ngoại")
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+
+                    f.viewModel.typeText("Cuối tuần #da_ngoai cùng nhà")
+                    advanceUntilIdle()
+                    val id = f.entries.saves.first().id
+                    f.entries.labelSets[id] shouldBe setOf(picnic.id)
+
+                    f.viewModel.onLabelToggle(picnic.id)
+                    f.viewModel.typeText("Cuối tuần #da_ngoai cùng nhà, vui lắm")
+                    advanceUntilIdle()
+                    f.entries.labelSets[id] shouldBe emptySet()
+                }
+            }
         },
     )
