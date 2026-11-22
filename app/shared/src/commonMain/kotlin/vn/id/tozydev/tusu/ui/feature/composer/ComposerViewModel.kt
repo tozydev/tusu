@@ -31,9 +31,11 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import vn.id.tozydev.tusu.domain.error.EntryError
 import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.error.Outcome
@@ -124,14 +126,14 @@ class ComposerViewModel(
     }
 
     /**
-     * Starts the session for [entryId], or for a new entry when it is null. Only the first call
-     * counts.
+     * Starts the session for [entryId], or for a new entry when it is null. A new entry written for
+     * an earlier [date] keeps the current time of day on that date. Only the first call counts.
      */
-    fun bind(entryId: Uuid?) {
+    fun bind(entryId: Uuid?, date: LocalDate? = null) {
         if (bound) return
         bound = true
         _uiState.update { it.copy(currentTimeZone = timeZone) }
-        if (entryId == null) startNewEntry() else sessionScope.launch { openEntry(entryId) }
+        if (entryId == null) startNewEntry(date) else sessionScope.launch { openEntry(entryId) }
     }
 
     /** Called whenever the rich text changes. Saves only when the content really changed. */
@@ -247,8 +249,11 @@ class ComposerViewModel(
         finishSession()
     }
 
-    private fun startNewEntry() {
-        val now = clock.now()
+    private fun startNewEntry(date: LocalDate?) {
+        val current = clock.now()
+        val now =
+            if (date == null) current
+            else LocalDateTime(date, current.toLocalDateTime(timeZone).time).toInstant(timeZone)
         val newTarget =
             EntryTarget(
                 id = Uuid.random(),

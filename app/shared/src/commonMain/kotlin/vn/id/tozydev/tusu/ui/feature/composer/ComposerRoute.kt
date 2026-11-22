@@ -8,15 +8,21 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlin.uuid.Uuid
+import kotlinx.datetime.LocalDate
 import vn.id.tozydev.tusu.ui.component.OnBackgroundEffect
 import vn.id.tozydev.tusu.ui.platform.rememberCameraLauncher
 import vn.id.tozydev.tusu.ui.platform.rememberPhotoPickerLauncher
 
-/** Writes a new entry, or edits [entryId]; [onClose] leaves the composer. */
+/** Writes a new entry (dated [date] when given), or edits [entryId]; [onClose] leaves it. */
 @Composable
-fun ComposerRoute(entryId: Uuid?, onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun ComposerRoute(
+    entryId: Uuid?,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+    date: LocalDate? = null,
+) {
     val viewModel = metroViewModel<ComposerViewModel>()
-    LaunchedEffect(entryId) { viewModel.bind(entryId) }
+    LaunchedEffect(entryId) { viewModel.bind(entryId, date) }
     LaunchedEffect(viewModel) {
         snapshotFlow { viewModel.richTextState.annotatedString }
             .collect { viewModel.onBodyChanged() }

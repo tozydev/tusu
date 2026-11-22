@@ -2,6 +2,7 @@ package vn.id.tozydev.tusu.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 import kotlin.uuid.Uuid
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 /** Every destination of the app; features reach each other only by pushing one of these. */
@@ -16,8 +17,9 @@ sealed interface AppRoute : NavKey {
 
     @Serializable data object Media : TopLevel
 
-    /** Writes a new entry, or edits the one with [entryId]. */
-    @Serializable data class Composer(val entryId: Uuid? = null) : AppRoute
+    /** Writes a new entry, dated [date] when given, or edits the one with [entryId]. */
+    @Serializable
+    data class Composer(val entryId: Uuid? = null, val date: LocalDate? = null) : AppRoute
 
     /** Shows one entry in full. */
     @Serializable data class EntryDetail(val entryId: Uuid) : AppRoute

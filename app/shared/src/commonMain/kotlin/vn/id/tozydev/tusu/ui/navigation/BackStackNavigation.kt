@@ -2,6 +2,7 @@ package vn.id.tozydev.tusu.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 import kotlin.uuid.Uuid
+import kotlinx.datetime.LocalDate
 
 // The back stack is [Timeline, <other tab>?, EntryDetail?, Composer? | Viewer?]: Timeline is always
 // the root so that back from any tab lands there, and the other tabs replace each other instead of
@@ -35,9 +36,9 @@ fun MutableList<NavKey>.openEntry(entryId: Uuid): Boolean {
 }
 
 /** Opens the composer over a tab or the entry detail; returns false from any other route. */
-fun MutableList<NavKey>.openComposer(entryId: Uuid? = null): Boolean {
+fun MutableList<NavKey>.openComposer(entryId: Uuid? = null, date: LocalDate? = null): Boolean {
     if (!canOpenOverContent()) return false
-    add(AppRoute.Composer(entryId))
+    add(AppRoute.Composer(entryId, date))
     return true
 }
 

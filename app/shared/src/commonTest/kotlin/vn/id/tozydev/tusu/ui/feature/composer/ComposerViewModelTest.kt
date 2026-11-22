@@ -36,6 +36,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -167,6 +168,19 @@ class ComposerViewModelTest :
                     advanceTimeBy(2.seconds)
 
                     f.entries.saves.shouldBeEmpty()
+                }
+            }
+
+            test("a new entry for a chosen day starts on that day at the current time of day") {
+                composerTest { f ->
+                    f.viewModel.bind(null, date = LocalDate(2026, 11, 5))
+                    advanceUntilIdle()
+                    val expected = LocalDateTime(2026, 11, 5, 10, 0).toInstant(zone)
+                    f.viewModel.uiState.value.occurredAt shouldBe expected
+
+                    f.viewModel.typeText("Back then")
+                    advanceTimeBy(1.seconds)
+                    f.entries.saves.single().occurredAt shouldBe expected
                 }
             }
 
