@@ -57,6 +57,11 @@
     <string name="action_retry">Thử lại</string>
     <string name="emoji_badge_add">Thêm biểu tượng cảm xúc</string>
     <string name="emoji_picker_title">Chọn emoji</string>
+    <string name="composer_labels">Nhãn</string>
+    <string name="label_picker_title">Chọn nhãn</string>
+    <string name="label_group_other">Khác</string>
+    <string name="label_new">Nhãn mới</string>
+    <string name="label_new_name">Tên nhãn</string>
     <string name="emoji_group_recent">Gần đây</string>
     <string name="emoji_group_feelings">Cảm xúc</string>
     <string name="emoji_group_activities">Hoạt động</string>

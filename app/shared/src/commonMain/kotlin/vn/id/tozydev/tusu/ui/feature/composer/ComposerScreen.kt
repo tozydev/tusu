@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,11 +27,13 @@ import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.ui.component.DateTimePickerDialog
 import vn.id.tozydev.tusu.ui.component.EmojiPickerRoute
 import vn.id.tozydev.tusu.ui.component.MediaUi
+import vn.id.tozydev.tusu.ui.component.labelChipsOf
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerBody
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerEmojiRow
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerPhotoStrip
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerToolbar
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerTopBar
+import vn.id.tozydev.tusu.ui.feature.composer.component.LabelPickerSheet
 import vn.id.tozydev.tusu.ui.feature.composer.component.RichTextFormatBar
 import vn.id.tozydev.tusu.ui.format.UiText
 import vn.id.tozydev.tusu.ui.theme.AppTheme
@@ -48,10 +51,14 @@ fun ComposerScreen(
 ) {
     var formatOpen by rememberSaveable { mutableStateOf(false) }
     var emojiSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var labelSheetOpen by rememberSaveable { mutableStateOf(false) }
     var timeDialogOpen by rememberSaveable { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val editable = !state.isLoading && state.loadError == null && !state.isReadOnly
-    ReturnFocusWhenClosed(sheetOpen = emojiSheetOpen, focusRequester = focusRequester)
+    ReturnFocusWhenClosed(
+        sheetOpen = emojiSheetOpen || labelSheetOpen,
+        focusRequester = focusRequester,
+    )
     Surface(modifier = modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
             ComposerTopBar(
@@ -65,7 +72,21 @@ fun ComposerScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             if (editable) {
-                ComposerEmojiRow(emoji = state.emoji, onClick = { emojiSheetOpen = true })
+                val otherColor = MaterialTheme.colorScheme.outline
+                val chips =
+                    remember(state.selectedLabelIds, state.labels, state.labelGroups, otherColor) {
+                        labelChipsOf(
+                            state.labels.filter { it.id in state.selectedLabelIds },
+                            state.labelGroups,
+                            otherColor,
+                        )
+                    }
+                ComposerEmojiRow(
+                    emoji = state.emoji,
+                    onClick = { emojiSheetOpen = true },
+                    labels = chips,
+                    onLabelsClick = { labelSheetOpen = true },
+                )
             }
             ComposerBody(
                 isLoading = state.isLoading,
@@ -87,6 +108,16 @@ fun ComposerScreen(
                 )
             }
         }
+    }
+    if (labelSheetOpen) {
+        LabelPickerSheet(
+            groups = state.labelGroups,
+            labels = state.labels,
+            selectedIds = state.selectedLabelIds,
+            onToggle = actions.onLabelToggle,
+            onCreate = actions.onCreateLabel,
+            onDismiss = { labelSheetOpen = false },
+        )
     }
     if (emojiSheetOpen) {
         EmojiPickerRoute(

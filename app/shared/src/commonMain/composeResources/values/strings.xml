@@ -57,6 +57,11 @@
     <string name="action_retry">Retry</string>
     <string name="emoji_badge_add">Add emoji</string>
     <string name="emoji_picker_title">Choose an emoji</string>
+    <string name="composer_labels">Labels</string>
+    <string name="label_picker_title">Choose labels</string>
+    <string name="label_group_other">Other</string>
+    <string name="label_new">New label</string>
+    <string name="label_new_name">Label name</string>
     <string name="emoji_group_recent">Recent</string>
     <string name="emoji_group_feelings">Feelings</string>
     <string name="emoji_group_activities">Activities</string>

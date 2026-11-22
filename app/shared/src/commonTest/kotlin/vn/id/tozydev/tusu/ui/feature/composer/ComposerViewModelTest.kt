@@ -119,6 +119,7 @@ private fun photoMedia(
 
 private class ComposerFixture(scope: TestScope, appScope: CoroutineScope) {
     val entries = FakeEntryRepository()
+    val labels = FakeLabelRepository()
     val media = FakeMediaRepository()
     val files = FakeMediaFileStore()
     val jobs = FakeMediaJobQueue()
@@ -127,6 +128,7 @@ private class ComposerFixture(scope: TestScope, appScope: CoroutineScope) {
     val viewModel =
         ComposerViewModel(
             entryRepository = entries,
+            labelRepository = labels,
             mediaRepository = media,
             attachMedia =
                 AttachMediaUseCase(files = files, media = media, clock = fixedClock, jobs = jobs),
@@ -731,6 +733,37 @@ class ComposerViewModelTest :
                     finish.isCompleted shouldBe true
                     f.media.media.single().entryId shouldBe id
                     f.posted.single().text.shouldBeSavedMessage()
+                }
+            }
+
+            test("a label on a new entry writes the entry first, then its labels") {
+                composerTest { f ->
+                    val group = f.labels.addGroup()
+                    val label = f.labels.addLabel(group)
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+
+                    f.viewModel.onLabelToggle(label.id)
+                    advanceUntilIdle()
+
+                    val id = f.entries.saves.single().id
+                    f.entries.labelSets[id] shouldBe setOf(label.id)
+                    f.viewModel.uiState.value.selectedLabelIds shouldBe setOf(label.id)
+                }
+            }
+
+            test("a new label created in a group is attached right away") {
+                composerTest { f ->
+                    val group = f.labels.addGroup()
+                    f.viewModel.bind(null)
+                    f.viewModel.typeText("Hello")
+                    advanceTimeBy(1.seconds)
+
+                    f.viewModel.onCreateLabel("Picnic", group.id)
+                    advanceUntilIdle()
+
+                    val created = f.labels.labels.value.single { it.name == "Picnic" }
+                    f.entries.labelSets[f.entries.saves.first().id] shouldBe setOf(created.id)
                 }
             }
         },

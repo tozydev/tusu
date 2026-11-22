@@ -18,6 +18,9 @@ class ComposerActions(
     val onTakePhoto: (() -> Unit)?,
     val onRemovePhoto: (Uuid) -> Unit,
     val onRetryPhoto: (Uuid) -> Unit,
+    val onLabelToggle: (Uuid) -> Unit = {},
+    /** Creates a label in the group (null for "Khác") and attaches it. */
+    val onCreateLabel: (name: String, groupId: Uuid?) -> Unit = { _, _ -> },
 ) {
     companion object {
         /** Does nothing; for previews. */

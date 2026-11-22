@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
@@ -44,6 +45,7 @@ import vn.id.tozydev.tusu.domain.model.MediaStatus
 import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.domain.model.toDraft
 import vn.id.tozydev.tusu.domain.repository.EntryRepository
+import vn.id.tozydev.tusu.domain.repository.LabelRepository
 import vn.id.tozydev.tusu.domain.repository.MediaFileStore
 import vn.id.tozydev.tusu.domain.repository.MediaRepository
 import vn.id.tozydev.tusu.domain.usecase.AttachMediaUseCase
@@ -73,6 +75,7 @@ import vn.id.tozydev.tusu.util.SaveState
 @Inject
 class ComposerViewModel(
     private val entryRepository: EntryRepository,
+    private val labelRepository: LabelRepository,
     private val mediaRepository: MediaRepository,
     private val attachMedia: AttachMediaUseCase,
     private val mediaFiles: MediaFileStore,
@@ -133,6 +136,7 @@ class ComposerViewModel(
         if (bound) return
         bound = true
         _uiState.update { it.copy(currentTimeZone = timeZone) }
+        observeLabels()
         if (entryId == null) startNewEntry(date) else sessionScope.launch { openEntry(entryId) }
     }
 
@@ -148,6 +152,75 @@ class ComposerViewModel(
         target.emoji = emoji
         _uiState.update { it.copy(emoji = emoji) }
         syncDraft()
+    }
+
+    /**
+     * Adds or removes a label, following the selection kind of its group. A new entry is written
+     * first, because labels need its row; the work is tracked so closing waits for it.
+     */
+    fun onLabelToggle(labelId: Uuid) {
+        val target = target ?: return
+        if (!editable) return
+        val state = _uiState.value
+        val label = state.labels.firstOrNull { it.id == labelId } ?: return
+        val next = toggledLabels(target.labelIds, label, state.labelGroups, state.labels)
+        target.labelIds = next
+        _uiState.update { it.copy(selectedLabelIds = next) }
+        writeLabels(target, next)
+    }
+
+    /** Creates a label in [groupId] (null for "Khác") and attaches it to this entry. */
+    fun onCreateLabel(name: String, groupId: Uuid?) {
+        val target = target ?: return
+        val trimmed = name.trim()
+        if (!editable || trimmed.isEmpty()) return
+        trackMediaWork {
+            when (val outcome = labelRepository.createLabel(trimmed, groupId)) {
+                is Outcome.Failure -> appMessages.post(UiMessage(outcome.error.toUiText()))
+                is Outcome.Success -> {
+                    val created = outcome.value
+                    _uiState.update { state ->
+                        if (state.labels.any { it.id == created.id }) state
+                        else state.copy(labels = state.labels + created)
+                    }
+                    val next =
+                        toggledLabels(
+                            target.labelIds,
+                            created,
+                            _uiState.value.labelGroups,
+                            _uiState.value.labels,
+                        )
+                    target.labelIds = next
+                    _uiState.update { it.copy(selectedLabelIds = next) }
+                    writeLabels(target, next)
+                }
+            }
+        }
+    }
+
+    private fun writeLabels(target: EntryTarget, labelIds: Set<Uuid>) {
+        val isNewEntry = target.original == null && !submitted
+        if (isNewEntry) writeDraftNow(target)
+        submitted = true
+        trackMediaWork {
+            if (isNewEntry && !awaitEntryWritten()) return@trackMediaWork
+            val outcome = entryRepository.setLabels(target.id, labelIds)
+            if (outcome is Outcome.Failure) appMessages.post(UiMessage(outcome.error.toUiText()))
+        }
+    }
+
+    /** Keeps the groups and labels the label sheet offers in step with the database. */
+    private fun observeLabels() {
+        sessionScope.launch {
+            combine(labelRepository.observeGroups(), labelRepository.observeLabels()) {
+                    groups,
+                    labels ->
+                    groups to labels
+                }
+                .collect { (groups, labels) ->
+                    _uiState.update { it.copy(labelGroups = groups, labels = labels) }
+                }
+        }
     }
 
     /**
@@ -284,6 +357,7 @@ class ComposerViewModel(
                 timeZone = entry.timeZone,
                 original = entry.toDraft(),
                 emoji = entry.emoji,
+                originalLabelIds = entry.labels.map { it.id }.toSet(),
             )
         target = existing
         if (!loadBody(entry.body)) {
@@ -301,6 +375,7 @@ class ComposerViewModel(
                 occurredAt = entry.occurredAt,
                 timeZone = entry.timeZone,
                 emoji = entry.emoji,
+                selectedLabelIds = existing.labelIds,
             )
         }
         observePhotos(existing.id)
@@ -451,6 +526,9 @@ class ComposerViewModel(
             succeeded(entryRepository.moveToTrash(id))
         } else {
             succeeded(entryRepository.save(original))
+            target
+                ?.takeIf { it.labelIds != it.originalLabelIds }
+                ?.let { succeeded(entryRepository.setLabels(id, it.originalLabelIds)) }
             revertMedia(changes)
         }
     }
@@ -517,4 +595,7 @@ private class EntryTarget(
     val original: EntryDraft?,
     /** The emoji of this session; it can differ from [original] after the user changes it. */
     var emoji: String?,
+    /** Labels when the session started; Undo writes them back. */
+    val originalLabelIds: Set<Uuid> = emptySet(),
+    var labelIds: Set<Uuid> = originalLabelIds,
 )

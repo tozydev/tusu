@@ -68,6 +68,15 @@ class FakeEntryRepository : EntryRepository {
 
     override fun observeRecentLocations(limit: Int): Flow<List<EntryLocation>> = error("not used")
 
-    override suspend fun setLabels(entryId: Uuid, labelIds: Set<Uuid>): Outcome<Unit, EntryError> =
-        error("not used")
+    /** The last label set written for each entry. */
+    val labelSets = mutableMapOf<Uuid, Set<Uuid>>()
+
+    override suspend fun setLabels(entryId: Uuid, labelIds: Set<Uuid>): Outcome<Unit, EntryError> {
+        // Labels need the entry row, as in Room.
+        if (saves.none { it.id == entryId } && entryId !in entries) {
+            return Outcome.Failure(EntryError.NotFound)
+        }
+        labelSets[entryId] = labelIds
+        return Outcome.Success(Unit)
+    }
 }

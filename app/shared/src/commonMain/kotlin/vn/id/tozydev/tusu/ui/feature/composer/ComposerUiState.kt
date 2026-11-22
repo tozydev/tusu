@@ -1,7 +1,10 @@
 package vn.id.tozydev.tusu.ui.feature.composer
 
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 import kotlinx.datetime.TimeZone
+import vn.id.tozydev.tusu.domain.model.Label
+import vn.id.tozydev.tusu.domain.model.LabelGroup
 import vn.id.tozydev.tusu.ui.component.MediaUi
 import vn.id.tozydev.tusu.ui.format.UiText
 
@@ -21,4 +24,8 @@ data class ComposerUiState(
     val readOnlyText: String = "",
     /** Live photos of the entry in album order; empty until the entry is known. */
     val photos: List<MediaUi> = emptyList(),
+    val selectedLabelIds: Set<Uuid> = emptySet(),
+    /** Every live group and label, for the label sheet and the chips. */
+    val labelGroups: List<LabelGroup> = emptyList(),
+    val labels: List<Label> = emptyList(),
 )

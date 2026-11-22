@@ -54,6 +54,8 @@ fun ComposerRoute(
                 onTakePhoto = camera?.let { launcher -> launcher::launch },
                 onRemovePhoto = viewModel::onRemovePhoto,
                 onRetryPhoto = viewModel::onRetryPhoto,
+                onLabelToggle = viewModel::onLabelToggle,
+                onCreateLabel = viewModel::onCreateLabel,
             ),
         modifier = modifier,
     )
