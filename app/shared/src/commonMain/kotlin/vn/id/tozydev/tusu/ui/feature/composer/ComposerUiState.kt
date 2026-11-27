@@ -37,6 +37,9 @@ data class ComposerUiState(
     val suggestedLocation: EntryLocation? = null,
     /** Places of recent entries, offered for a quick pick. */
     val recentLocations: List<EntryLocation> = emptyList(),
+    /** Undo and Redo show once the session has a first change. */
+    val canUndo: Boolean = false,
+    val canRedo: Boolean = false,
     val selectedLabelIds: Set<Uuid> = emptySet(),
     /** Every live group and label, for the label sheet and the chips. */
     val labelGroups: List<LabelGroup> = emptyList(),

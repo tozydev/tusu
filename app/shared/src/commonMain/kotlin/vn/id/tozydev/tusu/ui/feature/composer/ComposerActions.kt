@@ -28,6 +28,8 @@ class ComposerActions(
     val onLocationChange: (EntryLocation?) -> Unit = {},
     /** Asks for the location permission when needed, then looks up where the user is. */
     val onUseCurrentLocation: () -> Unit = {},
+    val onUndo: () -> Unit = {},
+    val onRedo: () -> Unit = {},
     val onLabelToggle: (Uuid) -> Unit = {},
     /** Creates a label in the group (null for "Khác") and attaches it. */
     val onCreateLabel: (name: String, groupId: Uuid?) -> Unit = { _, _ -> },

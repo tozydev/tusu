@@ -1074,5 +1074,114 @@ class ComposerViewModelTest :
                         listOf(EntryLocation(name = "Hồ Gươm"))
                 }
             }
+
+            test("undo and redo are unavailable until something changes") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.canUndo shouldBe false
+
+                    f.viewModel.onEmojiChange("🌱")
+                    f.viewModel.uiState.value.canUndo shouldBe true
+                    f.viewModel.uiState.value.canRedo shouldBe false
+                }
+            }
+
+            test("undo and redo an emoji") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+                    f.viewModel.onEmojiChange("🌱")
+                    f.viewModel.onEmojiChange("🔥")
+
+                    f.viewModel.onUndo()
+                    f.viewModel.uiState.value.emoji shouldBe "🌱"
+                    f.viewModel.onUndo()
+                    f.viewModel.uiState.value.emoji.shouldBeNull()
+                    f.viewModel.uiState.value.canUndo shouldBe false
+
+                    f.viewModel.onRedo()
+                    f.viewModel.uiState.value.emoji shouldBe "🌱"
+                }
+            }
+
+            test("typing without a pause is one step, and undo saves the earlier text") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+                    f.viewModel.typeText("H")
+                    f.viewModel.typeText("He")
+                    f.viewModel.typeText("Hey")
+                    advanceTimeBy(2.seconds)
+                    f.viewModel.typeText("Hey there")
+                    advanceTimeBy(2.seconds)
+
+                    f.viewModel.onUndo()
+                    f.viewModel.richTextState.annotatedString.text shouldBe "Hey"
+                    advanceUntilIdle()
+                    RichTextState()
+                        .setJson(f.entries.saves.last().body)
+                        .annotatedString
+                        .text shouldBe "Hey"
+
+                    f.viewModel.onUndo()
+                    f.viewModel.richTextState.annotatedString.text shouldBe ""
+                }
+            }
+
+            test("another change ends the typing step") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+                    f.viewModel.typeText("Hi")
+                    f.viewModel.onEmojiChange("🌱")
+                    f.viewModel.typeText("Hi you")
+
+                    f.viewModel.onUndo()
+                    f.viewModel.richTextState.annotatedString.text shouldBe "Hi"
+                    f.viewModel.uiState.value.emoji shouldBe "🌱"
+                }
+            }
+
+            test("undo a label and a place") {
+                composerTest { f ->
+                    val group = f.labels.addGroup()
+                    val label = f.labels.addLabel(group, name = "Trip")
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+                    f.viewModel.typeText("Hi")
+                    advanceTimeBy(2.seconds)
+
+                    f.viewModel.onLabelToggle(label.id)
+                    f.viewModel.onLocationChange(EntryLocation(name = "Nhà"))
+                    advanceUntilIdle()
+
+                    f.viewModel.onUndo()
+                    f.viewModel.uiState.value.location.shouldBeNull()
+                    f.viewModel.onUndo()
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.selectedLabelIds shouldBe emptySet()
+                    f.entries.labelSets[f.entries.saves.first().id] shouldBe emptySet()
+                }
+            }
+
+            test("undo removes an added photo, and redo brings it back") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.typeText("Hi")
+                    advanceTimeBy(2.seconds)
+                    f.viewModel.onPhotosPicked(listOf(photo("first")))
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.photos.size shouldBe 1
+
+                    f.viewModel.onUndo()
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.photos.shouldBeEmpty()
+
+                    f.viewModel.onRedo()
+                    advanceUntilIdle()
+                    f.viewModel.uiState.value.photos.size shouldBe 1
+                }
+            }
         },
     )

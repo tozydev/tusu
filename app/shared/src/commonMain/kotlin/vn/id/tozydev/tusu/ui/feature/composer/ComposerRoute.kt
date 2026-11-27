@@ -76,6 +76,8 @@ fun ComposerRoute(
                 onStopRecording = viewModel::onStopRecording,
                 onCancelRecording = viewModel::onCancelRecording,
                 onLocationChange = viewModel::onLocationChange,
+                onUndo = viewModel::onUndo,
+                onRedo = viewModel::onRedo,
                 onUseCurrentLocation = {
                     location.request { error ->
                         if (error == null) {

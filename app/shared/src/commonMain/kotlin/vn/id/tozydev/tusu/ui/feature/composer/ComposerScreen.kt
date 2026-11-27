@@ -160,6 +160,10 @@ private fun ComposerContent(
             onTimeClick = onTimeClick,
             timeEnabled = editable,
             modifier = Modifier.fillMaxWidth(),
+            canUndo = editable && state.canUndo,
+            canRedo = editable && state.canRedo,
+            onUndo = actions.onUndo,
+            onRedo = actions.onRedo,
         )
         if (editable) {
             val otherColor = MaterialTheme.colorScheme.outline

@@ -104,7 +104,9 @@ class ComposerViewModel(
     private val appScope: CoroutineScope,
 ) : ViewModel() {
     /** Owned here so the text survives configuration changes; the screen edits it directly. */
-    val richTextState = RichTextState()
+    // The editor keeps no history of its own: [history] covers text together with the rest, so
+    // one Undo goes back one step whatever it changed.
+    val richTextState = RichTextState(historyLimit = 0)
 
     /** Applies Markdown typed into [richTextState]; runs with each text change. */
     private val markdownShortcuts = MarkdownShortcuts(richTextState)
@@ -146,6 +148,17 @@ class ComposerViewModel(
     /** The recording in progress. A state flow for its compare-and-set: its jobs run off main. */
     private val activeRecording = MutableStateFlow<ActiveRecording?>(null)
 
+    private val history = ComposerHistory()
+
+    /** The body as of the last text change, the "before" state of the next typing step. */
+    private var lastBody = ""
+
+    /** Running while the user keeps typing; changes until it ends join the same step. */
+    private var typingStep: Job? = null
+
+    /** True while Undo or Redo puts a state back, so that is not recorded as a new step. */
+    private var restoring = false
+
     init {
         sessionScope.launch {
             autoSaver.state.collectLatest { state ->
@@ -174,13 +187,129 @@ class ComposerViewModel(
     /** Called whenever the rich text changes. Saves only when the content really changed. */
     fun onBodyChanged() {
         markdownShortcuts.onTextChange()
+        if (editable && !restoring) recordTyping()
         syncDraft()
+    }
+
+    /** Goes back one step: text, emoji, labels, place or media, whichever changed. */
+    fun onUndo() {
+        val current = snapshot() ?: return
+        history.undo(current)?.let(::restore)
+    }
+
+    fun onRedo() {
+        val current = snapshot() ?: return
+        history.redo(current)?.let(::restore)
+    }
+
+    /**
+     * Opens a typing step on the first change after a pause and keeps it open while changes keep
+     * coming, so a burst of keystrokes is undone at once.
+     */
+    private fun recordTyping() {
+        val body = richTextState.toJson()
+        if (body == lastBody) return
+        if (typingStep == null) snapshot(body = lastBody)?.let(::recordSnapshot)
+        lastBody = body
+        typingStep?.cancel()
+        typingStep = sessionScope.launch {
+            delay(TYPING_PAUSE)
+            typingStep = null
+        }
+    }
+
+    /** Records the state before a change that is not typing; it also ends a typing step. */
+    private fun recordStep() {
+        if (restoring) return
+        endTypingStep()
+        snapshot()?.let(::recordSnapshot)
+    }
+
+    private fun recordSnapshot(before: ComposerSnapshot) {
+        history.record(before)
+        publishHistory()
+    }
+
+    private fun endTypingStep() {
+        typingStep?.cancel()
+        typingStep = null
+    }
+
+    private fun publishHistory() {
+        _uiState.update { it.copy(canUndo = history.canUndo, canRedo = history.canRedo) }
+    }
+
+    private fun snapshot(body: String = richTextState.toJson()): ComposerSnapshot? {
+        val target = target ?: return null
+        if (!editable) return null
+        val state = _uiState.value
+        return ComposerSnapshot(
+            body = body,
+            emoji = target.emoji,
+            labelIds = target.labelIds,
+            location = target.location,
+            mediaIds = (state.photos + state.voices).map { it.id }.toSet(),
+        )
+    }
+
+    /** Puts [snapshot] back and saves it like any other edit. */
+    private fun restore(snapshot: ComposerSnapshot) {
+        val target = target ?: return
+        endTypingStep()
+        restoring = true
+        try {
+            if (snapshot.body != richTextState.toJson()) {
+                richTextState.setJson(snapshot.body)
+                markdownShortcuts.sync()
+            }
+            lastBody = snapshot.body
+            target.emoji = snapshot.emoji
+            target.location = snapshot.location
+            val labelsChanged = target.labelIds != snapshot.labelIds
+            target.labelIds = snapshot.labelIds
+            _uiState.update {
+                it.copy(
+                    emoji = snapshot.emoji,
+                    location = snapshot.location,
+                    selectedLabelIds = snapshot.labelIds,
+                )
+            }
+            if (labelsChanged) writeLabels(target, snapshot.labelIds)
+            restoreMedia(target.id, snapshot.mediaIds)
+            syncDraft()
+        } finally {
+            restoring = false
+        }
+        publishHistory()
+    }
+
+    /** Removes the media added since [mediaIds] was taken and brings back the media removed. */
+    private fun restoreMedia(entryId: Uuid, mediaIds: Set<Uuid>) {
+        val shown = _uiState.value.let { (it.photos + it.voices).map { media -> media.id }.toSet() }
+        if (shown == mediaIds) return
+        submitted = true
+        trackMediaWork {
+            val live =
+                mediaRepository
+                    .observeEntryMedia(entryId)
+                    .first()
+                    .filter { it.deletedAt == null }
+                    .map { it.id }
+                    .toSet()
+            for (id in live - mediaIds) removeMediaNow(id)
+            for (id in mediaIds - live) {
+                if (mediaSucceeded(mediaRepository.restore(id))) {
+                    mediaLock.withLock { if (!removedMedia.remove(id)) addedMedia += id }
+                }
+            }
+        }
     }
 
     /** Sets or clears the emoji. A persisted entry is auto-saved like text. */
     fun onEmojiChange(emoji: String?) {
         val target = target ?: return
         if (!editable) return
+        recordStep()
         target.emoji = emoji
         _uiState.update { it.copy(emoji = emoji) }
         syncDraft()
@@ -195,6 +324,7 @@ class ComposerViewModel(
         if (!editable) return
         val state = _uiState.value
         val label = state.labels.firstOrNull { it.id == labelId } ?: return
+        recordStep()
         val next = toggledLabels(target.labelIds, label, state.labelGroups, state.labels)
         target.labelIds = next
         _uiState.update { it.copy(selectedLabelIds = next) }
@@ -206,6 +336,7 @@ class ComposerViewModel(
         val target = target ?: return
         val trimmed = name.trim()
         if (!editable || trimmed.isEmpty()) return
+        recordStep()
         trackMediaWork {
             when (val outcome = labelRepository.createLabel(trimmed, groupId)) {
                 is Outcome.Failure -> appMessages.post(UiMessage(outcome.error.toUiText()))
@@ -276,6 +407,7 @@ class ComposerViewModel(
     fun onLocationChange(location: EntryLocation?) {
         if (!editable) return
         locationTouched = true
+        recordStep()
         setLocation(location)
     }
 
@@ -285,7 +417,10 @@ class ComposerViewModel(
         locationTouched = true
         sessionScope.launch {
             when (val found = locate()) {
-                is Outcome.Success -> setLocation(found.value)
+                is Outcome.Success -> {
+                    recordStep()
+                    setLocation(found.value)
+                }
                 is Outcome.Failure -> appMessages.post(UiMessage(found.error.toUiText()))
             }
         }
@@ -356,6 +491,7 @@ class ComposerViewModel(
     fun onPhotosPicked(photos: List<PickedPhoto>) {
         val target = target ?: return
         if (photos.isEmpty() || !editable) return
+        recordStep()
         val isNewEntry = target.original == null && !submitted
         if (isNewEntry) writeDraftNow(target)
         submitted = true
@@ -397,6 +533,7 @@ class ComposerViewModel(
 
     /** Stops the recording and attaches it to the entry. */
     fun onStopRecording() {
+        if (activeRecording.value != null) recordStep()
         endRecording(keep = true)
     }
 
@@ -492,17 +629,24 @@ class ComposerViewModel(
     /** Soft-deletes a photo or voice; Undo of this session brings it back. */
     fun onRemoveMedia(mediaId: Uuid) {
         if (!editable) return
+        recordStep()
+        removeMedia(mediaId)
+    }
+
+    private fun removeMedia(mediaId: Uuid) {
         submitted = true
-        trackMediaWork {
-            when (val outcome = mediaRepository.remove(mediaId)) {
-                is Outcome.Success ->
-                    mediaLock.withLock {
-                        // A photo added and removed in the same session is not kept, so there is
-                        // nothing for Undo to restore.
-                        if (!addedMedia.remove(mediaId)) removedMedia += mediaId
-                    }
-                is Outcome.Failure -> appMessages.post(UiMessage(outcome.error.toUiText()))
-            }
+        trackMediaWork { removeMediaNow(mediaId) }
+    }
+
+    private suspend fun removeMediaNow(mediaId: Uuid) {
+        when (val outcome = mediaRepository.remove(mediaId)) {
+            is Outcome.Success ->
+                mediaLock.withLock {
+                    // A photo added and removed in the same session is not kept, so there is
+                    // nothing for the closing Undo to restore.
+                    if (!addedMedia.remove(mediaId)) removedMedia += mediaId
+                }
+            is Outcome.Failure -> appMessages.post(UiMessage(outcome.error.toUiText()))
         }
     }
 
@@ -578,6 +722,7 @@ class ComposerViewModel(
             )
         target = newTarget
         lastDraft = draftOf(newTarget)
+        lastBody = richTextState.toJson()
         editable = true
         _uiState.update { it.copy(isLoading = false, occurredAt = now, timeZone = timeZone) }
         observeMedia(newTarget.id)
@@ -610,6 +755,7 @@ class ComposerViewModel(
         }
         // The loaded state is the baseline, so opening an entry does not count as an edit.
         lastDraft = draftOf(existing)
+        lastBody = richTextState.toJson()
         editable = true
         _uiState.update {
             it.copy(
@@ -853,6 +999,9 @@ class ComposerViewModel(
 
         /** Places offered in the location sheet. */
         const val RECENT_LOCATIONS = 5
+
+        /** A pause this long ends a typing step for Undo. */
+        val TYPING_PAUSE = 1.seconds
     }
 }
 

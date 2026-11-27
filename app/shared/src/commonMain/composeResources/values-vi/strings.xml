@@ -176,6 +176,7 @@
     <string name="composer_saved_message">Đã lưu entry</string>
     <string name="composer_empty_trashed">Entry trống đã vào Thùng rác</string>
     <string name="action_undo">Hoàn tác</string>
+    <string name="action_redo">Làm lại</string>
     <string name="composer_emoji_description">Chọn emoji</string>
     <string name="composer_pick_photos">Thêm ảnh</string>
     <string name="composer_take_photo">Chụp ảnh</string>
