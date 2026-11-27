@@ -3,6 +3,7 @@ package vn.id.tozydev.tusu.ui.feature.composer
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.datetime.TimeZone
+import vn.id.tozydev.tusu.domain.model.EntryLocation
 import vn.id.tozydev.tusu.domain.model.Label
 import vn.id.tozydev.tusu.domain.model.LabelGroup
 import vn.id.tozydev.tusu.ui.component.MediaUi
@@ -28,6 +29,14 @@ data class ComposerUiState(
     val voices: List<MediaUi> = emptyList(),
     /** Set while a voice is being recorded; the toolbar becomes the recording bar. */
     val recording: RecordingUi? = null,
+    /** Where the entry happened; null shows the "Add location" button. */
+    val location: EntryLocation? = null,
+    /** True while the current location is being looked up. */
+    val isLocating: Boolean = false,
+    /** Found for a new entry when the location setting only suggests; one tap attaches it. */
+    val suggestedLocation: EntryLocation? = null,
+    /** Places of recent entries, offered for a quick pick. */
+    val recentLocations: List<EntryLocation> = emptyList(),
     val selectedLabelIds: Set<Uuid> = emptySet(),
     /** Every live group and label, for the label sheet and the chips. */
     val labelGroups: List<LabelGroup> = emptyList(),

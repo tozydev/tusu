@@ -14,6 +14,13 @@
         android:name="android.hardware.microphone"
         android:required="false" />
 
+    <!-- Current location for new entries; approximate access is enough. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+
     <application
         android:name=".TusuApplication"
         android:allowBackup="true"

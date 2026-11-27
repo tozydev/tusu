@@ -25,8 +25,10 @@ actual fun rememberPermissionRequester(permission: AppPermission): PermissionReq
     val activity = LocalActivity.current
     val pending = remember { PendingResult() }
     val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            val error = if (granted) null else denial(activity, permission)
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            results ->
+            // Any of the names is enough: location works with approximate access alone.
+            val error = if (results.values.any { it }) null else denial(activity, permission)
             pending.take()?.invoke(error)
         }
     return remember(context, launcher, permission) {
@@ -47,18 +49,22 @@ private class PendingResult {
 
 private class AndroidPermissionRequester(
     private val context: Context,
-    private val launcher: ActivityResultLauncher<String>,
+    private val launcher: ActivityResultLauncher<Array<String>>,
     private val permission: AppPermission,
     private val pending: PendingResult,
 ) : PermissionRequester {
     override fun request(onResult: (PermissionError?) -> Unit) {
-        val name = permission.manifestName()
-        if (name == null || ContextCompat.checkSelfPermission(context, name) == PackageManager.PERMISSION_GRANTED) {
+        val names = permission.manifestNames()
+        val granted =
+            names.any {
+                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            }
+        if (names.isEmpty() || granted) {
             onResult(null)
             return
         }
         pending.put(onResult)
-        launcher.launch(name)
+        launcher.launch(names.toTypedArray())
     }
 
     override fun openSettings() {
@@ -77,22 +83,29 @@ private class AndroidPermissionRequester(
  * stops, the prompt is no longer shown and only system settings can grant it.
  */
 private fun denial(activity: Activity?, permission: AppPermission): PermissionError {
-    val name = permission.manifestName()
-    val canAskAgain = name != null && activity?.shouldShowRequestPermissionRationale(name) == true
+    val canAskAgain =
+        permission.manifestNames().any { activity?.shouldShowRequestPermissionRationale(it) == true }
     return if (canAskAgain) PermissionError.Denied(permission)
     else PermissionError.DeniedPermanently(permission)
 }
 
-/** Null when this Android version grants the permission without asking. */
-private fun AppPermission.manifestName(): String? =
+/**
+ * Empty when this Android version grants the permission without asking. Location asks for both
+ * names: Android 12 ignores a request for precise location alone and lets the user pick.
+ */
+private fun AppPermission.manifestNames(): List<String> =
     when (this) {
-        AppPermission.CAMERA -> Manifest.permission.CAMERA
-        AppPermission.MICROPHONE -> Manifest.permission.RECORD_AUDIO
-        AppPermission.LOCATION -> Manifest.permission.ACCESS_FINE_LOCATION
+        AppPermission.CAMERA -> listOf(Manifest.permission.CAMERA)
+        AppPermission.MICROPHONE -> listOf(Manifest.permission.RECORD_AUDIO)
+        AppPermission.LOCATION ->
+            listOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            )
         AppPermission.NOTIFICATIONS ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                Manifest.permission.POST_NOTIFICATIONS
+                listOf(Manifest.permission.POST_NOTIFICATIONS)
             } else {
-                null
+                emptyList()
             }
     }

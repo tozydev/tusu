@@ -11,6 +11,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlin.concurrent.Volatile
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -40,10 +41,14 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import vn.id.tozydev.tusu.domain.error.EntryError
+import vn.id.tozydev.tusu.domain.error.LocationError
 import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.error.PermissionError
+import vn.id.tozydev.tusu.domain.error.getOrNull
 import vn.id.tozydev.tusu.domain.model.EntryDraft
+import vn.id.tozydev.tusu.domain.model.EntryLocation
+import vn.id.tozydev.tusu.domain.model.LocationMode
 import vn.id.tozydev.tusu.domain.model.MediaStatus
 import vn.id.tozydev.tusu.domain.model.MediaType
 import vn.id.tozydev.tusu.domain.model.toDraft
@@ -51,6 +56,7 @@ import vn.id.tozydev.tusu.domain.repository.EntryRepository
 import vn.id.tozydev.tusu.domain.repository.LabelRepository
 import vn.id.tozydev.tusu.domain.repository.MediaFileStore
 import vn.id.tozydev.tusu.domain.repository.MediaRepository
+import vn.id.tozydev.tusu.domain.repository.SettingsRepository
 import vn.id.tozydev.tusu.domain.usecase.AttachMediaUseCase
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.action_open_settings
@@ -59,7 +65,9 @@ import vn.id.tozydev.tusu.generated.resources.composer_empty_trashed
 import vn.id.tozydev.tusu.generated.resources.composer_saved_message
 import vn.id.tozydev.tusu.platform.AudioRecorder
 import vn.id.tozydev.tusu.platform.AudioRecording
+import vn.id.tozydev.tusu.platform.LocationProvider
 import vn.id.tozydev.tusu.platform.MediaJobQueue
+import vn.id.tozydev.tusu.platform.label
 import vn.id.tozydev.tusu.text.matchLabelHashtags
 import vn.id.tozydev.tusu.ui.component.AppMessages
 import vn.id.tozydev.tusu.ui.component.UiMessage
@@ -88,6 +96,8 @@ class ComposerViewModel(
     private val mediaFiles: MediaFileStore,
     private val mediaJobQueue: MediaJobQueue,
     private val audioRecorder: AudioRecorder,
+    private val locationProvider: LocationProvider,
+    private val settingsRepository: SettingsRepository,
     private val appMessages: AppMessages,
     private val clock: Clock,
     private val timeZone: TimeZone,
@@ -116,6 +126,9 @@ class ComposerViewModel(
     private var lastDraft: EntryDraft? = null
     private var submitted = false
     private var finishJob: Job? = null
+
+    /** Set once the user picks or removes a place, so a late automatic location does not win. */
+    @Volatile private var locationTouched = false
 
     /** Labels a #hashtag has already attached in this session. */
     private val hashtagLabelIds = mutableSetOf<Uuid>()
@@ -151,6 +164,7 @@ class ComposerViewModel(
         bound = true
         _uiState.update { it.copy(currentTimeZone = timeZone) }
         observeLabels()
+        observeRecentLocations()
         if (entryId == null) startNewEntry(date) else sessionScope.launch { openEntry(entryId) }
     }
 
@@ -252,6 +266,86 @@ class ComposerViewModel(
     }
 
     /**
+     * Sets the place of the entry, a free-typed name or a found one; null removes it. Like the
+     * emoji, a place alone does not create a new entry.
+     */
+    fun onLocationChange(location: EntryLocation?) {
+        if (!editable) return
+        locationTouched = true
+        setLocation(location)
+    }
+
+    /** Finds where the user is now. The location permission must already be granted. */
+    fun onUseCurrentLocation() {
+        if (!editable || _uiState.value.isLocating) return
+        locationTouched = true
+        sessionScope.launch {
+            when (val found = locate()) {
+                is Outcome.Success -> setLocation(found.value)
+                is Outcome.Failure -> appMessages.post(UiMessage(found.error.toUiText()))
+            }
+        }
+    }
+
+    /** The location permission was refused; a permanent refusal offers [openSettings]. */
+    fun onLocationPermissionDenied(
+        error: LocationError.PermissionRequired,
+        openSettings: () -> Unit,
+    ) {
+        appMessages.post(permissionMessage(error.toUiText(), error.error, openSettings))
+    }
+
+    private fun setLocation(location: EntryLocation?) {
+        val target = target ?: return
+        target.location = location
+        _uiState.update { it.copy(location = location, suggestedLocation = null) }
+        syncDraft()
+    }
+
+    /**
+     * Places a new entry where the user is, as the location setting asks. Nothing is reported when
+     * this fails: the user did not ask for it, and "Add location" stays available.
+     */
+    private fun autoLocate() {
+        sessionScope.launch {
+            val mode = settingsRepository.settings.first().locationMode
+            if (mode == LocationMode.OFF) return@launch
+            val found = locate().getOrNull() ?: return@launch
+            // A place the user chose meanwhile wins over the one found for them.
+            if (locationTouched) return@launch
+            if (mode == LocationMode.ALWAYS) setLocation(found)
+            else _uiState.update { it.copy(suggestedLocation = found) }
+        }
+    }
+
+    private suspend fun locate(): Outcome<EntryLocation, LocationError> {
+        _uiState.update { it.copy(isLocating = true) }
+        try {
+            val point =
+                when (val fix = locationProvider.currentLocation()) {
+                    is Outcome.Success -> fix.value
+                    is Outcome.Failure -> return fix
+                }
+            return when (val named = locationProvider.reverseGeocode(point)) {
+                is Outcome.Success -> named
+                // The geocoder needs the network; the coordinates still place the entry.
+                is Outcome.Failure ->
+                    Outcome.Success(EntryLocation(name = point.label(), coordinates = point))
+            }
+        } finally {
+            _uiState.update { it.copy(isLocating = false) }
+        }
+    }
+
+    private fun observeRecentLocations() {
+        sessionScope.launch {
+            entryRepository.observeRecentLocations(RECENT_LOCATIONS).collect { recent ->
+                _uiState.update { it.copy(recentLocations = recent) }
+            }
+        }
+    }
+
+    /**
      * Stores the photos in the order given, on [appScope]: the session may close while files are
      * still being copied. A new entry is written first, because a photo needs its entry row.
      */
@@ -315,18 +409,23 @@ class ComposerViewModel(
         error: MediaError.PermissionRequired,
         openSettings: () -> Unit,
     ) {
-        val text = error.toUiText()
-        val message =
-            if (error.error is PermissionError.DeniedPermanently) {
-                UiMessage(
-                    text,
-                    UiMessageAction(UiText.of(Res.string.action_open_settings), openSettings),
-                )
-            } else {
-                UiMessage(text)
-            }
-        appMessages.post(message)
+        appMessages.post(permissionMessage(error.toUiText(), error.error, openSettings))
     }
+
+    /** Only system settings can undo a permanent refusal, so that message links there. */
+    private fun permissionMessage(
+        text: UiText,
+        error: PermissionError,
+        openSettings: () -> Unit,
+    ): UiMessage =
+        if (error is PermissionError.DeniedPermanently) {
+            UiMessage(
+                text,
+                UiMessageAction(UiText.of(Res.string.action_open_settings), openSettings),
+            )
+        } else {
+            UiMessage(text)
+        }
 
     private suspend fun showLevels() {
         audioRecorder.amplitudes.collect { level ->
@@ -478,6 +577,7 @@ class ComposerViewModel(
         editable = true
         _uiState.update { it.copy(isLoading = false, occurredAt = now, timeZone = timeZone) }
         observeMedia(newTarget.id)
+        autoLocate()
     }
 
     private suspend fun openEntry(entryId: Uuid) {
@@ -514,6 +614,7 @@ class ComposerViewModel(
                 timeZone = entry.timeZone,
                 emoji = entry.emoji,
                 selectedLabelIds = existing.labelIds,
+                location = existing.location,
             )
         }
         observeMedia(existing.id)
@@ -574,7 +675,7 @@ class ComposerViewModel(
         }
     }
 
-    /** The draft the session currently describes; location is kept from the original entry. */
+    /** The draft the session currently describes. */
     private fun draftOf(target: EntryTarget): EntryDraft =
         EntryDraft(
             id = target.id,
@@ -582,7 +683,7 @@ class ComposerViewModel(
             emoji = target.emoji,
             occurredAt = target.occurredAt,
             timeZone = target.timeZone,
-            location = target.original?.location,
+            location = target.location,
         )
 
     /** Submits the current draft when it differs from the last one written or the baseline. */
@@ -743,6 +844,9 @@ class ComposerViewModel(
 
         /** Live levels the recording bar draws. */
         const val LIVE_LEVELS = 40
+
+        /** Places offered in the location sheet. */
+        const val RECENT_LOCATIONS = 5
     }
 }
 
@@ -760,6 +864,8 @@ private class EntryTarget(
     /** Labels when the session started; Undo writes them back. */
     val originalLabelIds: Set<Uuid> = emptySet(),
     var labelIds: Set<Uuid> = originalLabelIds,
+    /** Where the entry happened in this session; Undo writes back the one in [original]. */
+    var location: EntryLocation? = original?.location,
 )
 
 /** A recording this session started; [started] is set once the recorder runs. */

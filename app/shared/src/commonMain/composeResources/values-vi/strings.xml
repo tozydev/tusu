@@ -188,6 +188,15 @@
     <string name="voice_pause">Tạm dừng bản ghi</string>
     <string name="voice_playback_failed">Không phát được bản ghi này</string>
     <string name="action_open_settings">Cài đặt</string>
+    <string name="composer_add_location">Thêm vị trí</string>
+    <string name="composer_remove_location">Bỏ vị trí</string>
+    <string name="composer_suggested_location">Gắn %1$s</string>
+    <string name="location_locating">Đang tìm vị trí…</string>
+    <string name="location_sheet_title">Vị trí</string>
+    <string name="location_use_current">Dùng vị trí hiện tại</string>
+    <string name="location_name_label">Tên địa điểm</string>
+    <string name="location_name_apply">Dùng tên này</string>
+    <string name="location_recent">Gần đây</string>
     <string name="composer_remove_photo">Bỏ ảnh</string>
     <string name="composer_change_time">Đổi ngày giờ</string>
     <string name="composer_format_toggle">Aa</string>

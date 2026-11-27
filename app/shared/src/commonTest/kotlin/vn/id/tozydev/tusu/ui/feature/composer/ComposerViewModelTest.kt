@@ -42,11 +42,15 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.io.Buffer
 import vn.id.tozydev.tusu.domain.error.EntryError
+import vn.id.tozydev.tusu.domain.error.LocationError
 import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.error.Outcome
 import vn.id.tozydev.tusu.domain.error.PermissionError
 import vn.id.tozydev.tusu.domain.model.AppPermission
+import vn.id.tozydev.tusu.domain.model.AppSettings
 import vn.id.tozydev.tusu.domain.model.Entry
+import vn.id.tozydev.tusu.domain.model.EntryLocation
+import vn.id.tozydev.tusu.domain.model.LocationMode
 import vn.id.tozydev.tusu.domain.model.Media
 import vn.id.tozydev.tusu.domain.model.MediaStatus
 import vn.id.tozydev.tusu.domain.model.MediaType
@@ -127,6 +131,12 @@ private class ComposerFixture(scope: TestScope, appScope: CoroutineScope) {
     val files = FakeMediaFileStore()
     val jobs = FakeMediaJobQueue()
     val recorder = FakeAudioRecorder()
+    val location = FakeLocationProvider()
+    // Off unless a test turns it on, so other tests see no place they did not set.
+    val settings =
+        FakeSettingsRepository().also {
+            it.state.value = AppSettings(locationMode = LocationMode.OFF)
+        }
     val messages = AppMessages()
     val posted = mutableListOf<UiMessage>()
     val viewModel =
@@ -139,6 +149,8 @@ private class ComposerFixture(scope: TestScope, appScope: CoroutineScope) {
             mediaFiles = files,
             mediaJobQueue = jobs,
             audioRecorder = recorder,
+            locationProvider = location,
+            settingsRepository = settings,
             appMessages = messages,
             clock = fixedClock,
             timeZone = zone,
@@ -934,6 +946,132 @@ class ComposerViewModelTest :
                     advanceUntilIdle()
 
                     f.viewModel.uiState.value.voices.shouldBeEmpty()
+                }
+            }
+
+            test("a new entry is placed where the user is, and the place is saved with the text") {
+                composerTest { f ->
+                    f.settings.state.value = AppSettings(locationMode = LocationMode.ALWAYS)
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+
+                    f.viewModel.uiState.value.location shouldBe f.location.place
+                    f.entries.saves.shouldBeEmpty()
+
+                    f.viewModel.typeText("Cà phê sáng")
+                    advanceUntilIdle()
+                    f.entries.saves.single().location shouldBe f.location.place
+                }
+            }
+
+            test("an existing entry is not placed again when it is opened") {
+                composerTest { f ->
+                    f.settings.state.value = AppSettings(locationMode = LocationMode.ALWAYS)
+                    val id = Uuid.random()
+                    f.entries.entries[id] = existingEntry(id, storedBody("Hi"), "Hi")
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+
+                    f.location.fixes shouldBe 0
+                    f.viewModel.uiState.value.location.shouldBeNull()
+                }
+            }
+
+            test("with suggestions only, the place is offered but not attached") {
+                composerTest { f ->
+                    f.settings.state.value = AppSettings(locationMode = LocationMode.SUGGEST)
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+
+                    val state = f.viewModel.uiState.value
+                    state.location.shouldBeNull()
+                    state.suggestedLocation shouldBe f.location.place
+
+                    f.viewModel.onLocationChange(state.suggestedLocation)
+                    f.viewModel.uiState.value.location shouldBe f.location.place
+                    f.viewModel.uiState.value.suggestedLocation.shouldBeNull()
+                }
+            }
+
+            test("an automatic location that fails is not reported") {
+                composerTest { f ->
+                    f.settings.state.value = AppSettings(locationMode = LocationMode.ALWAYS)
+                    f.location.fixResult = Outcome.Failure(LocationError.ServiceDisabled)
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+                    runCurrent()
+
+                    f.viewModel.uiState.value.location.shouldBeNull()
+                    f.viewModel.uiState.value.isLocating shouldBe false
+                    f.posted.shouldBeEmpty()
+                }
+            }
+
+            test("asking for the current location reports a failure") {
+                composerTest { f ->
+                    f.location.fixResult = Outcome.Failure(LocationError.ServiceDisabled)
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+
+                    f.viewModel.onUseCurrentLocation()
+                    advanceUntilIdle()
+                    runCurrent()
+
+                    f.posted.single().text shouldBe LocationError.ServiceDisabled.toUiText()
+                }
+            }
+
+            test("without a geocoder the coordinates name the place") {
+                composerTest { f ->
+                    f.location.geocodeResult = Outcome.Failure(LocationError.Unavailable)
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+
+                    f.viewModel.onUseCurrentLocation()
+                    advanceUntilIdle()
+
+                    val location = f.viewModel.uiState.value.location.shouldNotBeNull()
+                    location.name shouldBe "10.78756, 106.67891"
+                    location.coordinates shouldBe f.location.point
+                }
+            }
+
+            test("a free-typed place on an existing entry is saved, and removing it saves again") {
+                composerTest { f ->
+                    val id = Uuid.random()
+                    f.entries.entries[id] = existingEntry(id, storedBody("Hi"), "Hi")
+                    f.viewModel.bind(id)
+                    advanceUntilIdle()
+
+                    f.viewModel.onLocationChange(EntryLocation(name = "Nhà ngoại"))
+                    advanceUntilIdle()
+                    f.entries.saves.last().location shouldBe EntryLocation(name = "Nhà ngoại")
+
+                    f.viewModel.onLocationChange(null)
+                    advanceUntilIdle()
+                    f.entries.saves.last().location.shouldBeNull()
+                }
+            }
+
+            test("a place picked before the automatic one arrives is kept") {
+                composerTest { f ->
+                    f.settings.state.value = AppSettings(locationMode = LocationMode.ALWAYS)
+                    f.viewModel.bind(null)
+                    f.viewModel.onLocationChange(EntryLocation(name = "Nhà"))
+                    advanceUntilIdle()
+
+                    f.viewModel.uiState.value.location shouldBe EntryLocation(name = "Nhà")
+                }
+            }
+
+            test("recent places are offered") {
+                composerTest { f ->
+                    f.entries.recentLocations.value = listOf(EntryLocation(name = "Hồ Gươm"))
+                    f.viewModel.bind(null)
+                    advanceUntilIdle()
+
+                    f.viewModel.uiState.value.recentLocations shouldBe
+                        listOf(EntryLocation(name = "Hồ Gươm"))
                 }
             }
         },

@@ -42,11 +42,11 @@ import vn.id.tozydev.tusu.generated.resources.entry_more_actions
 import vn.id.tozydev.tusu.generated.resources.ic_more_vert_24px
 import vn.id.tozydev.tusu.ui.component.DateTimePickerDialog
 import vn.id.tozydev.tusu.ui.component.LabelChip
+import vn.id.tozydev.tusu.ui.component.LocationCard
 import vn.id.tozydev.tusu.ui.component.RichTextContent
 import vn.id.tozydev.tusu.ui.component.labelChipsOf
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryDetailHeader
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryDetailTopBar
-import vn.id.tozydev.tusu.ui.feature.entry.component.EntryLocationCard
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryMoreSheet
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoCarousel
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoStrip
@@ -218,10 +218,11 @@ private fun EntryDetailContent(
             )
         }
         state.location?.let { location ->
-            EntryLocationCard(
+            LocationCard(
                 name = location.name,
                 address = location.address,
                 mapSnapshotPath = location.mapSnapshotPath,
+                hasCoordinates = location.coordinates != null,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
             )
         }

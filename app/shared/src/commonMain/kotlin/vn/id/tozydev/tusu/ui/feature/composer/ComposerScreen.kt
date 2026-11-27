@@ -3,6 +3,7 @@ package vn.id.tozydev.tusu.ui.feature.composer
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -30,11 +32,13 @@ import vn.id.tozydev.tusu.ui.component.MediaUi
 import vn.id.tozydev.tusu.ui.component.labelChipsOf
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerBody
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerEmojiRow
+import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerLocation
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerPhotoStrip
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerToolbar
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerTopBar
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerVoiceList
 import vn.id.tozydev.tusu.ui.feature.composer.component.LabelPickerSheet
+import vn.id.tozydev.tusu.ui.feature.composer.component.LocationPickerSheet
 import vn.id.tozydev.tusu.ui.feature.composer.component.RecordingBar
 import vn.id.tozydev.tusu.ui.feature.composer.component.RichTextFormatBar
 import vn.id.tozydev.tusu.ui.format.UiText
@@ -54,11 +58,12 @@ fun ComposerScreen(
     var formatOpen by rememberSaveable { mutableStateOf(false) }
     var emojiSheetOpen by rememberSaveable { mutableStateOf(false) }
     var labelSheetOpen by rememberSaveable { mutableStateOf(false) }
+    var locationSheetOpen by rememberSaveable { mutableStateOf(false) }
     var timeDialogOpen by rememberSaveable { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val editable = !state.isLoading && state.loadError == null && !state.isReadOnly
     ReturnFocusWhenClosed(
-        sheetOpen = emojiSheetOpen || labelSheetOpen,
+        sheetOpen = emojiSheetOpen || labelSheetOpen || locationSheetOpen,
         focusRequester = focusRequester,
     )
     Surface(modifier = modifier.fillMaxSize()) {
@@ -88,6 +93,17 @@ fun ComposerScreen(
                     onClick = { emojiSheetOpen = true },
                     labels = chips,
                     onLabelsClick = { labelSheetOpen = true },
+                )
+                // Pinned with the emoji row: the editor scrolls itself into view when it takes
+                // focus, which would push a place at the top of the scrolling part out of sight.
+                ComposerLocation(
+                    location = state.location,
+                    isLocating = state.isLocating,
+                    suggestedLocation = state.suggestedLocation,
+                    onOpen = { locationSheetOpen = true },
+                    onRemove = { actions.onLocationChange(null) },
+                    onAcceptSuggestion = actions.onLocationChange,
+                    modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
             ComposerBody(
@@ -123,6 +139,15 @@ fun ComposerScreen(
                     )
             }
         }
+    }
+    if (locationSheetOpen) {
+        LocationPickerSheet(
+            current = state.location,
+            recent = state.recentLocations,
+            onUseCurrent = actions.onUseCurrentLocation,
+            onPick = actions.onLocationChange,
+            onDismiss = { locationSheetOpen = false },
+        )
     }
     if (labelSheetOpen) {
         LabelPickerSheet(

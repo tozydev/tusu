@@ -190,6 +190,15 @@
     <string name="voice_pause">Pause voice note</string>
     <string name="voice_playback_failed">Could not play this voice note</string>
     <string name="action_open_settings">Settings</string>
+    <string name="composer_add_location">Add location</string>
+    <string name="composer_remove_location">Remove location</string>
+    <string name="composer_suggested_location">Add %1$s</string>
+    <string name="location_locating">Finding your location…</string>
+    <string name="location_sheet_title">Location</string>
+    <string name="location_use_current">Use current location</string>
+    <string name="location_name_label">Place name</string>
+    <string name="location_name_apply">Use this name</string>
+    <string name="location_recent">Recent</string>
     <string name="composer_remove_photo">Remove photo</string>
     <string name="composer_change_time">Change date and time</string>
     <string name="composer_format_toggle">Aa</string>

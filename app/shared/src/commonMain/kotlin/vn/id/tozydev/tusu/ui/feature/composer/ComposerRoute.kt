@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlin.uuid.Uuid
 import kotlinx.datetime.LocalDate
+import vn.id.tozydev.tusu.domain.error.LocationError
 import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.model.AppPermission
 import vn.id.tozydev.tusu.ui.component.OnBackgroundEffect
@@ -46,6 +47,7 @@ fun ComposerRoute(
             onError = viewModel::onPickerFailed,
         )
     val microphone = rememberPermissionRequester(AppPermission.MICROPHONE)
+    val location = rememberPermissionRequester(AppPermission.LOCATION)
     ComposerScreen(
         state = state,
         richTextState = viewModel.richTextState,
@@ -73,6 +75,19 @@ fun ComposerRoute(
                 },
                 onStopRecording = viewModel::onStopRecording,
                 onCancelRecording = viewModel::onCancelRecording,
+                onLocationChange = viewModel::onLocationChange,
+                onUseCurrentLocation = {
+                    location.request { error ->
+                        if (error == null) {
+                            viewModel.onUseCurrentLocation()
+                        } else {
+                            viewModel.onLocationPermissionDenied(
+                                LocationError.PermissionRequired(error),
+                                openSettings = location::openSettings,
+                            )
+                        }
+                    }
+                },
                 onLabelToggle = viewModel::onLabelToggle,
                 onCreateLabel = viewModel::onCreateLabel,
                 onManageLabels = onManageLabels,

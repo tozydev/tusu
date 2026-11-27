@@ -3,7 +3,9 @@ package vn.id.tozydev.tusu.ui.feature.composer
 import androidx.paging.PagingData
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import vn.id.tozydev.tusu.domain.error.EntryError
@@ -66,7 +68,13 @@ class FakeEntryRepository : EntryRepository {
 
     override fun observeTrash(): Flow<List<Entry>> = error("not used")
 
-    override fun observeRecentLocations(limit: Int): Flow<List<EntryLocation>> = error("not used")
+    /** Places the location sheet offers; a test sets them. */
+    val recentLocations = MutableStateFlow<List<EntryLocation>>(emptyList())
+
+    override fun observeRecentLocations(limit: Int): Flow<List<EntryLocation>> =
+        recentLocations.map {
+            it.take(limit)
+        }
 
     /** The last label set written for each entry. */
     val labelSets = mutableMapOf<Uuid, Set<Uuid>>()
