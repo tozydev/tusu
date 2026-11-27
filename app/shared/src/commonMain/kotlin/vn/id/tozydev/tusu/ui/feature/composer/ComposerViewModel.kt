@@ -106,6 +106,9 @@ class ComposerViewModel(
     /** Owned here so the text survives configuration changes; the screen edits it directly. */
     val richTextState = RichTextState()
 
+    /** Applies Markdown typed into [richTextState]; runs with each text change. */
+    private val markdownShortcuts = MarkdownShortcuts(richTextState)
+
     private val _uiState = MutableStateFlow(ComposerUiState())
     val uiState: StateFlow<ComposerUiState> = _uiState.asStateFlow()
 
@@ -170,6 +173,7 @@ class ComposerViewModel(
 
     /** Called whenever the rich text changes. Saves only when the content really changed. */
     fun onBodyChanged() {
+        markdownShortcuts.onTextChange()
         syncDraft()
     }
 
@@ -667,6 +671,8 @@ class ComposerViewModel(
         if (body.isBlank()) return true
         return try {
             richTextState.setJson(body)
+            // The loaded text is not something typed, so it must not trigger a shortcut.
+            markdownShortcuts.sync()
             true
         } catch (e: MalformedRichTextJsonException) {
             false

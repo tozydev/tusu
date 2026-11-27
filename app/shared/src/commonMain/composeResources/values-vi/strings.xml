@@ -206,6 +206,14 @@
     <string name="format_strikethrough">Gạch ngang</string>
     <string name="format_bullet_list">Danh sách chấm</string>
     <string name="format_numbered_list">Danh sách số</string>
+    <string name="format_heading">Tiêu đề</string>
+    <string name="format_link">Liên kết</string>
+    <string name="link_dialog_title">Liên kết</string>
+    <string name="link_url_label">Địa chỉ URL</string>
+    <string name="link_remove">Bỏ liên kết</string>
+    <string name="composer_show_keyboard">Hiện bàn phím</string>
+    <string name="composer_hide_keyboard">Ẩn bàn phím</string>
+    <string name="composer_add_menu">Thêm vào entry</string>
     <string name="timeline_empty_title">Nhật ký đang trống</string>
     <string name="timeline_empty_description">Các entry bạn viết sẽ hiện ở đây, mới nhất trước.</string>
     <string name="timeline_load_error_title">Không tải được các entry</string>

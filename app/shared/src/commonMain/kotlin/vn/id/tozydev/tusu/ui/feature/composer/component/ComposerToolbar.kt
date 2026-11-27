@@ -1,9 +1,7 @@
 package vn.id.tozydev.tusu.ui.feature.composer.component
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Column
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonDefaults
@@ -17,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -28,69 +25,62 @@ import org.jetbrains.compose.resources.stringResource
 import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.composer_format_description
 import vn.id.tozydev.tusu.generated.resources.composer_format_toggle
-import vn.id.tozydev.tusu.generated.resources.composer_pick_photos
-import vn.id.tozydev.tusu.generated.resources.composer_record_voice
-import vn.id.tozydev.tusu.generated.resources.composer_take_photo
-import vn.id.tozydev.tusu.generated.resources.ic_add_a_photo_24px
-import vn.id.tozydev.tusu.generated.resources.ic_add_photo_alternate_24px
-import vn.id.tozydev.tusu.generated.resources.ic_mic_24px
+import vn.id.tozydev.tusu.generated.resources.composer_hide_keyboard
+import vn.id.tozydev.tusu.generated.resources.ic_keyboard_hide_24px
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 /**
- * The bar under the editor: the photo and voice buttons at the start, the format toggle at the end,
- * and [formatBar] opening above the row when [formatOpen] is true. The buttons do not take focus,
- * so the keyboard stays open. The camera button is shown only when [onTakePhotoClick] is not null.
+ * The bar that sits on the keyboard while the user types: the attach buttons, then Aa and a button
+ * that hides the keyboard. Aa swaps the attach buttons for [formatBar]. No button takes focus, so
+ * the keyboard stays open.
  */
 @Composable
 fun ComposerToolbar(
+    actions: List<AttachAction>,
     formatOpen: Boolean,
     onFormatToggle: () -> Unit,
-    onPickPhotosClick: () -> Unit,
-    onTakePhotoClick: (() -> Unit)?,
-    onRecordClick: () -> Unit,
+    onHideKeyboard: () -> Unit,
     modifier: Modifier = Modifier,
     formatBar: @Composable () -> Unit = {},
 ) {
     Surface(modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
-        Column {
-            AnimatedVisibility(visible = formatOpen) { formatBar() }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (onTakePhotoClick != null) {
-                    PhotoButton(
-                        icon = painterResource(Res.drawable.ic_add_a_photo_24px),
-                        description = stringResource(Res.string.composer_take_photo),
-                        onClick = onTakePhotoClick,
-                    )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AnimatedContent(targetState = formatOpen, modifier = Modifier.weight(1f)) { open ->
+                if (open) {
+                    formatBar()
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        actions.forEach { ToolbarButton(it) }
+                    }
                 }
-                PhotoButton(
-                    icon = painterResource(Res.drawable.ic_add_photo_alternate_24px),
-                    description = stringResource(Res.string.composer_pick_photos),
-                    onClick = onPickPhotosClick,
+            }
+            FormatToggleButton(checked = formatOpen, onClick = onFormatToggle)
+            IconButton(
+                onClick = onHideKeyboard,
+                modifier = Modifier.focusProperties { canFocus = false },
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_keyboard_hide_24px),
+                    contentDescription = stringResource(Res.string.composer_hide_keyboard),
                 )
-                PhotoButton(
-                    icon = painterResource(Res.drawable.ic_mic_24px),
-                    description = stringResource(Res.string.composer_record_voice),
-                    onClick = onRecordClick,
-                )
-                Spacer(Modifier.weight(1f))
-                FormatToggleButton(checked = formatOpen, onClick = onFormatToggle)
             }
         }
     }
 }
 
 @Composable
-private fun PhotoButton(
-    icon: Painter,
-    description: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    IconButton(onClick = onClick, modifier = modifier.focusProperties { canFocus = false }) {
-        Icon(painter = icon, contentDescription = description)
+private fun ToolbarButton(action: AttachAction, modifier: Modifier = Modifier) {
+    IconButton(
+        onClick = action.onClick,
+        modifier = modifier.focusProperties { canFocus = false },
+    ) {
+        Icon(
+            painter = painterResource(action.icon),
+            contentDescription = stringResource(action.label),
+        )
     }
 }
 
@@ -121,30 +111,18 @@ private fun FormatToggleButton(
     }
 }
 
+private val previewActions =
+    attachActions(onTakePhoto = {}, onPickPhotos = {}, onRecord = {}, onAddLocation = {})
+
 @Preview
 @Composable
 private fun ComposerToolbarPreview() {
     AppTheme {
         ComposerToolbar(
+            actions = previewActions,
             formatOpen = false,
             onFormatToggle = {},
-            onPickPhotosClick = {},
-            onTakePhotoClick = null,
-            onRecordClick = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun ComposerToolbarWithCameraPreview() {
-    AppTheme {
-        ComposerToolbar(
-            formatOpen = false,
-            onFormatToggle = {},
-            onPickPhotosClick = {},
-            onTakePhotoClick = {},
-            onRecordClick = {},
+            onHideKeyboard = {},
         )
     }
 }
@@ -154,25 +132,11 @@ private fun ComposerToolbarWithCameraPreview() {
 private fun ComposerToolbarFormatOpenPreview() {
     AppTheme {
         ComposerToolbar(
+            actions = previewActions,
             formatOpen = true,
             onFormatToggle = {},
-            onPickPhotosClick = {},
-            onTakePhotoClick = {},
-            onRecordClick = {},
-            formatBar = {
-                FormatBar(
-                    bold = true,
-                    italic = false,
-                    strikethrough = true,
-                    bulletList = false,
-                    numberedList = true,
-                    onBoldClick = {},
-                    onItalicClick = {},
-                    onStrikethroughClick = {},
-                    onBulletListClick = {},
-                    onNumberedListClick = {},
-                )
-            },
+            onHideKeyboard = {},
+            formatBar = { FormatBar(state = FormatState(setOf(FormatAction.Bold)), onAction = {}) },
         )
     }
 }

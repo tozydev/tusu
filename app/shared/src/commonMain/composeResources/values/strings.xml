@@ -208,6 +208,14 @@
     <string name="format_strikethrough">Strikethrough</string>
     <string name="format_bullet_list">Bulleted list</string>
     <string name="format_numbered_list">Numbered list</string>
+    <string name="format_heading">Heading</string>
+    <string name="format_link">Link</string>
+    <string name="link_dialog_title">Link</string>
+    <string name="link_url_label">URL</string>
+    <string name="link_remove">Remove link</string>
+    <string name="composer_show_keyboard">Show keyboard</string>
+    <string name="composer_hide_keyboard">Hide keyboard</string>
+    <string name="composer_add_menu">Add to entry</string>
     <string name="timeline_empty_title">Your journal is empty for now</string>
     <string name="timeline_empty_description">Entries you write will appear here, newest first.</string>
     <string name="timeline_load_error_title">Could not load your entries</string>

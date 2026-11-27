@@ -51,6 +51,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
             implementation(libs.androidx.navigation3.ui)
+            implementation(libs.androidx.navigationevent.compose)
             implementation(libs.androidx.paging.compose)
 
             api(libs.androidx.room.runtime)
