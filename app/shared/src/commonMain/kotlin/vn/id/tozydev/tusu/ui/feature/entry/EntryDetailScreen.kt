@@ -50,6 +50,7 @@ import vn.id.tozydev.tusu.ui.feature.entry.component.EntryLocationCard
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryMoreSheet
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoCarousel
 import vn.id.tozydev.tusu.ui.feature.entry.component.EntryPhotoStrip
+import vn.id.tozydev.tusu.ui.feature.entry.component.EntryVoiceGroup
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.format.ProvideAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.theme.AppTheme
@@ -202,6 +203,12 @@ private fun EntryDetailContent(
                 chips.forEach { LabelChip(it) }
             }
         }
+        if (state.voices.isNotEmpty()) {
+            EntryVoiceGroup(
+                voices = state.voices,
+                modifier = Modifier.padding(horizontal = 20.dp),
+            )
+        }
         // Empty text is hidden completely; textPlain is derived from the body on save.
         if (state.textPlain.isNotBlank()) {
             RichTextContent(
@@ -249,6 +256,7 @@ private fun EntryDetailScreenFullPreview() {
                         text = "Buổi sáng ở Đà Lạt, sương còn chưa tan hết trên đồi thông.",
                         emoji = "🌱",
                         photoCount = 3,
+                        voiceCount = 2,
                     ),
                 onBack = {},
                 onPhotoClick = {},

@@ -22,6 +22,8 @@ data class EntryDetailUiState(
     val body: String = "",
     val textPlain: String = "",
     val photos: List<MediaUi> = emptyList(),
+    /** Voice notes in album order; several are shown as one group. */
+    val voices: List<MediaUi> = emptyList(),
     val labels: List<Label> = emptyList(),
     val location: EntryLocation? = null,
 )

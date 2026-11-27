@@ -141,6 +141,7 @@ private fun Entry?.toUiState(files: MediaFileStore, currentTimeZone: TimeZone): 
             currentTimeZone = currentTimeZone,
         )
     }
+    val live = media.filter { it.deletedAt == null }.sortedBy { it.position }
     return EntryDetailUiState(
         isLoading = false,
         currentTimeZone = currentTimeZone,
@@ -153,10 +154,7 @@ private fun Entry?.toUiState(files: MediaFileStore, currentTimeZone: TimeZone): 
         location = location,
         body = body,
         textPlain = textPlain,
-        photos =
-            media
-                .filter { it.type == MediaType.PHOTO && it.deletedAt == null }
-                .sortedBy { it.position }
-                .map { it.toUi(files) },
+        photos = live.filter { it.type == MediaType.PHOTO }.map { it.toUi(files) },
+        voices = live.filter { it.type == MediaType.AUDIO }.map { it.toUi(files) },
     )
 }
