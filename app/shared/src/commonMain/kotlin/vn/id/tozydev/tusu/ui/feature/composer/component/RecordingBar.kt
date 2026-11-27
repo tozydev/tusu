@@ -44,6 +44,7 @@ import vn.id.tozydev.tusu.generated.resources.ic_stop_24px
 import vn.id.tozydev.tusu.ui.component.Waveform
 import vn.id.tozydev.tusu.ui.feature.composer.RecordingUi
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
+import vn.id.tozydev.tusu.ui.format.ProvideAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 private val TICK = 200.milliseconds
@@ -141,14 +142,16 @@ private fun RecordingClock(elapsed: Duration, modifier: Modifier = Modifier) {
 @Composable
 private fun RecordingBarPreview() {
     AppTheme {
-        RecordingBar(
-            recording =
-                RecordingUi(
-                    startedAt = TimeSource.Monotonic.markNow(),
-                    levels = List(24) { ((it * 41) % 100) / 100f },
-                ),
-            onCancel = {},
-            onStop = {},
-        )
+        ProvideAppDateTimeFormatter {
+            RecordingBar(
+                recording =
+                    RecordingUi(
+                        startedAt = TimeSource.Monotonic.markNow(),
+                        levels = List(24) { ((it * 41) % 100) / 100f },
+                    ),
+                onCancel = {},
+                onStop = {},
+            )
+        }
     }
 }

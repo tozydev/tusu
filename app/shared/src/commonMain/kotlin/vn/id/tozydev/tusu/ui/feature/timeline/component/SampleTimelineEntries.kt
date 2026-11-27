@@ -1,6 +1,7 @@
 package vn.id.tozydev.tusu.ui.feature.timeline.component
 
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.datetime.TimeZone
@@ -56,4 +57,16 @@ private fun previewEntry(text: String, emoji: String?, minutes: Int) =
         timeZone = TimeZone.of("Asia/Ho_Chi_Minh"),
         createdAt = PreviewStart,
         updatedAt = PreviewStart,
+    )
+
+internal fun sampleVoice(seconds: Int): MediaUi =
+    MediaUi(
+        id = Uuid.random(),
+        path = "",
+        type = MediaType.AUDIO,
+        status = MediaStatus.READY,
+        width = null,
+        height = null,
+        duration = seconds.seconds,
+        waveform = List(48) { ((it * (29 + seconds)) % 100) / 100f },
     )

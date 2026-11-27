@@ -149,6 +149,7 @@ private fun TimelineList(
                         TimelineEntryRow(
                             entry = row.entry,
                             photos = row.photos,
+                            voices = row.voices,
                             onClick = { onEntryClick(row.entry.id) },
                             onLongClick = { onEntryLongClick(row.entry) },
                             labelGroups = labelGroups,

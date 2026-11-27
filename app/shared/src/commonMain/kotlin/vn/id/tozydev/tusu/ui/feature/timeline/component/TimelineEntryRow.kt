@@ -33,16 +33,18 @@ import vn.id.tozydev.tusu.ui.component.EmojiBadge
 import vn.id.tozydev.tusu.ui.component.LabelChipRow
 import vn.id.tozydev.tusu.ui.component.MediaUi
 import vn.id.tozydev.tusu.ui.component.RichTextContent
+import vn.id.tozydev.tusu.ui.component.VoicePlayer
 import vn.id.tozydev.tusu.ui.component.labelChipsOf
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
+import vn.id.tozydev.tusu.ui.format.ProvideAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 private const val MaxTextLines = 6
 
 /**
  * One entry of the feed, laid out like a diary page: the time on a rail, then the emoji, the text
- * and the photos. The whole row opens the entry; a long press calls [onLongClick], which the feed
- * uses to change the emoji.
+ * the photos and the voice notes. The whole row opens the entry; a long press calls [onLongClick],
+ * which the feed uses to change the emoji.
  */
 @Composable
 fun TimelineEntryRow(
@@ -52,6 +54,7 @@ fun TimelineEntryRow(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     labelGroups: List<LabelGroup> = emptyList(),
+    voices: List<MediaUi> = emptyList(),
 ) {
     val formatter = LocalAppDateTimeFormatter.current
     val haptics = LocalHapticFeedback.current
@@ -98,6 +101,9 @@ fun TimelineEntryRow(
             }
             if (photos.isNotEmpty()) {
                 TimelinePhotoGrid(photos = photos)
+            }
+            voices.forEach { voice ->
+                VoicePlayer(voice = voice, modifier = Modifier.fillMaxWidth())
             }
             TimelineEntryMeta(
                 labels = entry.labels,
@@ -214,6 +220,23 @@ private fun TimelineEntryRowLabelsPreview() {
                 onClick = {},
                 labelGroups = listOf(group),
             )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun TimelineEntryRowVoicePreview() {
+    AppTheme {
+        ProvideAppDateTimeFormatter {
+            Surface {
+                TimelineEntryRow(
+                    entry = sampleTimelineEntries().first(),
+                    photos = emptyList(),
+                    voices = listOf(sampleVoice(42), sampleVoice(95)),
+                    onClick = {},
+                )
+            }
         }
     }
 }

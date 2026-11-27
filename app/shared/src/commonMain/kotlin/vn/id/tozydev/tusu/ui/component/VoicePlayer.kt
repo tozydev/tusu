@@ -42,6 +42,7 @@ import vn.id.tozydev.tusu.generated.resources.voice_pause
 import vn.id.tozydev.tusu.generated.resources.voice_play
 import vn.id.tozydev.tusu.generated.resources.voice_playback_failed
 import vn.id.tozydev.tusu.ui.format.LocalAppDateTimeFormatter
+import vn.id.tozydev.tusu.ui.format.ProvideAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 // The player reports its position on a 0..1000 slider scale.
@@ -180,20 +181,22 @@ private fun fileUri(path: String): String = if (path.startsWith("/")) "file://$p
 @Composable
 private fun VoicePlayerPreview() {
     AppTheme {
-        VoicePlayer(
-            voice =
-                MediaUi(
-                    id = Uuid.random(),
-                    path = "",
-                    type = MediaType.AUDIO,
-                    status = MediaStatus.READY,
-                    width = null,
-                    height = null,
-                    duration = 83.seconds,
-                    waveform = List(48) { ((it * 37) % 100) / 100f },
-                ),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        ProvideAppDateTimeFormatter {
+            VoicePlayer(
+                voice =
+                    MediaUi(
+                        id = Uuid.random(),
+                        path = "",
+                        type = MediaType.AUDIO,
+                        status = MediaStatus.READY,
+                        width = null,
+                        height = null,
+                        duration = 83.seconds,
+                        waveform = List(48) { ((it * 37) % 100) / 100f },
+                    ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 
@@ -201,15 +204,17 @@ private fun VoicePlayerPreview() {
 @Composable
 private fun VoicePlayerFailedPreview() {
     AppTheme {
-        VoicePlayerRow(
-            waveform = List(48) { ((it * 53) % 100) / 100f },
-            progress = 0f,
-            playing = false,
-            time = 12.seconds,
-            failed = true,
-            onToggle = {},
-            onSeek = {},
-            modifier = Modifier.fillMaxWidth(),
-        )
+        ProvideAppDateTimeFormatter {
+            VoicePlayerRow(
+                waveform = List(48) { ((it * 53) % 100) / 100f },
+                progress = 0f,
+                playing = false,
+                time = 12.seconds,
+                failed = true,
+                onToggle = {},
+                onSeek = {},
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }

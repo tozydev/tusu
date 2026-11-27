@@ -8,6 +8,10 @@ import vn.id.tozydev.tusu.ui.component.MediaUi
 sealed interface TimelineItem {
     data class Day(val date: LocalDate) : TimelineItem
 
-    /** [photos] are the entry's live photos in album order; audio and video are not shown here. */
-    data class EntryItem(val entry: Entry, val photos: List<MediaUi>) : TimelineItem
+    /** The entry's live photos and voice notes, each in album order; video is not shown yet. */
+    data class EntryItem(
+        val entry: Entry,
+        val photos: List<MediaUi>,
+        val voices: List<MediaUi> = emptyList(),
+    ) : TimelineItem
 }

@@ -91,16 +91,15 @@ class TimelineViewModel(
     }
 }
 
-/** Only photos are shown in the feed; the repository already drops soft-deleted media. */
-internal fun Entry.toEntryItem(files: MediaFileStore): TimelineItem.EntryItem =
-    TimelineItem.EntryItem(
+/** Photos and voice notes are shown in the feed; video is not yet. */
+internal fun Entry.toEntryItem(files: MediaFileStore): TimelineItem.EntryItem {
+    val live = media.filter { it.deletedAt == null }.sortedBy { it.position }
+    return TimelineItem.EntryItem(
         entry = this,
-        photos =
-            media
-                .filter { it.type == MediaType.PHOTO && it.deletedAt == null }
-                .sortedBy { it.position }
-                .map { it.toUi(files) },
+        photos = live.filter { it.type == MediaType.PHOTO }.map { it.toUi(files) },
+        voices = live.filter { it.type == MediaType.AUDIO }.map { it.toUi(files) },
     )
+}
 
 /**
  * A day header goes right before the first entry of a day in the feed. The feed is newest first, so

@@ -21,6 +21,7 @@ import vn.id.tozydev.tusu.generated.resources.composer_remove_voice
 import vn.id.tozydev.tusu.generated.resources.ic_close_24px
 import vn.id.tozydev.tusu.ui.component.MediaUi
 import vn.id.tozydev.tusu.ui.component.VoicePlayer
+import vn.id.tozydev.tusu.ui.format.ProvideAppDateTimeFormatter
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 /** The recorded voice notes of the entry, each playable and removable. */
@@ -55,21 +56,23 @@ fun ComposerVoiceList(
 @Composable
 private fun ComposerVoiceListPreview() {
     AppTheme {
-        ComposerVoiceList(
-            voices =
-                List(2) { index ->
-                    MediaUi(
-                        id = Uuid.random(),
-                        path = "",
-                        type = MediaType.AUDIO,
-                        status = MediaStatus.READY,
-                        width = null,
-                        height = null,
-                        duration = (12 + index * 50).seconds,
-                        waveform = List(48) { ((it * (31 + index * 6)) % 100) / 100f },
-                    )
-                },
-            onRemove = {},
-        )
+        ProvideAppDateTimeFormatter {
+            ComposerVoiceList(
+                voices =
+                    List(2) { index ->
+                        MediaUi(
+                            id = Uuid.random(),
+                            path = "",
+                            type = MediaType.AUDIO,
+                            status = MediaStatus.READY,
+                            width = null,
+                            height = null,
+                            duration = (12 + index * 50).seconds,
+                            waveform = List(48) { ((it * (31 + index * 6)) % 100) / 100f },
+                        )
+                    },
+                onRemove = {},
+            )
+        }
     }
 }
