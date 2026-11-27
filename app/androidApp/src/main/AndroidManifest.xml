@@ -7,6 +7,13 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <!-- Voice journal. Asked for on the first recording; devices without a microphone still
+         install the app and only see the recording error. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+
     <application
         android:name=".TusuApplication"
         android:allowBackup="true"

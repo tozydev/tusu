@@ -1,6 +1,7 @@
 package vn.id.tozydev.tusu.ui.component
 
 import androidx.compose.runtime.Immutable
+import kotlin.time.Duration
 import kotlin.uuid.Uuid
 import vn.id.tozydev.tusu.domain.model.Media
 import vn.id.tozydev.tusu.domain.model.MediaStatus
@@ -16,6 +17,10 @@ data class MediaUi(
     val status: MediaStatus,
     val width: Int?,
     val height: Int?,
+    /** Length of a voice recording or video; null for photos. */
+    val duration: Duration? = null,
+    /** Downsampled levels of a voice recording, each in 0..1; empty for other types. */
+    val waveform: List<Float> = emptyList(),
 )
 
 fun Media.toUi(files: MediaFileStore): MediaUi =
@@ -26,4 +31,6 @@ fun Media.toUi(files: MediaFileStore): MediaUi =
         status = status,
         width = width,
         height = height,
+        duration = duration,
+        waveform = waveform,
     )

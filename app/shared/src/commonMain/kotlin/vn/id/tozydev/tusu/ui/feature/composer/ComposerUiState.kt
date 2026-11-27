@@ -24,6 +24,10 @@ data class ComposerUiState(
     val readOnlyText: String = "",
     /** Live photos of the entry in album order; empty until the entry is known. */
     val photos: List<MediaUi> = emptyList(),
+    /** Live voice recordings of the entry in album order. */
+    val voices: List<MediaUi> = emptyList(),
+    /** Set while a voice is being recorded; the toolbar becomes the recording bar. */
+    val recording: RecordingUi? = null,
     val selectedLabelIds: Set<Uuid> = emptySet(),
     /** Every live group and label, for the label sheet and the chips. */
     val labelGroups: List<LabelGroup> = emptyList(),

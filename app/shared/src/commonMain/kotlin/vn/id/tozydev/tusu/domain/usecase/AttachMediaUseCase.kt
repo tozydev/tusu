@@ -3,6 +3,7 @@ package vn.id.tozydev.tusu.domain.usecase
 import dev.zacsweers.metro.Inject
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.first
@@ -44,6 +45,22 @@ class AttachMediaUseCase(
         val id = Uuid.random()
         val relativePath = files.newRelativePath(id, extension)
         files.write(relativePath, source).bind()
+        register(entryId, id, relativePath, type, takenAt = takenAt).bind()
+    }
+
+    /**
+     * Appends a file already stored under [relativePath], such as a finished voice recording, to
+     * the entry's album. The file is removed when its row cannot be written.
+     */
+    suspend fun register(
+        entryId: Uuid,
+        id: Uuid,
+        relativePath: String,
+        type: MediaType,
+        takenAt: Instant? = null,
+        duration: Duration? = null,
+        waveform: List<Float> = emptyList(),
+    ): Outcome<Media, MediaError> = outcome {
         val position =
             (media.observeEntryMedia(entryId).first().maxOfOrNull { it.position } ?: -1) + 1
         val created =
@@ -52,9 +69,11 @@ class AttachMediaUseCase(
                 entryId = entryId,
                 type = type,
                 localPath = relativePath,
+                duration = duration,
                 position = position,
                 takenAt = takenAt,
                 status = if (type == MediaType.PHOTO) MediaStatus.PROCESSING else MediaStatus.READY,
+                waveform = waveform,
                 updatedAt = clock.now(),
             )
         when (val added = media.add(created)) {

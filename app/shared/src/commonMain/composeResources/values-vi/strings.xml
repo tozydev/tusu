@@ -179,6 +179,15 @@
     <string name="composer_emoji_description">Chọn emoji</string>
     <string name="composer_pick_photos">Thêm ảnh</string>
     <string name="composer_take_photo">Chụp ảnh</string>
+    <string name="composer_record_voice">Ghi âm</string>
+    <string name="composer_recording">Đang ghi âm</string>
+    <string name="composer_recording_cancel">Huỷ bản ghi</string>
+    <string name="composer_recording_stop">Dừng và giữ bản ghi</string>
+    <string name="composer_remove_voice">Bỏ bản ghi</string>
+    <string name="voice_play">Phát bản ghi</string>
+    <string name="voice_pause">Tạm dừng bản ghi</string>
+    <string name="voice_playback_failed">Không phát được bản ghi này</string>
+    <string name="action_open_settings">Cài đặt</string>
     <string name="composer_remove_photo">Bỏ ảnh</string>
     <string name="composer_change_time">Đổi ngày giờ</string>
     <string name="composer_format_toggle">Aa</string>

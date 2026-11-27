@@ -181,6 +181,15 @@
     <string name="composer_emoji_description">Choose an emoji</string>
     <string name="composer_pick_photos">Add photos</string>
     <string name="composer_take_photo">Take a photo</string>
+    <string name="composer_record_voice">Record a voice note</string>
+    <string name="composer_recording">Recording</string>
+    <string name="composer_recording_cancel">Discard recording</string>
+    <string name="composer_recording_stop">Stop and keep recording</string>
+    <string name="composer_remove_voice">Remove voice note</string>
+    <string name="voice_play">Play voice note</string>
+    <string name="voice_pause">Pause voice note</string>
+    <string name="voice_playback_failed">Could not play this voice note</string>
+    <string name="action_open_settings">Settings</string>
     <string name="composer_remove_photo">Remove photo</string>
     <string name="composer_change_time">Change date and time</string>
     <string name="composer_format_toggle">Aa</string>

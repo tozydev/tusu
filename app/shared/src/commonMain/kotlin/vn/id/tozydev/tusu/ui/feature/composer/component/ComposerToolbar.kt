@@ -29,15 +29,17 @@ import vn.id.tozydev.tusu.generated.resources.Res
 import vn.id.tozydev.tusu.generated.resources.composer_format_description
 import vn.id.tozydev.tusu.generated.resources.composer_format_toggle
 import vn.id.tozydev.tusu.generated.resources.composer_pick_photos
+import vn.id.tozydev.tusu.generated.resources.composer_record_voice
 import vn.id.tozydev.tusu.generated.resources.composer_take_photo
 import vn.id.tozydev.tusu.generated.resources.ic_add_a_photo_24px
 import vn.id.tozydev.tusu.generated.resources.ic_add_photo_alternate_24px
+import vn.id.tozydev.tusu.generated.resources.ic_mic_24px
 import vn.id.tozydev.tusu.ui.theme.AppTheme
 
 /**
- * The bar under the editor: the photo buttons at the start, the format toggle at the end, and
- * [formatBar] opening above the row when [formatOpen] is true. The buttons do not take focus, so
- * the keyboard stays open. The camera button is shown only when [onTakePhotoClick] is not null.
+ * The bar under the editor: the photo and voice buttons at the start, the format toggle at the end,
+ * and [formatBar] opening above the row when [formatOpen] is true. The buttons do not take focus,
+ * so the keyboard stays open. The camera button is shown only when [onTakePhotoClick] is not null.
  */
 @Composable
 fun ComposerToolbar(
@@ -45,6 +47,7 @@ fun ComposerToolbar(
     onFormatToggle: () -> Unit,
     onPickPhotosClick: () -> Unit,
     onTakePhotoClick: (() -> Unit)?,
+    onRecordClick: () -> Unit,
     modifier: Modifier = Modifier,
     formatBar: @Composable () -> Unit = {},
 ) {
@@ -66,6 +69,11 @@ fun ComposerToolbar(
                     icon = painterResource(Res.drawable.ic_add_photo_alternate_24px),
                     description = stringResource(Res.string.composer_pick_photos),
                     onClick = onPickPhotosClick,
+                )
+                PhotoButton(
+                    icon = painterResource(Res.drawable.ic_mic_24px),
+                    description = stringResource(Res.string.composer_record_voice),
+                    onClick = onRecordClick,
                 )
                 Spacer(Modifier.weight(1f))
                 FormatToggleButton(checked = formatOpen, onClick = onFormatToggle)
@@ -122,6 +130,7 @@ private fun ComposerToolbarPreview() {
             onFormatToggle = {},
             onPickPhotosClick = {},
             onTakePhotoClick = null,
+            onRecordClick = {},
         )
     }
 }
@@ -135,6 +144,7 @@ private fun ComposerToolbarWithCameraPreview() {
             onFormatToggle = {},
             onPickPhotosClick = {},
             onTakePhotoClick = {},
+            onRecordClick = {},
         )
     }
 }
@@ -148,6 +158,7 @@ private fun ComposerToolbarFormatOpenPreview() {
             onFormatToggle = {},
             onPickPhotosClick = {},
             onTakePhotoClick = {},
+            onRecordClick = {},
             formatBar = {
                 FormatBar(
                     bold = true,

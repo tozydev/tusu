@@ -33,7 +33,9 @@ import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerEmojiRow
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerPhotoStrip
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerToolbar
 import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerTopBar
+import vn.id.tozydev.tusu.ui.feature.composer.component.ComposerVoiceList
 import vn.id.tozydev.tusu.ui.feature.composer.component.LabelPickerSheet
+import vn.id.tozydev.tusu.ui.feature.composer.component.RecordingBar
 import vn.id.tozydev.tusu.ui.feature.composer.component.RichTextFormatBar
 import vn.id.tozydev.tusu.ui.format.UiText
 import vn.id.tozydev.tusu.ui.theme.AppTheme
@@ -95,17 +97,30 @@ fun ComposerScreen(
                 readOnlyText = state.readOnlyText,
                 richTextState = richTextState,
                 focusRequester = focusRequester,
-                header = { PhotoStrip(state.photos, actions) },
+                header = {
+                    PhotoStrip(state.photos, actions)
+                    VoiceList(state.voices, actions)
+                },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
-            if (editable) {
-                ComposerToolbar(
-                    formatOpen = formatOpen,
-                    onFormatToggle = { formatOpen = !formatOpen },
-                    onPickPhotosClick = actions.onPickPhotos,
-                    onTakePhotoClick = actions.onTakePhoto,
-                    formatBar = { RichTextFormatBar(richTextState) },
-                )
+            val recording = state.recording
+            when {
+                !editable -> Unit
+                recording != null ->
+                    RecordingBar(
+                        recording = recording,
+                        onCancel = actions.onCancelRecording,
+                        onStop = actions.onStopRecording,
+                    )
+                else ->
+                    ComposerToolbar(
+                        formatOpen = formatOpen,
+                        onFormatToggle = { formatOpen = !formatOpen },
+                        onPickPhotosClick = actions.onPickPhotos,
+                        onTakePhotoClick = actions.onTakePhoto,
+                        onRecordClick = actions.onRecord,
+                        formatBar = { RichTextFormatBar(richTextState) },
+                    )
             }
         }
     }
@@ -154,9 +169,16 @@ private fun PhotoStrip(photos: List<MediaUi>, actions: ComposerActions) {
     if (photos.isEmpty()) return
     ComposerPhotoStrip(
         photos = photos,
-        onRemove = actions.onRemovePhoto,
+        onRemove = actions.onRemoveMedia,
         onRetry = actions.onRetryPhoto,
     )
+}
+
+/** The voice notes under the photos; nothing when the entry has none. */
+@Composable
+private fun VoiceList(voices: List<MediaUi>, actions: ComposerActions) {
+    if (voices.isEmpty()) return
+    ComposerVoiceList(voices = voices, onRemove = actions.onRemoveMedia)
 }
 
 /** Gives the editor focus, and the keyboard with it, once the emoji sheet has closed. */

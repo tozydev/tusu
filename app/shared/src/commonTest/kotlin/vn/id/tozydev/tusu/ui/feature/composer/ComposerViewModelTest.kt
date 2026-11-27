@@ -43,6 +43,9 @@ import kotlinx.datetime.toInstant
 import kotlinx.io.Buffer
 import vn.id.tozydev.tusu.domain.error.EntryError
 import vn.id.tozydev.tusu.domain.error.MediaError
+import vn.id.tozydev.tusu.domain.error.Outcome
+import vn.id.tozydev.tusu.domain.error.PermissionError
+import vn.id.tozydev.tusu.domain.model.AppPermission
 import vn.id.tozydev.tusu.domain.model.Entry
 import vn.id.tozydev.tusu.domain.model.Media
 import vn.id.tozydev.tusu.domain.model.MediaStatus
@@ -123,6 +126,7 @@ private class ComposerFixture(scope: TestScope, appScope: CoroutineScope) {
     val media = FakeMediaRepository()
     val files = FakeMediaFileStore()
     val jobs = FakeMediaJobQueue()
+    val recorder = FakeAudioRecorder()
     val messages = AppMessages()
     val posted = mutableListOf<UiMessage>()
     val viewModel =
@@ -134,6 +138,7 @@ private class ComposerFixture(scope: TestScope, appScope: CoroutineScope) {
                 AttachMediaUseCase(files = files, media = media, clock = fixedClock, jobs = jobs),
             mediaFiles = files,
             mediaJobQueue = jobs,
+            audioRecorder = recorder,
             appMessages = messages,
             clock = fixedClock,
             timeZone = zone,
@@ -630,7 +635,7 @@ class ComposerViewModelTest :
                     advanceUntilIdle()
                     val (first, second) = f.viewModel.uiState.value.photos.map { it.id }
 
-                    f.viewModel.onRemovePhoto(first)
+                    f.viewModel.onRemoveMedia(first)
                     runCurrent()
                     advanceUntilIdle()
 
@@ -700,7 +705,7 @@ class ComposerViewModelTest :
                     f.viewModel.bind(id)
                     advanceUntilIdle()
 
-                    f.viewModel.onRemovePhoto(photoId)
+                    f.viewModel.onRemoveMedia(photoId)
                     advanceUntilIdle()
                     f.viewModel.uiState.value.photos.shouldBeEmpty()
                     f.viewModel.finishSession().join()
@@ -783,6 +788,152 @@ class ComposerViewModelTest :
                     f.viewModel.typeText("Cuối tuần #da_ngoai cùng nhà, vui lắm")
                     advanceUntilIdle()
                     f.entries.labelSets[id] shouldBe emptySet()
+                }
+            }
+
+            test("a voice recorded on a new entry is attached with its length and waveform") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onStartRecording()
+                    advanceUntilIdle()
+
+                    val entry = f.entries.saves.single()
+                    f.recorder.isRecording shouldBe true
+                    f.viewModel.uiState.value.recording.shouldNotBeNull()
+
+                    f.viewModel.onStopRecording()
+                    advanceUntilIdle()
+
+                    val voice = f.media.media.single()
+                    voice.entryId shouldBe entry.id
+                    voice.type shouldBe MediaType.AUDIO
+                    voice.status shouldBe MediaStatus.READY
+                    voice.duration shouldBe 3.seconds
+                    voice.waveform shouldBe listOf(0.2f, 0.8f, 0.5f)
+                    f.files.resolve(voice.localPath) shouldBe f.recorder.destinations.single()
+                    f.jobs.enqueued.shouldBeEmpty()
+                    f.viewModel.uiState.value.recording.shouldBeNull()
+                    f.viewModel.uiState.value.voices.single().id shouldBe voice.id
+                    f.viewModel.uiState.value.photos.shouldBeEmpty()
+                }
+            }
+
+            test("live levels of the recording are shown while it runs") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onStartRecording()
+                    advanceUntilIdle()
+
+                    f.recorder.levels.emit(0.4f)
+                    f.recorder.levels.emit(0.9f)
+                    runCurrent()
+
+                    f.viewModel.uiState.value.recording.shouldNotBeNull().levels shouldBe
+                        listOf(0.4f, 0.9f)
+                }
+            }
+
+            test("a cancelled recording is discarded") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onStartRecording()
+                    advanceUntilIdle()
+
+                    f.viewModel.onCancelRecording()
+                    advanceUntilIdle()
+
+                    f.recorder.cancels shouldBe 1
+                    f.media.media.shouldBeEmpty()
+                    f.viewModel.uiState.value.recording.shouldBeNull()
+                }
+            }
+
+            test("a recording that cannot start posts the error and leaves no recording bar") {
+                composerTest { f ->
+                    f.recorder.startResult = Outcome.Failure(MediaError.RecordingFailed)
+                    f.viewModel.bind(null)
+                    f.viewModel.onStartRecording()
+                    advanceUntilIdle()
+
+                    f.viewModel.uiState.value.recording.shouldBeNull()
+                    f.posted.single().text shouldBe MediaError.RecordingFailed.toUiText()
+                }
+            }
+
+            test("a recording that cannot be finished posts the error and attaches nothing") {
+                composerTest { f ->
+                    f.recorder.stopResult = Outcome.Failure(MediaError.RecordingFailed)
+                    f.viewModel.bind(null)
+                    f.viewModel.onStartRecording()
+                    advanceUntilIdle()
+                    f.viewModel.onStopRecording()
+                    advanceUntilIdle()
+                    runCurrent()
+
+                    f.media.media.shouldBeEmpty()
+                    f.posted.single().text shouldBe MediaError.RecordingFailed.toUiText()
+                }
+            }
+
+            test("a denied microphone is reported") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    val error =
+                        MediaError.PermissionRequired(
+                            PermissionError.DeniedPermanently(AppPermission.MICROPHONE),
+                        )
+                    f.viewModel.onRecordingPermissionDenied(error, openSettings = {})
+                    runCurrent()
+
+                    val message = f.posted.single()
+                    message.text shouldBe error.toUiText()
+                    message.action.shouldNotBeNull()
+                }
+            }
+
+            test("closing the composer while recording keeps the recording") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onStartRecording()
+                    advanceUntilIdle()
+
+                    f.viewModel.finishSession().join()
+                    runCurrent()
+
+                    f.recorder.stops shouldBe 1
+                    f.media.media.single().type shouldBe MediaType.AUDIO
+                    f.entries.deleted.shouldBeEmpty()
+                    f.posted.single().text.shouldBeSavedMessage()
+                }
+            }
+
+            test("going to the background stops the recording and keeps it") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onStartRecording()
+                    advanceUntilIdle()
+
+                    f.viewModel.onBackground()
+                    advanceUntilIdle()
+
+                    f.recorder.isRecording shouldBe false
+                    f.media.media.single().type shouldBe MediaType.AUDIO
+                }
+            }
+
+            test("removing a voice takes it out of the list") {
+                composerTest { f ->
+                    f.viewModel.bind(null)
+                    f.viewModel.onStartRecording()
+                    advanceUntilIdle()
+                    f.viewModel.onStopRecording()
+                    advanceUntilIdle()
+                    val voice = f.viewModel.uiState.value.voices.single()
+
+                    f.viewModel.onRemoveMedia(voice.id)
+                    advanceUntilIdle()
+
+                    f.viewModel.uiState.value.voices.shouldBeEmpty()
                 }
             }
         },

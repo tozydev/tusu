@@ -16,8 +16,13 @@ class ComposerActions(
     val onPickPhotos: () -> Unit,
     /** Null on platforms without a camera, which hides the camera button. */
     val onTakePhoto: (() -> Unit)?,
-    val onRemovePhoto: (Uuid) -> Unit,
+    /** Removes a photo or a voice note. */
+    val onRemoveMedia: (Uuid) -> Unit,
     val onRetryPhoto: (Uuid) -> Unit,
+    /** Asks for the microphone when needed, then starts recording. */
+    val onRecord: () -> Unit = {},
+    val onStopRecording: () -> Unit = {},
+    val onCancelRecording: () -> Unit = {},
     val onLabelToggle: (Uuid) -> Unit = {},
     /** Creates a label in the group (null for "Khác") and attaches it. */
     val onCreateLabel: (name: String, groupId: Uuid?) -> Unit = { _, _ -> },
@@ -34,7 +39,7 @@ class ComposerActions(
                 onOccurredAtChange = {},
                 onPickPhotos = {},
                 onTakePhoto = {},
-                onRemovePhoto = {},
+                onRemoveMedia = {},
                 onRetryPhoto = {},
             )
     }

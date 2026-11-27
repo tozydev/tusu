@@ -15,6 +15,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -40,6 +42,7 @@ import kotlinx.datetime.toLocalDateTime
 import vn.id.tozydev.tusu.domain.error.EntryError
 import vn.id.tozydev.tusu.domain.error.MediaError
 import vn.id.tozydev.tusu.domain.error.Outcome
+import vn.id.tozydev.tusu.domain.error.PermissionError
 import vn.id.tozydev.tusu.domain.model.EntryDraft
 import vn.id.tozydev.tusu.domain.model.MediaStatus
 import vn.id.tozydev.tusu.domain.model.MediaType
@@ -50,9 +53,12 @@ import vn.id.tozydev.tusu.domain.repository.MediaFileStore
 import vn.id.tozydev.tusu.domain.repository.MediaRepository
 import vn.id.tozydev.tusu.domain.usecase.AttachMediaUseCase
 import vn.id.tozydev.tusu.generated.resources.Res
+import vn.id.tozydev.tusu.generated.resources.action_open_settings
 import vn.id.tozydev.tusu.generated.resources.action_undo
 import vn.id.tozydev.tusu.generated.resources.composer_empty_trashed
 import vn.id.tozydev.tusu.generated.resources.composer_saved_message
+import vn.id.tozydev.tusu.platform.AudioRecorder
+import vn.id.tozydev.tusu.platform.AudioRecording
 import vn.id.tozydev.tusu.platform.MediaJobQueue
 import vn.id.tozydev.tusu.text.matchLabelHashtags
 import vn.id.tozydev.tusu.ui.component.AppMessages
@@ -81,6 +87,7 @@ class ComposerViewModel(
     private val attachMedia: AttachMediaUseCase,
     private val mediaFiles: MediaFileStore,
     private val mediaJobQueue: MediaJobQueue,
+    private val audioRecorder: AudioRecorder,
     private val appMessages: AppMessages,
     private val clock: Clock,
     private val timeZone: TimeZone,
@@ -119,6 +126,9 @@ class ComposerViewModel(
     private val mediaLock = Mutex()
     private val addedMedia = mutableSetOf<Uuid>()
     private val removedMedia = mutableSetOf<Uuid>()
+
+    /** The recording in progress. A state flow for its compare-and-set: its jobs run off main. */
+    private val activeRecording = MutableStateFlow<ActiveRecording?>(null)
 
     init {
         sessionScope.launch {
@@ -257,8 +267,127 @@ class ComposerViewModel(
         }
     }
 
-    /** Soft-deletes a photo; Undo of this session brings it back. */
-    fun onRemovePhoto(mediaId: Uuid) {
+    /**
+     * Starts recording a voice into the media folder. The microphone permission must already be
+     * granted; a new entry is written first, because the recording needs its row.
+     */
+    fun onStartRecording() {
+        val target = target ?: return
+        if (!editable) return
+        val id = Uuid.random()
+        val active = ActiveRecording(id, mediaFiles.newRelativePath(id, AUDIO_EXTENSION))
+        if (!activeRecording.compareAndSet(null, active)) return
+        val isNewEntry = target.original == null && !submitted
+        if (isNewEntry) writeDraftNow(target)
+        submitted = true
+        _uiState.update { it.copy(recording = RecordingUi(TimeSource.Monotonic.markNow())) }
+        active.levelsJob = sessionScope.launch { showLevels() }
+        active.startJob = trackMediaWork {
+            if (isNewEntry && !awaitEntryWritten()) {
+                abandon(active)
+                return@trackMediaWork
+            }
+            when (val started = audioRecorder.start(mediaFiles.resolve(active.relativePath))) {
+                is Outcome.Success -> active.started = true
+                is Outcome.Failure -> {
+                    appMessages.post(UiMessage(started.error.toUiText()))
+                    abandon(active)
+                }
+            }
+        }
+    }
+
+    /** Stops the recording and attaches it to the entry. */
+    fun onStopRecording() {
+        endRecording(keep = true)
+    }
+
+    /** Stops the recording and throws it away. */
+    fun onCancelRecording() {
+        endRecording(keep = false)
+    }
+
+    /**
+     * The microphone was refused. A permanent refusal offers [openSettings], since the system no
+     * longer shows its prompt.
+     */
+    fun onRecordingPermissionDenied(
+        error: MediaError.PermissionRequired,
+        openSettings: () -> Unit,
+    ) {
+        val text = error.toUiText()
+        val message =
+            if (error.error is PermissionError.DeniedPermanently) {
+                UiMessage(
+                    text,
+                    UiMessageAction(UiText.of(Res.string.action_open_settings), openSettings),
+                )
+            } else {
+                UiMessage(text)
+            }
+        appMessages.post(message)
+    }
+
+    private suspend fun showLevels() {
+        audioRecorder.amplitudes.collect { level ->
+            _uiState.update { state ->
+                val recording = state.recording ?: return@update state
+                state.copy(
+                    recording =
+                        recording.copy(levels = (recording.levels + level).takeLast(LIVE_LEVELS)),
+                )
+            }
+        }
+    }
+
+    /** Clears a recording that never started. */
+    private fun abandon(active: ActiveRecording) {
+        if (!activeRecording.compareAndSet(active, null)) return
+        active.levelsJob?.cancel()
+        _uiState.update { it.copy(recording = null) }
+    }
+
+    private fun endRecording(keep: Boolean) {
+        val active = activeRecording.getAndUpdate { null } ?: return
+        active.levelsJob?.cancel()
+        _uiState.update { it.copy(recording = null) }
+        val entryId = target?.id ?: return
+        trackMediaWork {
+            active.startJob?.join()
+            if (!active.started) return@trackMediaWork
+            if (!keep) {
+                audioRecorder.cancel()
+                return@trackMediaWork
+            }
+            when (val stopped = audioRecorder.stop()) {
+                is Outcome.Failure -> appMessages.post(UiMessage(stopped.error.toUiText()))
+                is Outcome.Success -> attachRecording(entryId, active, stopped.value)
+            }
+        }
+    }
+
+    private suspend fun attachRecording(
+        entryId: Uuid,
+        active: ActiveRecording,
+        recording: AudioRecording,
+    ) {
+        val outcome =
+            attachMedia.register(
+                entryId = entryId,
+                id = active.id,
+                relativePath = active.relativePath,
+                type = MediaType.AUDIO,
+                duration = recording.duration,
+                waveform = recording.waveform,
+            )
+        when (outcome) {
+            is Outcome.Success -> mediaLock.withLock { addedMedia += outcome.value.id }
+            is Outcome.Failure -> appMessages.post(UiMessage(outcome.error.toUiText()))
+        }
+    }
+
+    /** Soft-deletes a photo or voice; Undo of this session brings it back. */
+    fun onRemoveMedia(mediaId: Uuid) {
         if (!editable) return
         submitted = true
         trackMediaWork {
@@ -294,6 +423,9 @@ class ComposerViewModel(
     }
 
     fun onBackground() {
+        // Android stops delivering microphone input to an app in the background, so the
+        // recording ends here and is kept rather than going silent.
+        endRecording(keep = true)
         autoSaver.flush()
     }
 
@@ -311,6 +443,8 @@ class ComposerViewModel(
         }
         // Read on the caller's thread, where the editor state is owned.
         val textIsBlank = richTextState.annotatedString.text.isBlank()
+        // A recording still running when the composer closes is kept, like everything else.
+        endRecording(keep = true)
         return appScope
             .launch {
                 try {
@@ -343,7 +477,7 @@ class ComposerViewModel(
         lastDraft = draftOf(newTarget)
         editable = true
         _uiState.update { it.copy(isLoading = false, occurredAt = now, timeZone = timeZone) }
-        observePhotos(newTarget.id)
+        observeMedia(newTarget.id)
     }
 
     private suspend fun openEntry(entryId: Uuid) {
@@ -382,27 +516,24 @@ class ComposerViewModel(
                 selectedLabelIds = existing.labelIds,
             )
         }
-        observePhotos(existing.id)
+        observeMedia(existing.id)
     }
 
-    /** Keeps [ComposerUiState.photos] in step with the album of the entry, in position order. */
-    private fun observePhotos(entryId: Uuid) {
+    /** Keeps the photos and voices of the state in step with the entry's album, in order. */
+    private fun observeMedia(entryId: Uuid) {
         sessionScope.launch {
             mediaRepository.observeEntryMedia(entryId).collect { items ->
-                val photos =
-                    items
-                        .filter { it.type == MediaType.PHOTO && it.deletedAt == null }
-                        .sortedBy { it.position }
-                        .map { it.toUi(mediaFiles) }
-                _uiState.update { it.copy(photos = photos) }
+                val live = items.filter { it.deletedAt == null }.sortedBy { it.position }
+                val photos = live.filter { it.type == MediaType.PHOTO }.map { it.toUi(mediaFiles) }
+                val voices = live.filter { it.type == MediaType.AUDIO }.map { it.toUi(mediaFiles) }
+                _uiState.update { it.copy(photos = photos, voices = voices) }
             }
         }
     }
 
     /** Starts [block] on [appScope] and remembers it, so closing the composer can wait for it. */
-    private fun trackMediaWork(block: suspend () -> Unit) {
-        mediaJobs += appScope.launch { block() }
-    }
+    private fun trackMediaWork(block: suspend () -> Unit): Job =
+        appScope.launch { block() }.also { mediaJobs += it }
 
     /** Submits the draft of a new entry even when its text is blank, since media needs the row. */
     private fun writeDraftNow(target: EntryTarget) {
@@ -608,6 +739,10 @@ class ComposerViewModel(
     private companion object {
         val SAVED_INDICATOR_DURATION = 1500.milliseconds
         val UNDO_DURATION = 5.seconds
+        const val AUDIO_EXTENSION = "m4a"
+
+        /** Live levels the recording bar draws. */
+        const val LIVE_LEVELS = 40
     }
 }
 
@@ -626,3 +761,11 @@ private class EntryTarget(
     val originalLabelIds: Set<Uuid> = emptySet(),
     var labelIds: Set<Uuid> = originalLabelIds,
 )
+
+/** A recording this session started; [started] is set once the recorder runs. */
+private class ActiveRecording(val id: Uuid, val relativePath: String) {
+    var startJob: Job? = null
+    var levelsJob: Job? = null
+    /** Written by [startJob] and read only after joining it. */
+    var started = false
+}

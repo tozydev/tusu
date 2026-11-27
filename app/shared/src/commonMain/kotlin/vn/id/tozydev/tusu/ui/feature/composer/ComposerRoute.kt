@@ -9,8 +9,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlin.uuid.Uuid
 import kotlinx.datetime.LocalDate
+import vn.id.tozydev.tusu.domain.error.MediaError
+import vn.id.tozydev.tusu.domain.model.AppPermission
 import vn.id.tozydev.tusu.ui.component.OnBackgroundEffect
 import vn.id.tozydev.tusu.ui.platform.rememberCameraLauncher
+import vn.id.tozydev.tusu.ui.platform.rememberPermissionRequester
 import vn.id.tozydev.tusu.ui.platform.rememberPhotoPickerLauncher
 
 /** Writes a new entry (dated [date] when given), or edits [entryId]; [onClose] leaves it. */
@@ -42,6 +45,7 @@ fun ComposerRoute(
             onResult = { photo -> photo?.let { viewModel.onPhotosPicked(listOf(it)) } },
             onError = viewModel::onPickerFailed,
         )
+    val microphone = rememberPermissionRequester(AppPermission.MICROPHONE)
     ComposerScreen(
         state = state,
         richTextState = viewModel.richTextState,
@@ -53,8 +57,22 @@ fun ComposerRoute(
                 onOccurredAtChange = viewModel::onOccurredAtChange,
                 onPickPhotos = photoPicker::launch,
                 onTakePhoto = camera?.let { launcher -> launcher::launch },
-                onRemovePhoto = viewModel::onRemovePhoto,
+                onRemoveMedia = viewModel::onRemoveMedia,
                 onRetryPhoto = viewModel::onRetryPhoto,
+                onRecord = {
+                    microphone.request { error ->
+                        if (error == null) {
+                            viewModel.onStartRecording()
+                        } else {
+                            viewModel.onRecordingPermissionDenied(
+                                MediaError.PermissionRequired(error),
+                                openSettings = microphone::openSettings,
+                            )
+                        }
+                    }
+                },
+                onStopRecording = viewModel::onStopRecording,
+                onCancelRecording = viewModel::onCancelRecording,
                 onLabelToggle = viewModel::onLabelToggle,
                 onCreateLabel = viewModel::onCreateLabel,
                 onManageLabels = onManageLabels,
